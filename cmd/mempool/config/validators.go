@@ -7,7 +7,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-func validateDataSource(cfg MempoolDataSource) error {
+// Validate -
+func (c *Config) Validate() error {
+	for network, mempool := range c.Mempool.Indexers {
+		if err := mempool.DataSource.Validate(); err != nil {
+			return errors.Wrap(err, network)
+		}
+		if err := mempool.Filters.Validate(); err != nil {
+			return errors.Wrap(err, network)
+		}
+	}
+	return c.Mempool.Settings.Validate()
+}
+
+// Validate -
+func (cfg MempoolDataSource) Validate() error {
 	if _, err := url.Parse(cfg.Tzkt); err != nil {
 		return errors.Wrapf(err, "Invalid TzKT url %s", cfg.Tzkt)
 	}
@@ -23,7 +37,8 @@ func validateDataSource(cfg MempoolDataSource) error {
 	return nil
 }
 
-func validateFilters(cfg Filters) error {
+// Validate -
+func (cfg Filters) Validate() error {
 	switch {
 	case len(cfg.Kinds) == 0:
 		cfg.Kinds = append(cfg.Kinds, node.KindTransaction)
@@ -62,18 +77,8 @@ func validateKinds(kinds ...string) error {
 	return nil
 }
 
-func validateDBKind(kind string) error {
-	for _, valid := range []string{
-		DBKindClickHouse, DBKindMysql, DBKindPostgres, DBKindSqlServer, DBKindSqlite,
-	} {
-		if valid == kind {
-			return nil
-		}
-	}
-	return errors.Wrap(ErrUnsupportedDB, kind)
-}
-
-func validateSettings(settings *Settings) {
+// Validate -
+func (settings *Settings) Validate() error {
 	if settings.ExpiredAfter == 0 {
 		settings.ExpiredAfter = 60
 	}
@@ -89,4 +94,5 @@ func validateSettings(settings *Settings) {
 	if settings.RPCTimeout == 0 {
 		settings.RPCTimeout = 10
 	}
+	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/dipdup-net/mempool/internal/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,22 +20,31 @@ func TestLoad(t *testing.T) {
 			name:     "config 1",
 			filename: "./test/config1.yaml",
 			want: &Config{
-				Version: "0.0.1",
-				DataSources: map[string]DataSource{
-					"tzkt_mainnet": {
-						Kind: "tzkt",
-						URL:  "https://staging.api.tzkt.io",
+				Config: config.Config{
+					Version: "0.0.1",
+					DataSources: map[string]config.DataSource{
+						"tzkt_mainnet": {
+							Kind: "tzkt",
+							URL:  "https://staging.api.tzkt.io",
+						},
+						"node_mainnet": {
+							Kind: "tezos-node",
+							URL:  "https://rpc.tzkt.io/mainnet",
+						},
 					},
-					"node_mainnet": {
-						Kind: "tezos-node",
-						URL:  "https://rpc.tzkt.io/mainnet",
+					Database: config.Database{
+						Kind: "sqlite",
+						Path: "mempool.db",
 					},
-				},
-				Database: Database{
-					Kind: "sqlite",
-					Path: "mempool.db",
 				},
 				Mempool: Mempool{
+					Settings: Settings{
+						KeepOperations:         172800,
+						ExpiredAfter:           60,
+						KeepInChainBlocks:      10,
+						MempoolRequestInterval: 10,
+						RPCTimeout:             10,
+					},
 					Indexers: map[string]*Indexer{
 						"mainnet": {
 							Filters: Filters{
@@ -53,17 +63,26 @@ func TestLoad(t *testing.T) {
 			name:     "config 2",
 			filename: "./test/config2.yaml",
 			want: &Config{
-				Version: "0.0.1",
-				Contracts: map[string]Contract{
-					"test": {
-						Address: "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9",
+				Config: config.Config{
+					Version: "0.0.1",
+					Contracts: map[string]config.Contract{
+						"test": {
+							Address: "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9",
+						},
+					},
+					Database: config.Database{
+						Kind: "sqlite",
+						Path: "mempool.db",
 					},
 				},
-				Database: Database{
-					Kind: "sqlite",
-					Path: "mempool.db",
-				},
 				Mempool: Mempool{
+					Settings: Settings{
+						KeepOperations:         172800,
+						ExpiredAfter:           60,
+						KeepInChainBlocks:      10,
+						MempoolRequestInterval: 10,
+						RPCTimeout:             10,
+					},
 					Indexers: map[string]*Indexer{
 						"mainnet": {
 							Filters: Filters{
@@ -82,12 +101,21 @@ func TestLoad(t *testing.T) {
 			name:     "config 3",
 			filename: "./test/config3.yaml",
 			want: &Config{
-				Version: "0.0.1",
-				Database: Database{
-					Kind: "sqlite",
-					Path: "mempool.db",
+				Config: config.Config{
+					Version: "0.0.1",
+					Database: config.Database{
+						Kind: "sqlite",
+						Path: "mempool.db",
+					},
 				},
 				Mempool: Mempool{
+					Settings: Settings{
+						KeepOperations:         172800,
+						ExpiredAfter:           60,
+						KeepInChainBlocks:      10,
+						MempoolRequestInterval: 10,
+						RPCTimeout:             10,
+					},
 					Indexers: map[string]*Indexer{
 						"mainnet": {
 							Filters: Filters{
@@ -106,27 +134,36 @@ func TestLoad(t *testing.T) {
 			name:     "config 4",
 			filename: "./test/config4.yaml",
 			want: &Config{
-				Version: "0.0.1",
-				Database: Database{
-					Kind: "sqlite",
-					Path: "mempool.db",
-				},
-				Contracts: map[string]Contract{
-					"test": {
-						Address: "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9",
+				Config: config.Config{
+					Version: "0.0.1",
+					Database: config.Database{
+						Kind: "sqlite",
+						Path: "mempool.db",
 					},
-				},
-				DataSources: map[string]DataSource{
-					"tzkt_mainnet": {
-						Kind: "tzkt",
-						URL:  "https://staging.api.tzkt.io",
+					Contracts: map[string]config.Contract{
+						"test": {
+							Address: "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9",
+						},
 					},
-					"node_mainnet": {
-						Kind: "tezos-node",
-						URL:  "https://rpc.tzkt.io/mainnet",
+					DataSources: map[string]config.DataSource{
+						"tzkt_mainnet": {
+							Kind: "tzkt",
+							URL:  "https://staging.api.tzkt.io",
+						},
+						"node_mainnet": {
+							Kind: "tezos-node",
+							URL:  "https://rpc.tzkt.io/mainnet",
+						},
 					},
 				},
 				Mempool: Mempool{
+					Settings: Settings{
+						KeepOperations:         172800,
+						ExpiredAfter:           60,
+						KeepInChainBlocks:      10,
+						MempoolRequestInterval: 10,
+						RPCTimeout:             10,
+					},
 					Indexers: map[string]*Indexer{
 						"mainnet": {
 							Filters: Filters{
@@ -145,12 +182,21 @@ func TestLoad(t *testing.T) {
 			name:     "config 5 without envs",
 			filename: "./test/config5.yaml",
 			want: &Config{
-				Version: "0.0.1",
-				Database: Database{
-					Kind: "sqlite",
-					Path: "mempool.db",
+				Config: config.Config{
+					Version: "0.0.1",
+					Database: config.Database{
+						Kind: "sqlite",
+						Path: "mempool.db",
+					},
 				},
 				Mempool: Mempool{
+					Settings: Settings{
+						KeepOperations:         172800,
+						ExpiredAfter:           60,
+						KeepInChainBlocks:      10,
+						MempoolRequestInterval: 10,
+						RPCTimeout:             10,
+					},
 					Indexers: map[string]*Indexer{
 						"mainnet": {
 							Filters: Filters{
@@ -172,12 +218,21 @@ func TestLoad(t *testing.T) {
 				"ACCOUNT": "test",
 			},
 			want: &Config{
-				Version: "0.0.1",
-				Database: Database{
-					Kind: "sqlite",
-					Path: "mempool.db",
+				Config: config.Config{
+					Version: "0.0.1",
+					Database: config.Database{
+						Kind: "sqlite",
+						Path: "mempool.db",
+					},
 				},
 				Mempool: Mempool{
+					Settings: Settings{
+						KeepOperations:         172800,
+						ExpiredAfter:           60,
+						KeepInChainBlocks:      10,
+						MempoolRequestInterval: 10,
+						RPCTimeout:             10,
+					},
 					Indexers: map[string]*Indexer{
 						"mainnet": {
 							Filters: Filters{
@@ -206,13 +261,14 @@ func TestLoad(t *testing.T) {
 				os.Setenv(name, val)
 			}
 
-			got, err := Load(tt.filename)
+			var got Config
+			err := config.Parse(tt.filename, &got)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			assert.Equal(t, got, tt.want)
+			assert.Equal(t, &got, tt.want)
 		})
 	}
 }

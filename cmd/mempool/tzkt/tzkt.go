@@ -331,10 +331,7 @@ func (tzkt *TzKT) Sync(indexerLevel uint64) error {
 		if err != nil {
 			return err
 		}
-		log.Infof("Indexed to level %d", tzkt.state)
 	}
-
-	log.Info("Synced")
 
 	return nil
 }

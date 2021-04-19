@@ -14,13 +14,3 @@ const (
 var (
 	ErrUnsupportedDB = errors.New("Unsupported database")
 )
-
-const (
-	tzktMaxSubscriptions = 50
-)
-
-// Data source kinds
-const (
-	DataSourceKindTzKT = "tzkt"
-	DataSourceKindNode = "tezos-node"
-)

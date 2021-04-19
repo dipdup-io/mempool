@@ -5,14 +5,15 @@ import (
 	"sync"
 	"time"
 
+	generalConfig "github.com/dipdup-net/mempool/internal/config"
 	"github.com/karlseguin/ccache"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/dipdup-net/mempool/cmd/mempool/receiver"
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
-	"github.com/dipdup-net/mempool/internal/config"
 	"github.com/dipdup-net/mempool/internal/node"
 	"github.com/dipdup-net/mempool/internal/state"
 	"gorm.io/gorm"
@@ -36,7 +37,7 @@ type Indexer struct {
 }
 
 // NewIndexer -
-func NewIndexer(network string, indexerCfg config.Indexer, database config.Database, settings config.Settings) (*Indexer, error) {
+func NewIndexer(network string, indexerCfg config.Indexer, database generalConfig.Database, settings config.Settings) (*Indexer, error) {
 	db, err := models.OpenDatabaseConnection(database, indexerCfg.Filters.Kinds...)
 	if err != nil {
 		return nil, err

@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
-	"github.com/dipdup-net/mempool/internal/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"

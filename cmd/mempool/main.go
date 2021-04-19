@@ -5,8 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/internal/cmdline"
-	"github.com/dipdup-net/mempool/internal/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,7 +20,7 @@ func main() {
 		return
 	}
 
-	cfg, err := config.LoadAndValidate(args.Config)
+	cfg, err := config.Load(args.Config)
 	if err != nil {
 		log.Error(err)
 		return
