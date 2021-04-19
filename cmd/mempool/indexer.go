@@ -5,17 +5,17 @@ import (
 	"sync"
 	"time"
 
-	generalConfig "github.com/dipdup-net/mempool/internal/config"
 	"github.com/karlseguin/ccache"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	generalConfig "github.com/dipdup-net/go-lib/config"
+	"github.com/dipdup-net/go-lib/node"
+	"github.com/dipdup-net/go-lib/state"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/dipdup-net/mempool/cmd/mempool/receiver"
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
-	"github.com/dipdup-net/mempool/internal/node"
-	"github.com/dipdup-net/mempool/internal/state"
 	"gorm.io/gorm"
 )
 

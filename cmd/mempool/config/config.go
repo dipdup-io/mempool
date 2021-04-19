@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/dipdup-net/mempool/internal/config"
+	"github.com/dipdup-net/go-lib/config"
 )
 
 // Config

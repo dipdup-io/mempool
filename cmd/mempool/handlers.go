@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 
+	"github.com/dipdup-net/go-lib/node"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
-	"github.com/dipdup-net/mempool/internal/node"
 	"github.com/dipdup-net/tzktevents"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"

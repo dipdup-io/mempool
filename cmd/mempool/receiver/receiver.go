@@ -4,9 +4,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dipdup-net/go-lib/node"
+	"github.com/dipdup-net/go-lib/state"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
-	"github.com/dipdup-net/mempool/internal/node"
-	"github.com/dipdup-net/mempool/internal/state"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"

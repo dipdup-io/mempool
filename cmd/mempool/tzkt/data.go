@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dipdup-net/mempool/internal/node"
+	"github.com/dipdup-net/go-lib/node"
 	events "github.com/dipdup-net/tzktevents"
 )
 

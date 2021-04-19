@@ -5,8 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/dipdup-net/go-lib/cmdline"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
-	"github.com/dipdup-net/mempool/internal/cmdline"
 	log "github.com/sirupsen/logrus"
 )
 

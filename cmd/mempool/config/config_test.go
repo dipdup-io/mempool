@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/dipdup-net/mempool/internal/config"
+	"github.com/dipdup-net/go-lib/config"
 	"github.com/stretchr/testify/assert"
 )
 

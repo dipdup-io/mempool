@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/dipdup-net/mempool/internal/node"
+	"github.com/dipdup-net/go-lib/node"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )

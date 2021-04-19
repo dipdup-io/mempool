@@ -1,8 +1,8 @@
 package models
 
 import (
-	"github.com/dipdup-net/mempool/internal/config"
-	"github.com/dipdup-net/mempool/internal/state"
+	"github.com/dipdup-net/go-lib/config"
+	"github.com/dipdup-net/go-lib/state"
 	"gorm.io/gorm"
 )
 
