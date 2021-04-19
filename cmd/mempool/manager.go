@@ -31,7 +31,7 @@ func NewManager(db *gorm.DB, settings config.Settings, blockTime uint64, kinds .
 		db:               db,
 		keepOperations:   settings.KeepOperations,
 		keepInChain:      blockTime * settings.KeepInChainBlocks,
-		lostAfterSeconds: blockTime * settings.LostAfter,
+		lostAfterSeconds: blockTime * settings.ExpiredAfter,
 		blockTime:        blockTime,
 		stop:             make(chan struct{}, 1),
 		kinds:            kinds,

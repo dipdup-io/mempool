@@ -32,7 +32,7 @@ func main() {
 	indexers := make(map[string]*Indexer)
 
 	for network, mempool := range cfg.Mempool.Indexers {
-		indexer, err := NewIndexer(network, mempool, cfg.Database, cfg.Mempool.Settings)
+		indexer, err := NewIndexer(network, *mempool, cfg.Database, cfg.Mempool.Settings)
 		if err != nil {
 			log.Error(err)
 			return

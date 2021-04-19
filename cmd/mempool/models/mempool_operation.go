@@ -14,9 +14,7 @@ const (
 	StatusBranchDelayed = "branch_delayed"
 	StatusBranchRefused = "branch_refused"
 	StatusRefused       = "refused"
-	StatusUnprocessed   = "unprocessed"
 	StatusInChain       = "in_chain"
-	StatusLost          = "lost"
 	StatusExpired       = "expired"
 )
 

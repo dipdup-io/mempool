@@ -70,7 +70,7 @@ func NewIndexer(network string, indexerCfg config.Indexer, database config.Datab
 		stop:            make(chan struct{}, 1),
 	}
 
-	indexer.branches = newBlockQueue(settings.LostAfter, indexer.onPopBlockQueue, indexer.onRollbackBlockQueue)
+	indexer.branches = newBlockQueue(settings.ExpiredAfter, indexer.onPopBlockQueue, indexer.onRollbackBlockQueue)
 
 	return indexer, nil
 }

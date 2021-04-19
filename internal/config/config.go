@@ -56,7 +56,7 @@ type MempoolDataSource struct {
 // Settings -
 type Settings struct {
 	KeepOperations         uint64 `yaml:"keep_operations_seconds"`
-	LostAfter              uint64 `yaml:"lost_after_blocks"`
+	ExpiredAfter           uint64 `yaml:"expired_after_blocks"`
 	KeepInChainBlocks      uint64 `yaml:"keep_in_chain_blocks"`
 	MempoolRequestInterval uint64 `yaml:"mempool_request_interval_seconds"`
 	RPCTimeout             uint64 `yaml:"rpc_timeout_seconds"`
@@ -103,6 +103,7 @@ func Validate(cfg *Config) error {
 			return errors.Wrap(err, network)
 		}
 	}
+	validateSettings(&cfg.Mempool.Settings)
 	return nil
 }
 

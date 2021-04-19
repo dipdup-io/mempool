@@ -72,3 +72,21 @@ func validateDBKind(kind string) error {
 	}
 	return errors.Wrap(ErrUnsupportedDB, kind)
 }
+
+func validateSettings(settings *Settings) {
+	if settings.ExpiredAfter == 0 {
+		settings.ExpiredAfter = 60
+	}
+	if settings.KeepInChainBlocks == 0 {
+		settings.KeepInChainBlocks = 10
+	}
+	if settings.KeepOperations == 0 {
+		settings.KeepOperations = 172800
+	}
+	if settings.MempoolRequestInterval == 0 {
+		settings.MempoolRequestInterval = 10
+	}
+	if settings.RPCTimeout == 0 {
+		settings.RPCTimeout = 10
+	}
+}
