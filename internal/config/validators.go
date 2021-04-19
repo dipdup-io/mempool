@@ -1,0 +1,74 @@
+package config
+
+import (
+	"net/url"
+
+	"github.com/dipdup-net/mempool/internal/node"
+	"github.com/pkg/errors"
+)
+
+func validateDataSource(cfg MempoolDataSource) error {
+	if _, err := url.Parse(cfg.Tzkt); err != nil {
+		return errors.Wrapf(err, "Invalid TzKT url %s", cfg.Tzkt)
+	}
+	if len(cfg.RPC) == 0 {
+		return errors.Errorf("Empty nodes list")
+	}
+
+	for i := range cfg.RPC {
+		if _, err := url.Parse(cfg.RPC[i]); err != nil {
+			return errors.Wrapf(err, "Invalid TzKT url %s", cfg.RPC[i])
+		}
+	}
+	return nil
+}
+
+func validateFilters(cfg Filters) error {
+	switch {
+	case len(cfg.Kinds) == 0:
+		cfg.Kinds = append(cfg.Kinds, node.KindTransaction)
+	default:
+		if err := validateKinds(cfg.Kinds...); err != nil {
+			return err
+		}
+	}
+
+	if len(cfg.Accounts) > tzktMaxSubscriptions {
+		return errors.Errorf("Maximum accounts in config is %d. You added %d accounts", tzktMaxSubscriptions, len(cfg.Accounts))
+	}
+
+	return nil
+}
+
+func validateKinds(kinds ...string) error {
+	for _, kind := range kinds {
+		var found bool
+
+		for _, valid := range []string{
+			node.KindActivation, node.KindBallot, node.KindDelegation, node.KindDoubleBaking, node.KindDoubleEndorsing,
+			node.KindEndorsement, node.KindNonceRevelation, node.KindOrigination, node.KindProposal,
+			node.KindReveal, node.KindTransaction,
+		} {
+			if kind == valid {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return errors.Wrap(node.ErrUnknownKind, kind)
+		}
+	}
+	return nil
+}
+
+func validateDBKind(kind string) error {
+	for _, valid := range []string{
+		DBKindClickHouse, DBKindMysql, DBKindPostgres, DBKindSqlServer, DBKindSqlite,
+	} {
+		if valid == kind {
+			return nil
+		}
+	}
+	return errors.Wrap(ErrUnsupportedDB, kind)
+}

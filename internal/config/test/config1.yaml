@@ -1,0 +1,26 @@
+version: 0.0.1
+
+datasources:
+  tzkt_mainnet:
+    kind: tzkt
+    url: https://staging.api.tzkt.io
+  node_mainnet:
+    kind: tezos-node
+    url: https://rpc.tzkt.io/mainnet
+
+mempool:
+  indexers:
+    mainnet:
+      filters:
+        kinds:
+          - transaction
+        accounts:
+          - KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9
+      datasources:
+          tzkt: tzkt_mainnet
+          rpc: 
+            - node_mainnet
+
+database:
+  kind: sqlite
+  path: mempool.db
