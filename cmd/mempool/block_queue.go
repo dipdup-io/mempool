@@ -1,15 +1,15 @@
 package main
 
 import (
+	"github.com/dipdup-net/go-lib/tzkt/events"
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
-	"github.com/dipdup-net/tzktevents"
 )
 
 // Block -
 type Block struct {
 	Branch string
 	Level  uint64
-	Type   tzktevents.MessageType
+	Type   events.MessageType
 }
 
 func fromMessage(block tzkt.BlockMessage) Block {
@@ -43,15 +43,15 @@ func (bq *BlockQueue) Add(block tzkt.BlockMessage) error {
 	b := fromMessage(block)
 
 	switch block.Type {
-	case tzktevents.MessageTypeState:
-	case tzktevents.MessageTypeReorg:
+	case events.MessageTypeState:
+	case events.MessageTypeReorg:
 		for item := bq.queue[len(bq.queue)-1]; len(bq.queue) > 0 && bq.queue[len(bq.queue)-1].Level > block.Level; item = bq.queue[len(bq.queue)-1] {
 			if err := bq.onRollback(item); err != nil {
 				return err
 			}
 			bq.queue = bq.queue[:len(bq.queue)-1]
 		}
-	case tzktevents.MessageTypeData:
+	case events.MessageTypeData:
 		if bq.Space() == 0 {
 			item := bq.queue[0]
 			bq.queue = bq.queue[1:]

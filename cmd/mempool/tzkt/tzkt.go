@@ -6,7 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	events "github.com/dipdup-net/tzktevents"
+	"github.com/dipdup-net/go-lib/tzkt/api"
+	"github.com/dipdup-net/go-lib/tzkt/events"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -17,7 +18,7 @@ const (
 
 // TzKT - tzkt data source
 type TzKT struct {
-	api    *TzKTAPI
+	api    *api.API
 	client *events.TzKT
 	state  uint64
 	kinds  []string
@@ -33,7 +34,7 @@ func NewTzKT(url string, kinds []string) *TzKT {
 	return &TzKT{
 		client:     events.NewTzKT(fmt.Sprintf("%s/%s", strings.TrimSuffix(url, "/"), "v1/events")),
 		kinds:      kinds,
-		api:        NewTzKTAPI(url),
+		api:        api.New(url),
 		operations: make(chan OperationMessage, 1024),
 		blocks:     make(chan BlockMessage, 1024),
 		stop:       make(chan struct{}, 1),
@@ -244,13 +245,13 @@ type tableState struct {
 	Table    string
 	LastID   uint64
 	Finished bool
-	Items    []Operation
+	Items    []api.Operation
 }
 
 func emptyTableState(table string) *tableState {
 	return &tableState{
 		Table: table,
-		Items: make([]Operation, 0),
+		Items: make([]api.Operation, 0),
 	}
 }
 
@@ -278,7 +279,7 @@ func (a syncState) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func newSyncState(kind ...string) syncState {
 	ss := make(syncState, 0)
 	if len(kind) == 0 {
-		ss = append(ss, emptyTableState(KindTransaction))
+		ss = append(ss, emptyTableState(api.KindTransaction))
 	} else {
 		for i := range kind {
 			ss = append(ss, emptyTableState(kind[i]))
@@ -412,34 +413,34 @@ func (tzkt *TzKT) getTableData(table *tableState, indexerState, headLevel uint64
 	}
 
 	switch table.Table {
-	case KindActivation:
+	case api.KindActivation:
 		return getOperations(table, filters, tzkt.api.GetActivations)
-	case KindBallot:
+	case api.KindBallot:
 		return getOperations(table, filters, tzkt.api.GetBallots)
-	case KindDelegation:
+	case api.KindDelegation:
 		return getOperations(table, filters, tzkt.api.GetDelegations)
-	case KindDoubleBaking:
+	case api.KindDoubleBaking:
 		return getOperations(table, filters, tzkt.api.GetDoubleBakings)
-	case KindDoubleEndorsing:
+	case api.KindDoubleEndorsing:
 		return getOperations(table, filters, tzkt.api.GetDoubleEndorsings)
-	case KindEndorsement:
+	case api.KindEndorsement:
 		return getOperations(table, filters, tzkt.api.GetEndorsements)
-	case KindNonceRevelation:
+	case api.KindNonceRevelation:
 		return getOperations(table, filters, tzkt.api.GetNonceRevelations)
-	case KindOrigination:
+	case api.KindOrigination:
 		return getOperations(table, filters, tzkt.api.GetOriginations)
-	case KindProposal:
+	case api.KindProposal:
 		return getOperations(table, filters, tzkt.api.GetProposals)
-	case KindReveal:
+	case api.KindReveal:
 		return getOperations(table, filters, tzkt.api.GetReveals)
-	case KindTransaction:
+	case api.KindTransaction:
 		return getOperations(table, filters, tzkt.api.GetTransactions)
 	default:
 		return errors.Wrap(ErrUnknownOperationKind, table.Table)
 	}
 }
 
-func getOperations(table *tableState, filters map[string]string, requestFunc func(map[string]string) ([]Operation, error)) error {
+func getOperations(table *tableState, filters map[string]string, requestFunc func(map[string]string) ([]api.Operation, error)) error {
 	operations, err := requestFunc(filters)
 	if err != nil {
 		return err

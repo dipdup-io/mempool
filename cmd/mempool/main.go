@@ -46,8 +46,8 @@ func main() {
 	}
 
 	<-signals
+	log.Warn("Trying carefully stopping....")
 	for _, indexer := range indexers {
-		log.Warn("Trying carefully stopping....")
 		if err := indexer.Close(); err != nil {
 			log.Error(err)
 			return

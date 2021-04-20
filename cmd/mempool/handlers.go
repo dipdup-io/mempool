@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 
 	"github.com/dipdup-net/go-lib/node"
+	"github.com/dipdup-net/go-lib/tzkt/events"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
-	"github.com/dipdup-net/tzktevents"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -19,7 +19,7 @@ func (indexer *Indexer) handleBlock(block tzkt.BlockMessage) error {
 		return err
 	}
 
-	if block.Type == tzktevents.MessageTypeState {
+	if block.Type == events.MessageTypeState {
 		if space := indexer.branches.Space(); space > 0 {
 			blocks, err := indexer.externalIndexer.GetBlocks(space, indexer.state.Level)
 			if err != nil {
