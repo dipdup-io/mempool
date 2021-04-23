@@ -3,12 +3,13 @@
 # ---------------------------------------------------------------------
 FROM golang:1.15-alpine as builder
 
-ENV CGO_ENABLED=0
+ENV CGO_ENABLED=1
 ENV GO111MODULE=on
 ENV GOOS=linux
+ENV CONFIG=config.yaml
 
 RUN apk --no-cache add ca-certificates
-RUN apk add --update git
+RUN apk add --update git musl-dev gcc build-base
 
 RUN mkdir -p $GOPATH/src/github.com/dipdup-net/mempool/
 
@@ -17,10 +18,9 @@ WORKDIR $GOPATH/src/github.com/dipdup-net/mempool
 RUN go mod download
 
 COPY cmd/mempool cmd/mempool
-COPY internal internal
 
 WORKDIR $GOPATH/src/github.com/dipdup-net/mempool/cmd/mempool/
-RUN go build -a -installsuffix cgo -o /go/bin/dipdup-mempool .
+RUN go build -ldflags "-linkmode external -extldflags '-static' -s -w" -a -installsuffix cgo -o /go/bin/dipdup-mempool .
 
 # ---------------------------------------------------------------------
 #  The second stage container, for running the application
@@ -31,6 +31,6 @@ WORKDIR /app/mempool
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/bin/dipdup-mempool /go/bin/dipdup-mempool
-COPY config.yaml /app/mempool/
+COPY $CONFIG .
 
 ENTRYPOINT ["/go/bin/dipdup-mempool"]
