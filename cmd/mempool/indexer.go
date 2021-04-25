@@ -21,16 +21,16 @@ import (
 
 // Indexer -
 type Indexer struct {
-	db              *gorm.DB
-	externalIndexer *tzkt.TzKT
-	mempool         *receiver.Receiver
-	manager         *Manager
-	state           state.State
-	network         string
-	indexName       string
-	filters         config.Filters
-	branches        *BlockQueue
-	cache           *ccache.Cache
+	db        *gorm.DB
+	tzkt      *tzkt.TzKT
+	mempool   *receiver.Receiver
+	manager   *Manager
+	state     state.State
+	network   string
+	indexName string
+	filters   config.Filters
+	branches  *BlockQueue
+	cache     *ccache.Cache
 
 	stop chan struct{}
 	wg   sync.WaitGroup
@@ -60,15 +60,15 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 	}
 
 	indexer := &Indexer{
-		db:              db,
-		network:         network,
-		indexName:       models.MempoolIndexName(network),
-		filters:         indexerCfg.Filters,
-		externalIndexer: tzkt.NewTzKT(indexerCfg.DataSource.Tzkt, indexerCfg.Filters.Kinds),
-		mempool:         memInd,
-		manager:         NewManager(db, settings, uint64(constants.TimeBetweenBlocks[0]), indexerCfg.Filters.Kinds...),
-		cache:           ccache.New(ccache.Configure().MaxSize(2 ^ 13)),
-		stop:            make(chan struct{}, 1),
+		db:        db,
+		network:   network,
+		indexName: models.MempoolIndexName(network),
+		filters:   indexerCfg.Filters,
+		tzkt:      tzkt.NewTzKT(indexerCfg.DataSource.Tzkt, indexerCfg.Filters.Accounts, indexerCfg.Filters.Kinds),
+		mempool:   memInd,
+		manager:   NewManager(db, settings, uint64(constants.TimeBetweenBlocks[0]), indexerCfg.Filters.Kinds...),
+		cache:     ccache.New(ccache.Configure().MaxSize(2 ^ 13)),
+		stop:      make(chan struct{}, 1),
 	}
 
 	indexer.branches = newBlockQueue(settings.ExpiredAfter, indexer.onPopBlockQueue, indexer.onRollbackBlockQueue)
@@ -85,27 +85,17 @@ func (indexer *Indexer) Start() error {
 	indexer.wg.Add(1)
 	go indexer.listen()
 
-	if indexer.state.Level > 0 {
-		indexer.log().Info("Start syncing...")
-		if err := indexer.externalIndexer.Sync(indexer.state.Level); err != nil {
-			return err
-		}
-	}
+	go indexer.sync()
 
-	if err := indexer.externalIndexer.Connect(); err != nil {
-		return err
-	}
-
-	if err := indexer.subscribe(); err != nil {
-		return err
-	}
-
-	indexer.log().Info("Start indexing...")
-	indexer.mempool.Start()
-
+	go indexer.mempool.Start()
 	indexer.manager.Start()
 
 	return nil
+}
+
+func (indexer *Indexer) sync() {
+	indexer.log().Info("Start syncing...")
+	indexer.tzkt.Sync(indexer.state.Level)
 }
 
 func (indexer *Indexer) initState() error {
@@ -124,23 +114,6 @@ func (indexer *Indexer) initState() error {
 	return nil
 }
 
-func (indexer *Indexer) subscribe() error {
-	if err := indexer.externalIndexer.SubscribeToBlocks(); err != nil {
-		return err
-	}
-
-	if len(indexer.filters.Accounts) == 0 {
-		return indexer.externalIndexer.SubscribeToOperations("", indexer.filters.Kinds...)
-	}
-
-	for _, account := range indexer.filters.Accounts {
-		if err := indexer.externalIndexer.SubscribeToOperations(account, indexer.filters.Kinds...); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Close -
 func (indexer *Indexer) Close() error {
 	indexer.stop <- struct{}{}
@@ -150,7 +123,7 @@ func (indexer *Indexer) Close() error {
 		return err
 	}
 
-	if err := indexer.externalIndexer.Close(); err != nil {
+	if err := indexer.tzkt.Close(); err != nil {
 		return err
 	}
 
@@ -178,12 +151,12 @@ func (indexer *Indexer) listen() {
 		select {
 		case <-indexer.stop:
 			return
-		case operations := <-indexer.externalIndexer.Operations():
+		case operations := <-indexer.tzkt.Operations():
 			if err := indexer.handleInChain(operations); err != nil {
 				indexer.log().Error(err)
 				continue
 			}
-		case block := <-indexer.externalIndexer.Blocks():
+		case block := <-indexer.tzkt.Blocks():
 			if err := indexer.handleBlock(block); err != nil {
 				indexer.log().Error(err)
 				continue

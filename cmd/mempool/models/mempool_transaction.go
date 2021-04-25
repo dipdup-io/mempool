@@ -12,3 +12,8 @@ type MempoolTransaction struct {
 	Destination  string `json:"destination"`
 	Parameters   JSON   `json:"parameters,omitempty"`
 }
+
+// TableName -
+func (MempoolTransaction) TableName() string {
+	return "mempool_transaction"
+}

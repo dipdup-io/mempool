@@ -16,6 +16,11 @@ type MempoolDoubleEndorsing struct {
 	} `json:"op2" gorm:"-"`
 }
 
+// TableName -
+func (MempoolDoubleEndorsing) TableName() string {
+	return "mempool_double_endorsing"
+}
+
 // DoubleEndorsingOperations -
 type DoubleEndorsingOperations struct {
 	Kind  string `json:"kind"`

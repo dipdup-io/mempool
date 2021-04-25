@@ -21,7 +21,7 @@ func (indexer *Indexer) handleBlock(block tzkt.BlockMessage) error {
 
 	if block.Type == events.MessageTypeState {
 		if space := indexer.branches.Space(); space > 0 {
-			blocks, err := indexer.externalIndexer.GetBlocks(space, indexer.state.Level)
+			blocks, err := indexer.tzkt.GetBlocks(space, indexer.state.Level)
 			if err != nil {
 				return err
 			}

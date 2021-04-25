@@ -17,6 +17,11 @@ type MempoolOrigination struct {
 	Storage JSON `json:"-"`
 }
 
+// TableName -
+func (MempoolOrigination) TableName() string {
+	return "mempool_origination"
+}
+
 // Fill -
 func (mo *MempoolOrigination) Fill() {
 	mo.Storage = JSON(mo.Script.Storage)

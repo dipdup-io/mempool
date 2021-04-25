@@ -19,6 +19,11 @@ type MempoolDoubleBaking struct {
 	Bh2ProofOfWorkNonce string `json:"-"`
 }
 
+// TableName -
+func (MempoolDoubleBaking) TableName() string {
+	return "mempool_double_baking"
+}
+
 // DoubleBakingInfo -
 type DoubleBakingInfo struct {
 	Level            uint64   `json:"level"`

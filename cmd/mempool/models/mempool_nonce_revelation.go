@@ -6,3 +6,8 @@ type MempoolNonceRevelation struct {
 	Level int    `json:"level"`
 	Nonce string `json:"nonce"`
 }
+
+// TableName -
+func (MempoolNonceRevelation) TableName() string {
+	return "mempool_nonce_revelation"
+}

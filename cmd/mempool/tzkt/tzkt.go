@@ -18,10 +18,11 @@ const (
 
 // TzKT - tzkt data source
 type TzKT struct {
-	api    *api.API
-	client *events.TzKT
-	state  uint64
-	kinds  []string
+	api      *api.API
+	client   *events.TzKT
+	state    uint64
+	kinds    []string
+	accounts []string
 
 	operations chan OperationMessage
 	blocks     chan BlockMessage
@@ -29,11 +30,12 @@ type TzKT struct {
 	wg         sync.WaitGroup
 }
 
-// NewTzKT - TzKT data source`s constructor
-func NewTzKT(url string, kinds []string) *TzKT {
+// NewTzKT - TzKT constructor
+func NewTzKT(url string, accounts []string, kinds []string) *TzKT {
 	return &TzKT{
 		client:     events.NewTzKT(fmt.Sprintf("%s/%s", strings.TrimSuffix(url, "/"), "v1/events")),
 		kinds:      kinds,
+		accounts:   accounts,
 		api:        api.New(url),
 		operations: make(chan OperationMessage, 1024),
 		blocks:     make(chan BlockMessage, 1024),
@@ -307,34 +309,46 @@ func (state syncState) nextToRequest() *tableState {
 }
 
 // Sync -
-func (tzkt *TzKT) Sync(indexerLevel uint64) error {
+func (tzkt *TzKT) Sync(indexerLevel uint64) {
 	tzkt.state = indexerLevel
 
 	head, err := tzkt.api.GetHead()
 	if err != nil {
-		return err
+		log.Error(err)
+		return
 	}
 
 	log.Infof("Current TzKT level is %d. Current mempool indexer level is %d", head.Level, tzkt.state)
-	for head.Level > tzkt.state {
+	for head.Level > tzkt.state && tzkt.state > 0 {
 		state := newSyncState(tzkt.kinds...)
 
 		if len(state) == 0 {
-			return ErrEmptyKindList
+			log.Error(ErrEmptyKindList)
+			return
 		}
 
 		if err := tzkt.init(state, tzkt.state, head.Level); err != nil {
-			return err
+			log.Error(err)
+			return
 		}
 
 		tzkt.state = head.Level
 		head, err = tzkt.api.GetHead()
 		if err != nil {
-			return err
+			log.Error(err)
+			return
 		}
 	}
 
-	return nil
+	if err := tzkt.Connect(); err != nil {
+		log.Error(err)
+		return
+	}
+
+	if err := tzkt.subscribe(); err != nil {
+		log.Error(err)
+		return
+	}
 }
 
 func (tzkt *TzKT) init(state syncState, indexerState, headLevel uint64) error {
@@ -353,6 +367,23 @@ func (tzkt *TzKT) init(state syncState, indexerState, headLevel uint64) error {
 		}
 	}
 
+	return nil
+}
+
+func (tzkt *TzKT) subscribe() error {
+	if err := tzkt.SubscribeToBlocks(); err != nil {
+		return err
+	}
+
+	if len(tzkt.accounts) == 0 {
+		return tzkt.SubscribeToOperations("", tzkt.kinds...)
+	}
+
+	for _, account := range tzkt.accounts {
+		if err := tzkt.SubscribeToOperations(account, tzkt.kinds...); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

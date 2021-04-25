@@ -6,3 +6,8 @@ type MempoolActivateAccount struct {
 	Pkh    string `json:"pkh"`
 	Secret string `json:"secret"`
 }
+
+// TableName -
+func (MempoolActivateAccount) TableName() string {
+	return "mempool_activate_account"
+}

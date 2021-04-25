@@ -13,15 +13,21 @@ func OpenDatabaseConnection(cfg config.Database, kinds ...string) (*gorm.DB, err
 		return nil, err
 	}
 
+	sql, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.Kind == state.DBKindSqlite {
+		sql.SetMaxOpenConns(1)
+	}
+
 	data := GetModelsBy(kinds...)
 	data = append(data, &state.State{})
 
 	if err := db.AutoMigrate(data...); err != nil {
-		sql, err := db.DB()
-		if err == nil {
-			if err := sql.Close(); err != nil {
-				return nil, err
-			}
+		if err := sql.Close(); err != nil {
+			return nil, err
 		}
 		return nil, err
 	}

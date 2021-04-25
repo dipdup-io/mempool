@@ -8,3 +8,8 @@ type MempoolDelegation struct {
 	GasLimit     string `json:"gas_limit"`
 	StorageLimit string `json:"storage_limit"`
 }
+
+// TableName -
+func (MempoolDelegation) TableName() string {
+	return "mempool_delegation"
+}

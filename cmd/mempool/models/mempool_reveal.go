@@ -10,3 +10,8 @@ type MempoolReveal struct {
 	StorageLimit string `json:"storage_limit"`
 	PublicKey    string `json:"public_key"`
 }
+
+// TableName -
+func (MempoolReveal) TableName() string {
+	return "mempool_reveal"
+}
