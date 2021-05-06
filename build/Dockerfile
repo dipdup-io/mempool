@@ -31,6 +31,6 @@ WORKDIR /app/mempool
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/bin/dipdup-mempool /go/bin/dipdup-mempool
-COPY $CONFIG .
+COPY ./build/*.yml .
 
 ENTRYPOINT ["/go/bin/dipdup-mempool"]

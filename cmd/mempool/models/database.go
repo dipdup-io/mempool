@@ -8,7 +8,7 @@ import (
 
 // OpenDatabaseConnection -
 func OpenDatabaseConnection(cfg config.Database, kinds ...string) (*gorm.DB, error) {
-	db, err := state.OpenConnection(cfg.Kind, cfg.Path)
+	db, err := state.OpenConnection(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -18,7 +18,7 @@ func OpenDatabaseConnection(cfg config.Database, kinds ...string) (*gorm.DB, err
 		return nil, err
 	}
 
-	if cfg.Kind == state.DBKindSqlite {
+	if cfg.Kind == config.DBKindSqlite {
 		sql.SetMaxOpenConns(1)
 	}
 

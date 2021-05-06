@@ -1,10 +1,9 @@
 version: "3.6"
 
 services:
-  mempool:
+  indexer:
+    image: dipdup/mempool:latest
     build:
-        args: 
-            CONFIG: config.yaml
         dockerfile: build/Dockerfile
         context: .
     depends_on:
@@ -16,8 +15,6 @@ services:
 
   db:
     image: postgres:13
-    ports:
-      - 127.0.0.1:6423:5432
     restart: always
     volumes:
       - db:/var/lib/postgres/data
@@ -34,7 +31,7 @@ services:
   hasura:
     image: hasura/graphql-engine:v1.3.3
     ports:
-      - 127.0.0.1:8080:8080
+      - 127.0.0.1:22000:8080
     depends_on:
       - db
     restart: always

@@ -1,0 +1,27 @@
+version: 0.0.1
+
+mempool:
+  settings:
+    keep_operations_seconds: 172800
+    expired_after_blocks: 60
+    keep_in_chain_blocks: 10
+    mempool_request_interval_seconds: 10
+    rpc_timeout_seconds: 10
+  indexers:
+    mainnet:
+      datasources:
+          tzkt: https://staging.api.tzkt.io
+          rpc: 
+            - https://mainnet-tezos.giganode.io
+
+database:
+  kind: postgres
+  host: ${POSTGRES_HOST:-db}
+  port: 5432
+  user: ${POSTGRES_USER:-dipdup}
+  password: ${POSTGRES_PASSWORD:-changeme}
+  database: ${POSTGRES_DB:-dipdup}
+
+hasura:
+  url: http://hasura:8080
+  admin_secret: ${ADMIN_SECRET:-changeme}
