@@ -3,10 +3,10 @@ package models
 // MempoolDoubleEndorsing -
 type MempoolDoubleEndorsing struct {
 	MempoolOperation
-	Op1Kind  string `json:"-"`
-	Op1Level uint64 `json:"-"`
-	Op2Kind  string `json:"-"`
-	Op2Level uint64 `json:"-"`
+	Op1Kind  string `json:"-" gorm:"column:op_1_kind"`
+	Op1Level uint64 `json:"-" gorm:"column:op_1_level"`
+	Op2Kind  string `json:"-" gorm:"column:op_2_kind"`
+	Op2Level uint64 `json:"-" gorm:"column:op_2_level"`
 
 	Op1 struct {
 		Operations DoubleEndorsingOperations `json:"operations"`
