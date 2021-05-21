@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/dipdup-net/go-lib/node"
 	"github.com/dipdup-net/go-lib/tzkt/events"
@@ -55,16 +56,17 @@ func (indexer *Indexer) handleFailedOperation(operation node.Failed, status stri
 	return indexer.db.Transaction(func(tx *gorm.DB) error {
 		for i := range operation.Contents {
 			mempoolOperation := models.MempoolOperation{
-				Network: indexer.network,
-				Status:  status,
-				Hash:    operation.Hash,
-				Branch:  operation.Branch,
-				Errors:  models.JSON(operation.Error),
+				Network:   indexer.network,
+				Status:    status,
+				Hash:      operation.Hash,
+				Branch:    operation.Branch,
+				Signature: operation.Signature,
+				Errors:    models.JSON(operation.Error),
 			}
 			if !indexer.isKindAvailiable(operation.Contents[i].Kind) {
 				continue
 			}
-			if err := handleContent(tx, operation.Contents[i], mempoolOperation, indexer.filters.Accounts...); err != nil {
+			if err := indexer.handleContent(tx, operation.Contents[i], mempoolOperation); err != nil {
 				return err
 			}
 		}
@@ -76,15 +78,16 @@ func (indexer *Indexer) handleAppliedOperation(operation node.Applied) error {
 	return indexer.db.Transaction(func(tx *gorm.DB) error {
 		for i := range operation.Contents {
 			mempoolOperation := models.MempoolOperation{
-				Network: indexer.network,
-				Status:  models.StatusApplied,
-				Hash:    operation.Hash,
-				Branch:  operation.Branch,
+				Network:   indexer.network,
+				Status:    models.StatusApplied,
+				Hash:      operation.Hash,
+				Branch:    operation.Branch,
+				Signature: operation.Signature,
 			}
 			if !indexer.isKindAvailiable(operation.Contents[i].Kind) {
 				continue
 			}
-			if err := handleContent(tx, operation.Contents[i], mempoolOperation, indexer.filters.Accounts...); err != nil {
+			if err := indexer.handleContent(tx, operation.Contents[i], mempoolOperation); err != nil {
 				return err
 			}
 		}
@@ -92,12 +95,12 @@ func (indexer *Indexer) handleAppliedOperation(operation node.Applied) error {
 	})
 }
 
-func handleContent(db *gorm.DB, content node.Content, operation models.MempoolOperation, accounts ...string) error {
+func (indexer *Indexer) handleContent(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
 	operation.Kind = content.Kind
 
 	switch content.Kind {
 	case node.KindActivation:
-		return handleActivateAccount(db, content, operation, accounts...)
+		return handleActivateAccount(db, content, operation, indexer.filters.Accounts...)
 	case node.KindBallot:
 		return handleBallot(db, content, operation)
 	case node.KindDelegation:
@@ -108,6 +111,8 @@ func handleContent(db *gorm.DB, content node.Content, operation models.MempoolOp
 		return handleDoubleEndorsing(db, content, operation)
 	case node.KindEndorsement:
 		return handleEndorsement(db, content, operation)
+	case node.KindEndorsementWithSlot:
+		return handleEndorsementWithSlot(db, content, operation)
 	case node.KindNonceRevelation:
 		return handleNonceRevelation(db, content, operation)
 	case node.KindOrigination:
@@ -115,9 +120,9 @@ func handleContent(db *gorm.DB, content node.Content, operation models.MempoolOp
 	case node.KindProposal:
 		return handleProposal(db, content, operation)
 	case node.KindReveal:
-		return handleReveal(db, content, operation, accounts...)
+		return handleReveal(db, content, operation, indexer.filters.Accounts...)
 	case node.KindTransaction:
-		return handleTransaction(db, content, operation, accounts...)
+		return handleTransaction(db, content, operation, indexer.filters.Accounts...)
 	default:
 		return errors.Wrap(node.ErrUnknownKind, content.Kind)
 	}
@@ -129,6 +134,20 @@ func handleEndorsement(db *gorm.DB, content node.Content, operation models.Mempo
 		return err
 	}
 	endorsement.MempoolOperation = operation
+	return db.Clauses(clause.OnConflict{DoNothing: true}).Create(&endorsement).Error
+}
+
+func handleEndorsementWithSlot(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
+	var endorsementWithSlot node.EndorsementWithSlot
+	if err := json.Unmarshal(content.Body, &endorsementWithSlot); err != nil {
+		return err
+	}
+	operation.Kind = node.KindEndorsement
+	operation.Signature = endorsementWithSlot.Endorsement.Signature
+	endorsement := models.MempoolEndorsement{
+		MempoolOperation: operation,
+		Level:            endorsementWithSlot.Endorsement.Operation.Level,
+	}
 	return db.Clauses(clause.OnConflict{DoNothing: true}).Create(&endorsement).Error
 }
 
@@ -273,7 +292,7 @@ func handleProposal(db *gorm.DB, content node.Content, operation models.MempoolO
 
 func (indexer *Indexer) isKindAvailiable(kind string) bool {
 	for _, availiable := range indexer.filters.Kinds {
-		if kind == availiable {
+		if strings.HasPrefix(kind, availiable) {
 			return true
 		}
 	}

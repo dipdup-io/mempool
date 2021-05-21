@@ -9,11 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/cmd/mempool",
-            "args": [
-                "-f",
-                "../../config.yaml"
-            ]
+            "program": "${workspaceFolder}/cmd/mempool"
         }
     ]
 }

@@ -21,16 +21,19 @@ import (
 
 // Indexer -
 type Indexer struct {
-	db        *gorm.DB
-	tzkt      *tzkt.TzKT
-	mempool   *receiver.Receiver
-	manager   *Manager
-	state     state.State
-	network   string
-	indexName string
-	filters   config.Filters
-	branches  *BlockQueue
-	cache     *ccache.Cache
+	db           *gorm.DB
+	tzkt         *tzkt.TzKT
+	mempool      *receiver.Receiver
+	manager      *Manager
+	state        state.State
+	network      string
+	indexName    string
+	chainID      string
+	filters      config.Filters
+	branches     *BlockQueue
+	cache        *ccache.Cache
+	delegates    *CachedDelegates
+	threadsCount int
 
 	stop chan struct{}
 	wg   sync.WaitGroup
@@ -42,12 +45,19 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 	if err != nil {
 		return nil, err
 	}
-	constants, err := node.NewNodeRPC(indexerCfg.DataSource.RPC[0], node.WithTimeout(settings.RPCTimeout)).Constants()
+
+	rpc := node.NewNodeRPC(indexerCfg.DataSource.RPC[0], node.WithTimeout(settings.RPCTimeout))
+	constants, err := rpc.Constants()
 	if err != nil {
 		return nil, err
 	}
 	if len(constants.TimeBetweenBlocks) == 0 {
 		return nil, errors.Errorf("Empty time_between_blocks in node response: %s", network)
+	}
+
+	head, err := rpc.Head()
+	if err != nil {
+		return nil, err
 	}
 
 	memInd, err := receiver.New(indexerCfg.DataSource.RPC, network,
@@ -60,30 +70,51 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 	}
 
 	indexer := &Indexer{
-		db:        db,
-		network:   network,
-		indexName: models.MempoolIndexName(network),
-		filters:   indexerCfg.Filters,
-		tzkt:      tzkt.NewTzKT(indexerCfg.DataSource.Tzkt, indexerCfg.Filters.Accounts, indexerCfg.Filters.Kinds),
-		mempool:   memInd,
-		manager:   NewManager(db, settings, uint64(constants.TimeBetweenBlocks[0]), indexerCfg.Filters.Kinds...),
-		cache:     ccache.New(ccache.Configure().MaxSize(2 ^ 13)),
-		stop:      make(chan struct{}, 1),
+		db:           db,
+		network:      network,
+		chainID:      head.ChainID,
+		indexName:    models.MempoolIndexName(network),
+		filters:      indexerCfg.Filters,
+		tzkt:         tzkt.NewTzKT(indexerCfg.DataSource.Tzkt, indexerCfg.Filters.Accounts, indexerCfg.Filters.Kinds),
+		mempool:      memInd,
+		manager:      NewManager(db, settings, uint64(constants.TimeBetweenBlocks[0]), indexerCfg.Filters.Kinds...),
+		cache:        ccache.New(ccache.Configure().MaxSize(2 ^ 13)),
+		threadsCount: 1,
 	}
 
 	indexer.branches = newBlockQueue(settings.ExpiredAfter, indexer.onPopBlockQueue, indexer.onRollbackBlockQueue)
+
+	for _, kind := range indexer.filters.Kinds {
+		if kind == node.KindEndorsement {
+			indexer.delegates = newCachedDelegates(indexer.tzkt, constants.BlocksPerCycle)
+			indexer.threadsCount += 1
+			break
+		}
+	}
+
+	indexer.stop = make(chan struct{}, indexer.threadsCount)
 
 	return indexer, nil
 }
 
 // Start -
 func (indexer *Indexer) Start() error {
+	indexer.log().WithField("kinds", indexer.filters.Kinds).Info("Starting...")
+
 	if err := indexer.initState(); err != nil {
 		return err
 	}
 
 	indexer.wg.Add(1)
 	go indexer.listen()
+
+	if indexer.delegates != nil {
+		if err := indexer.delegates.Init(); err != nil {
+			return err
+		}
+		indexer.wg.Add(1)
+		go indexer.setEndorsementBakers()
+	}
 
 	go indexer.sync()
 
@@ -111,12 +142,16 @@ func (indexer *Indexer) initState() error {
 	} else {
 		indexer.state = current
 	}
+
 	return nil
 }
 
 // Close -
 func (indexer *Indexer) Close() error {
-	indexer.stop <- struct{}{}
+	indexer.log().Info("Stopping...")
+	for i := 0; i < 2; i++ {
+		indexer.stop <- struct{}{}
+	}
 	indexer.wg.Wait()
 
 	if err := indexer.manager.Close(); err != nil {

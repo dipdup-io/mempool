@@ -508,3 +508,21 @@ func (tzkt *TzKT) GetBlocks(limit, state uint64) ([]BlockMessage, error) {
 	}
 	return messages, nil
 }
+
+// Delegates -
+func (tzkt *TzKT) Delegates() ([]api.Delegate, error) {
+	return tzkt.api.GetDelegates(map[string]string{
+		"active": "true",
+		"select": "publicKey,address",
+		"limit":  "1000",
+	})
+}
+
+// Rights -
+func (tzkt *TzKT) Rights(level uint64) ([]api.Right, error) {
+	return tzkt.api.GetRights(map[string]string{
+		"type":   "endorsing",
+		"level":  fmt.Sprintf("%d", level),
+		"select": "baker,status",
+	})
+}

@@ -24,8 +24,9 @@ type MempoolOperation struct {
 	Network   string `gorm:"primaryKey" json:"network"`
 	Hash      string `gorm:"primaryKey" json:"hash"`
 	Branch    string `json:"branch"`
-	Status    string `json:"status" gorm:"index:idx_status"`
+	Status    string `json:"status"`
 	Kind      string `json:"kind"`
+	Signature string `json:"signature"`
 	Level     uint64 `json:"level"`
 	Errors    JSON   `json:"errors,omitempty"`
 }
