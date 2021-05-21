@@ -9,6 +9,19 @@ mempool:
     rpc_timeout_seconds: 10
   indexers:
     mainnet:
+      filters:
+        kinds:
+          - endorsement
+          - transaction
+          - activate_account
+          - ballot
+          - delegation
+          - double_baking_evidence
+          - double_endorsement_evidence
+          - origination
+          - proposal
+          - reveal
+          - seed_nonce_revelation
       datasources:
           tzkt: https://staging.api.tzkt.io
           rpc: 
