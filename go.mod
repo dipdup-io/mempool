@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/dipdup-net/go-lib v0.1.1
+	github.com/dipdup-net/go-lib v0.1.2
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/karlseguin/ccache v2.0.3+incompatible
 	github.com/karlseguin/expect v1.0.8 // indirect
