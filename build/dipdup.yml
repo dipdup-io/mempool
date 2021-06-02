@@ -19,7 +19,7 @@ mempool:
           - double_baking_evidence
           - double_endorsement_evidence
           - origination
-          - proposal
+          - proposals
           - reveal
           - seed_nonce_revelation
       datasources:
