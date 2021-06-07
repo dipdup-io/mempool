@@ -22,6 +22,20 @@ var toNodeKinds = map[string]string{
 	api.KindTransaction:     node.KindTransaction,
 }
 
+var toTzKTKinds = map[string]string{
+	node.KindActivation:      api.KindActivation,
+	node.KindBallot:          api.KindBallot,
+	node.KindDelegation:      api.KindDelegation,
+	node.KindDoubleBaking:    api.KindDoubleBaking,
+	node.KindDoubleEndorsing: api.KindDoubleEndorsing,
+	node.KindEndorsement:     api.KindEndorsement,
+	node.KindNonceRevelation: api.KindNonceRevelation,
+	node.KindOrigination:     api.KindOrigination,
+	node.KindProposal:        api.KindProposal,
+	node.KindReveal:          api.KindReveal,
+	node.KindTransaction:     api.KindTransaction,
+}
+
 // OperationMessage -
 type OperationMessage struct {
 	Level uint64

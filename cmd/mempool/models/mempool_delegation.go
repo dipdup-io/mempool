@@ -7,6 +7,7 @@ type MempoolDelegation struct {
 	Counter      string `json:"counter"`
 	GasLimit     string `json:"gas_limit"`
 	StorageLimit string `json:"storage_limit"`
+	Delegate     string `json:",omitempty"`
 }
 
 // TableName -

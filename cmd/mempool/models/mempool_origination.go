@@ -10,6 +10,7 @@ type MempoolOrigination struct {
 	GasLimit     string `json:"gas_limit"`
 	StorageLimit string `json:"storage_limit"`
 	Balance      string `json:"balance"`
+	Delegate     string `json:",omitempty"`
 	Script       struct {
 		Storage json.RawMessage `json:"storage"`
 	} `json:"script" gorm:"-"`

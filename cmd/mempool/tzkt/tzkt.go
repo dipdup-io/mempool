@@ -32,9 +32,15 @@ type TzKT struct {
 
 // NewTzKT - TzKT constructor
 func NewTzKT(url string, accounts []string, kinds []string) *TzKT {
+	tzktKinds := make([]string, 0)
+	for i := range kinds {
+		if kind, ok := toTzKTKinds[kinds[i]]; ok {
+			tzktKinds = append(tzktKinds, kind)
+		}
+	}
 	return &TzKT{
 		client:     events.NewTzKT(fmt.Sprintf("%s/%s", strings.TrimSuffix(url, "/"), "v1/events")),
-		kinds:      kinds,
+		kinds:      tzktKinds,
 		accounts:   accounts,
 		api:        api.New(url),
 		operations: make(chan OperationMessage, 1024),
