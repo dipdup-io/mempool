@@ -112,11 +112,6 @@ func (tzkt *TzKT) Blocks() <-chan BlockMessage {
 
 func (tzkt *TzKT) handleBlockMessage(msg events.Message) error {
 	switch msg.Type {
-	case events.MessageTypeState, events.MessageTypeReorg:
-		tzkt.blocks <- BlockMessage{
-			Level: msg.State,
-			Type:  msg.Type,
-		}
 	case events.MessageTypeData:
 		data, ok := msg.Body.([]interface{})
 		if !ok {
@@ -142,6 +137,11 @@ func (tzkt *TzKT) handleBlockMessage(msg events.Message) error {
 			Level: level,
 			Type:  msg.Type,
 		}
+	case events.MessageTypeState, events.MessageTypeReorg:
+		tzkt.blocks <- BlockMessage{
+			Level: msg.State,
+			Type:  msg.Type,
+		}
 	default:
 		return errors.Wrapf(ErrUnknownMessageType, "%d", msg.Type)
 	}
@@ -151,10 +151,9 @@ func (tzkt *TzKT) handleBlockMessage(msg events.Message) error {
 
 func (tzkt *TzKT) handleOperationMessage(msg events.Message) error {
 	switch msg.Type {
-	case events.MessageTypeState:
 	case events.MessageTypeData:
 		return tzkt.handleUpdateMessage(msg)
-	case events.MessageTypeReorg:
+	case events.MessageTypeState, events.MessageTypeReorg:
 	default:
 		return errors.Wrapf(ErrUnknownMessageType, "%d", msg.Type)
 	}
@@ -315,7 +314,7 @@ func (state syncState) nextToRequest() *tableState {
 }
 
 // Sync -
-func (tzkt *TzKT) Sync(indexerLevel uint64) {
+func (tzkt *TzKT) Sync(indexerLevel uint64, stop chan struct{}) {
 	tzkt.state = indexerLevel
 
 	head, err := tzkt.api.GetHead()
@@ -324,36 +323,35 @@ func (tzkt *TzKT) Sync(indexerLevel uint64) {
 		return
 	}
 
-	log.Infof("Current TzKT level is %d. Current mempool indexer level is %d", head.Level, tzkt.state)
-	for head.Level > tzkt.state && tzkt.state > 0 {
-		state := newSyncState(tzkt.kinds...)
-
-		if len(state) == 0 {
-			log.Error(ErrEmptyKindList)
+	log.Infof("current TzKT level is %d. Current mempool indexer level is %d", head.Level, tzkt.state)
+	for {
+		select {
+		case <-stop:
 			return
+		default:
+			if head.Level <= tzkt.state || tzkt.state == 0 {
+				log.Info("synced")
+				return
+			}
+			state := newSyncState(tzkt.kinds...)
+
+			if len(state) == 0 {
+				log.Error(ErrEmptyKindList)
+				return
+			}
+
+			if err := tzkt.init(state, tzkt.state, head.Level); err != nil {
+				log.Error(err)
+				return
+			}
+
+			tzkt.state = head.Level
+			head, err = tzkt.api.GetHead()
+			if err != nil {
+				log.Error(err)
+				return
+			}
 		}
-
-		if err := tzkt.init(state, tzkt.state, head.Level); err != nil {
-			log.Error(err)
-			return
-		}
-
-		tzkt.state = head.Level
-		head, err = tzkt.api.GetHead()
-		if err != nil {
-			log.Error(err)
-			return
-		}
-	}
-
-	if err := tzkt.Connect(); err != nil {
-		log.Error(err)
-		return
-	}
-
-	if err := tzkt.subscribe(); err != nil {
-		log.Error(err)
-		return
 	}
 }
 
@@ -368,6 +366,8 @@ func (tzkt *TzKT) init(state syncState, indexerState, headLevel uint64) error {
 			}
 		}
 
+		sort.Sort(state)
+
 		if err := tzkt.processSync(state, &msg); err != nil {
 			return err
 		}
@@ -376,7 +376,8 @@ func (tzkt *TzKT) init(state syncState, indexerState, headLevel uint64) error {
 	return nil
 }
 
-func (tzkt *TzKT) subscribe() error {
+// Subscribe -
+func (tzkt *TzKT) Subscribe() error {
 	if err := tzkt.SubscribeToBlocks(); err != nil {
 		return err
 	}
@@ -395,8 +396,6 @@ func (tzkt *TzKT) subscribe() error {
 
 func (tzkt *TzKT) processSync(state syncState, msg *OperationMessage) error {
 	for len(state[0].Items) > 0 {
-		sort.Sort(state)
-
 		table := state[0]
 
 		operation := table.Items[0]
@@ -422,6 +421,7 @@ func (tzkt *TzKT) processSync(state syncState, msg *OperationMessage) error {
 		}
 
 		table.Items = table.Items[1:]
+		sort.Sort(state)
 	}
 
 	if msg.Level > 0 {

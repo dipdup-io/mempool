@@ -14,13 +14,11 @@ import (
 )
 
 func (indexer *Indexer) handleBlock(block tzkt.BlockMessage) error {
-	indexer.state.Level = block.Level
-	indexer.log().Info("Indexer state was updated")
-	if err := indexer.state.Update(indexer.db); err != nil {
-		return err
-	}
-
-	if block.Type == events.MessageTypeState {
+	switch block.Type {
+	case events.MessageTypeState:
+		if indexer.state.Level < block.Level {
+			indexer.sync()
+		}
 		if space := indexer.branches.Space(); space > 0 {
 			blocks, err := indexer.tzkt.GetBlocks(space, indexer.state.Level)
 			if err != nil {
@@ -34,8 +32,15 @@ func (indexer *Indexer) handleBlock(block tzkt.BlockMessage) error {
 			}
 		}
 		return nil
+	case events.MessageTypeData:
+		if block.Level > indexer.state.Level {
+			indexer.state.Level = block.Level
+			indexer.log().Info("indexer state was updated")
+			if err := indexer.state.Update(indexer.db); err != nil {
+				return err
+			}
+		}
 	}
-
 	return indexer.branches.Add(block)
 }
 

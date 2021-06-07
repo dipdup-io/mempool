@@ -116,7 +116,13 @@ func (indexer *Indexer) Start() error {
 		go indexer.setEndorsementBakers()
 	}
 
-	go indexer.sync()
+	if err := indexer.tzkt.Connect(); err != nil {
+		return err
+	}
+
+	if err := indexer.tzkt.Subscribe(); err != nil {
+		return err
+	}
 
 	go indexer.mempool.Start()
 	indexer.manager.Start()
@@ -125,8 +131,13 @@ func (indexer *Indexer) Start() error {
 }
 
 func (indexer *Indexer) sync() {
-	indexer.log().Info("Start syncing...")
-	indexer.tzkt.Sync(indexer.state.Level)
+	indexer.wg.Add(1)
+	indexer.log().Info("start syncing...")
+	go func() {
+		defer indexer.wg.Done()
+		indexer.tzkt.Sync(indexer.state.Level, indexer.stop)
+	}()
+
 }
 
 func (indexer *Indexer) initState() error {
