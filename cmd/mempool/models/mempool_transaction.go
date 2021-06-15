@@ -5,7 +5,7 @@ type MempoolTransaction struct {
 	MempoolOperation
 	Source       string `json:"source"`
 	Fee          string `json:"fee"`
-	Counter      string `json:"counter"`
+	Counter      string `gorm:"primaryKey" json:"counter"`
 	GasLimit     string `json:"gas_limit"`
 	StorageLimit string `json:"storage_limit"`
 	Amount       string `json:"amount"`
