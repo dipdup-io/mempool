@@ -20,15 +20,16 @@ const (
 
 // MempoolOperation -
 type MempoolOperation struct {
-	UpdatedAt int
-	Network   string `gorm:"primaryKey" json:"network"`
-	Hash      string `gorm:"primaryKey" json:"hash"`
-	Branch    string `json:"branch"`
-	Status    string `json:"status"`
-	Kind      string `json:"kind"`
-	Signature string `json:"signature"`
-	Level     uint64 `json:"level"`
-	Errors    JSON   `json:"errors,omitempty"`
+	UpdatedAt       int
+	Network         string  `gorm:"primaryKey" json:"network"`
+	Hash            string  `gorm:"primaryKey" json:"hash"`
+	Branch          string  `json:"branch"`
+	Status          string  `json:"status"`
+	Kind            string  `json:"kind"`
+	Signature       string  `json:"signature"`
+	Level           uint64  `json:"level"`
+	Errors          JSON    `json:"errors,omitempty"`
+	ExpirationLevel *uint64 `json:"expiration_level"`
 }
 
 func networkAndBranch(network, branch string) func(db *gorm.DB) *gorm.DB {

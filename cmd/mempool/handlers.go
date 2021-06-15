@@ -89,6 +89,10 @@ func (indexer *Indexer) handleAppliedOperation(operation node.Applied) error {
 				Branch:    operation.Branch,
 				Signature: operation.Signature,
 			}
+			expirationLevel := indexer.branches.ExpirationLevel(operation.Branch)
+			if expirationLevel > 0 {
+				mempoolOperation.ExpirationLevel = &expirationLevel
+			}
 			if !indexer.isKindAvailiable(operation.Contents[i].Kind) {
 				continue
 			}
