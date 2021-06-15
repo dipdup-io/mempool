@@ -55,7 +55,7 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 		return nil, errors.Errorf("Empty time_between_blocks in node response: %s", network)
 	}
 
-	head, err := rpc.Head()
+	head, err := rpc.Header()
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +67,15 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	expiredAfter := settings.ExpiredAfter
+	if expiredAfter == 0 {
+		metadata, err := rpc.HeadMetadata()
+		if err != nil {
+			return nil, err
+		}
+		expiredAfter = metadata.MaxOperationsTTL
 	}
 
 	indexer := &Indexer{
@@ -82,7 +91,8 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 		threadsCount: 1,
 	}
 
-	indexer.branches = newBlockQueue(settings.ExpiredAfter, indexer.onPopBlockQueue, indexer.onRollbackBlockQueue)
+	indexer.log().Infof("operations TTL = %d", expiredAfter)
+	indexer.branches = newBlockQueue(expiredAfter, indexer.onPopBlockQueue, indexer.onRollbackBlockQueue)
 
 	for _, kind := range indexer.filters.Kinds {
 		if kind == node.KindEndorsement {

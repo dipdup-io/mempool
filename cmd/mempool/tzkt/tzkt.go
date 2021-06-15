@@ -424,7 +424,7 @@ func (tzkt *TzKT) processSync(state syncState, msg *OperationMessage) error {
 		sort.Sort(state)
 	}
 
-	if msg.Level > 0 {
+	if msg.Level > 0 && state.finished() {
 		tzkt.blocks <- BlockMessage{
 			Type:  events.MessageTypeData,
 			Level: msg.Level,

@@ -3,7 +3,6 @@ version: 0.0.1
 mempool:
   settings:
     keep_operations_seconds: 172800
-    expired_after_blocks: 60
     keep_in_chain_blocks: 10
     mempool_request_interval_seconds: 10
     rpc_timeout_seconds: 10
