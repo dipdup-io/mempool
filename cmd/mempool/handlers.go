@@ -9,6 +9,7 @@ import (
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
 	"github.com/pkg/errors"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -66,7 +67,7 @@ func (indexer *Indexer) handleFailedOperation(operation node.Failed, status stri
 				Hash:      operation.Hash,
 				Branch:    operation.Branch,
 				Signature: operation.Signature,
-				Errors:    models.JSON(operation.Error),
+				Errors:    datatypes.JSON(operation.Error),
 			}
 			if !indexer.isKindAvailiable(operation.Contents[i].Kind) {
 				continue

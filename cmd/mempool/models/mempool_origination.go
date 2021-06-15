@@ -1,6 +1,10 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"gorm.io/datatypes"
+)
 
 // MempoolOrigination -
 type MempoolOrigination struct {
@@ -15,7 +19,7 @@ type MempoolOrigination struct {
 		Storage json.RawMessage `json:"storage"`
 	} `json:"script" gorm:"-"`
 
-	Storage JSON `json:"-"`
+	Storage datatypes.JSON `json:"-"`
 }
 
 // TableName -
@@ -25,5 +29,5 @@ func (MempoolOrigination) TableName() string {
 
 // Fill -
 func (mo *MempoolOrigination) Fill() {
-	mo.Storage = JSON(mo.Script.Storage)
+	mo.Storage = datatypes.JSON(mo.Script.Storage)
 }
