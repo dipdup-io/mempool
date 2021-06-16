@@ -21,7 +21,8 @@ const (
 
 // MempoolOperation -
 type MempoolOperation struct {
-	UpdatedAt       int
+	CreatedAt       int            `gorm:"autoCreateTime"`
+	UpdatedAt       int            `gorm:"autoUpdateTime"`
 	Network         string         `gorm:"primaryKey" json:"network"`
 	Hash            string         `gorm:"primaryKey" json:"hash"`
 	Branch          string         `json:"branch"`
