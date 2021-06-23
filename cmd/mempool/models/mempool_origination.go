@@ -9,12 +9,13 @@ import (
 // MempoolOrigination -
 type MempoolOrigination struct {
 	MempoolOperation
-	Fee          string `json:"fee"`
-	Counter      string `gorm:"primaryKey" json:"counter"`
-	GasLimit     string `json:"gas_limit"`
-	StorageLimit string `json:"storage_limit"`
+	Fee          int64  `json:"fee,string"`
+	Counter      int64  `gorm:"primaryKey" json:"counter,string"`
+	GasLimit     int64  `json:"gas_limit,string"`
+	StorageLimit int64  `json:"storage_limit,string"`
 	Balance      string `json:"balance"`
 	Delegate     string `json:",omitempty"`
+	Source       string `json:"source,omitempty"`
 	Script       struct {
 		Storage json.RawMessage `json:"storage"`
 	} `json:"script" gorm:"-"`

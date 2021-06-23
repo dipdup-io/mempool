@@ -4,10 +4,10 @@ package models
 type MempoolReveal struct {
 	MempoolOperation
 	Source       string `json:"source"`
-	Fee          string `json:"fee"`
-	Counter      string `gorm:"primaryKey" json:"counter"`
-	GasLimit     string `json:"gas_limit"`
-	StorageLimit string `json:"storage_limit"`
+	Fee          int64  `json:"fee,string"`
+	Counter      int64  `gorm:"primaryKey" json:"counter,string"`
+	GasLimit     int64  `json:"gas_limit,string"`
+	StorageLimit int64  `json:"storage_limit,string"`
 	PublicKey    string `json:"public_key"`
 }
 
