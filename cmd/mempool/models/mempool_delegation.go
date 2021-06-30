@@ -8,7 +8,7 @@ type MempoolDelegation struct {
 	GasLimit     int64  `json:"gas_limit,string"`
 	StorageLimit int64  `json:"storage_limit,string"`
 	Delegate     string `json:",omitempty"`
-	Source       string `json:"source,omitempty"`
+	Source       string `json:"source,omitempty" gorm:"delegation_source_idx"`
 }
 
 // TableName -

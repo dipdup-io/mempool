@@ -10,7 +10,7 @@ import (
 type MempoolEndorsement struct {
 	MempoolOperation
 	Level uint64 `json:"level"`
-	Baker string `json:"-"`
+	Baker string `json:"-" gorm:"transaction_baker_idx"`
 }
 
 // TableName -

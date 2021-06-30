@@ -3,7 +3,7 @@ package models
 // MempoolReveal -
 type MempoolReveal struct {
 	MempoolOperation
-	Source       string `json:"source"`
+	Source       string `json:"source" gorm:"reveal_source_idx"`
 	Fee          int64  `json:"fee,string"`
 	Counter      int64  `gorm:"primaryKey" json:"counter,string"`
 	GasLimit     int64  `json:"gas_limit,string"`

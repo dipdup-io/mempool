@@ -15,7 +15,7 @@ type MempoolOrigination struct {
 	StorageLimit int64  `json:"storage_limit,string"`
 	Balance      string `json:"balance"`
 	Delegate     string `json:",omitempty"`
-	Source       string `json:"source,omitempty"`
+	Source       string `json:"source,omitempty" gorm:"origination_source_idx"`
 	Script       struct {
 		Storage json.RawMessage `json:"storage"`
 	} `json:"script" gorm:"-"`
