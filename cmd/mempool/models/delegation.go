@@ -1,7 +1,7 @@
 package models
 
-// MempoolDelegation -
-type MempoolDelegation struct {
+// Delegation -
+type Delegation struct {
 	MempoolOperation
 	Fee          int64  `json:"fee,string"`
 	Counter      int64  `gorm:"primaryKey" json:"counter,string"`
@@ -12,6 +12,6 @@ type MempoolDelegation struct {
 }
 
 // TableName -
-func (MempoolDelegation) TableName() string {
-	return "mempool_delegation"
+func (Delegation) TableName() string {
+	return "delegations"
 }

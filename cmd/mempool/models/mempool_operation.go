@@ -163,27 +163,27 @@ func GetModelsBy(kinds ...string) []interface{} {
 func getModelByKind(kind string) (interface{}, error) {
 	switch kind {
 	case node.KindActivation:
-		return &MempoolActivateAccount{}, nil
+		return &ActivateAccount{}, nil
 	case node.KindBallot:
-		return &MempoolBallot{}, nil
+		return &Ballot{}, nil
 	case node.KindDelegation:
-		return &MempoolDelegation{}, nil
+		return &Delegation{}, nil
 	case node.KindDoubleBaking:
-		return &MempoolDoubleBaking{}, nil
+		return &DoubleBaking{}, nil
 	case node.KindDoubleEndorsing:
-		return &MempoolDoubleEndorsing{}, nil
+		return &DoubleEndorsing{}, nil
 	case node.KindEndorsement:
-		return &MempoolEndorsement{}, nil
+		return &Endorsement{}, nil
 	case node.KindNonceRevelation:
-		return &MempoolNonceRevelation{}, nil
+		return &NonceRevelation{}, nil
 	case node.KindOrigination:
-		return &MempoolOrigination{}, nil
+		return &Origination{}, nil
 	case node.KindProposal:
-		return &MempoolProposal{}, nil
+		return &Proposal{}, nil
 	case node.KindReveal:
-		return &MempoolReveal{}, nil
+		return &Reveal{}, nil
 	case node.KindTransaction:
-		return &MempoolTransaction{}, nil
+		return &Transaction{}, nil
 	default:
 		return nil, errors.Wrap(node.ErrUnknownKind, kind)
 	}

@@ -1,7 +1,7 @@
 package models
 
-// MempoolDoubleBaking -
-type MempoolDoubleBaking struct {
+// DoubleBaking -
+type DoubleBaking struct {
 	MempoolOperation
 	Bh1 DoubleBakingInfo `json:"bh1" gorm:"-"`
 	Bh2 DoubleBakingInfo `json:"bh2" gorm:"-"`
@@ -20,8 +20,8 @@ type MempoolDoubleBaking struct {
 }
 
 // TableName -
-func (MempoolDoubleBaking) TableName() string {
-	return "mempool_double_baking"
+func (DoubleBaking) TableName() string {
+	return "double_bakings"
 }
 
 // DoubleBakingInfo -
@@ -35,7 +35,7 @@ type DoubleBakingInfo struct {
 }
 
 // Fill -
-func (mdb *MempoolDoubleBaking) Fill() {
+func (mdb *DoubleBaking) Fill() {
 	mdb.Bh1Proto = mdb.Bh1.Proto
 	mdb.Bh1ValidationPass = mdb.Bh1.ValidationPass
 	mdb.Bh1Level = mdb.Bh1.Level

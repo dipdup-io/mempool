@@ -6,20 +6,20 @@ import (
 	"gorm.io/gorm"
 )
 
-// MempoolEndorsement -
-type MempoolEndorsement struct {
+// Endorsement -
+type Endorsement struct {
 	MempoolOperation
 	Level uint64 `json:"level"`
 	Baker string `json:"-" gorm:"transaction_baker_idx"`
 }
 
 // TableName -
-func (MempoolEndorsement) TableName() string {
-	return "mempool_endorsement"
+func (Endorsement) TableName() string {
+	return "endorsements"
 }
 
 // Forge -
-func (endorsement MempoolEndorsement) Forge() ([]byte, error) {
+func (endorsement Endorsement) Forge() ([]byte, error) {
 	var buf bytes.Buffer
 
 	if _, err := buf.Write(forgeString(endorsement.Branch)); err != nil {
@@ -36,7 +36,7 @@ func (endorsement MempoolEndorsement) Forge() ([]byte, error) {
 }
 
 // EndorsementsWithoutBaker -
-func EndorsementsWithoutBaker(tx *gorm.DB) (endorsements []MempoolEndorsement, err error) {
-	err = tx.Model(&MempoolEndorsement{}).Where("baker = ''").Order("level asc").Find(&endorsements).Error
+func EndorsementsWithoutBaker(tx *gorm.DB) (endorsements []Endorsement, err error) {
+	err = tx.Model(&Endorsement{}).Where("baker = ''").Order("level asc").Find(&endorsements).Error
 	return
 }

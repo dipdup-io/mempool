@@ -2,8 +2,8 @@ package models
 
 import "gorm.io/datatypes"
 
-// MempoolTransaction -
-type MempoolTransaction struct {
+// Transaction -
+type Transaction struct {
 	MempoolOperation
 	Source       string         `json:"source" gorm:"transaction_source_idx"`
 	Fee          int64          `json:"fee,string"`
@@ -16,6 +16,6 @@ type MempoolTransaction struct {
 }
 
 // TableName -
-func (MempoolTransaction) TableName() string {
-	return "mempool_transaction"
+func (Transaction) TableName() string {
+	return "transactions"
 }

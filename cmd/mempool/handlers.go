@@ -139,7 +139,7 @@ func (indexer *Indexer) handleContent(db *gorm.DB, content node.Content, operati
 }
 
 func handleEndorsement(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
-	var endorsement models.MempoolEndorsement
+	var endorsement models.Endorsement
 	if err := json.Unmarshal(content.Body, &endorsement); err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func handleEndorsementWithSlot(db *gorm.DB, content node.Content, operation mode
 	}
 	operation.Kind = node.KindEndorsement
 	operation.Signature = endorsementWithSlot.Endorsement.Signature
-	endorsement := models.MempoolEndorsement{
+	endorsement := models.Endorsement{
 		MempoolOperation: operation,
 		Level:            endorsementWithSlot.Endorsement.Operation.Level,
 	}
@@ -162,7 +162,7 @@ func handleEndorsementWithSlot(db *gorm.DB, content node.Content, operation mode
 }
 
 func handleActivateAccount(db *gorm.DB, content node.Content, operation models.MempoolOperation, accounts ...string) error {
-	var activateAccount models.MempoolActivateAccount
+	var activateAccount models.ActivateAccount
 	if err := json.Unmarshal(content.Body, &activateAccount); err != nil {
 		return err
 	}
@@ -182,7 +182,7 @@ func handleActivateAccount(db *gorm.DB, content node.Content, operation models.M
 }
 
 func handleTransaction(db *gorm.DB, content node.Content, operation models.MempoolOperation, accounts ...string) error {
-	var transaction models.MempoolTransaction
+	var transaction models.Transaction
 	if err := json.Unmarshal(content.Body, &transaction); err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func handleTransaction(db *gorm.DB, content node.Content, operation models.Mempo
 }
 
 func handleReveal(db *gorm.DB, content node.Content, operation models.MempoolOperation, accounts ...string) error {
-	var reveal models.MempoolReveal
+	var reveal models.Reveal
 	if err := json.Unmarshal(content.Body, &reveal); err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func handleReveal(db *gorm.DB, content node.Content, operation models.MempoolOpe
 }
 
 func handleBallot(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
-	var ballot models.MempoolBallot
+	var ballot models.Ballot
 	if err := json.Unmarshal(content.Body, &ballot); err != nil {
 		return err
 	}
@@ -231,7 +231,7 @@ func handleBallot(db *gorm.DB, content node.Content, operation models.MempoolOpe
 }
 
 func handleDelegation(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
-	var delegation models.MempoolDelegation
+	var delegation models.Delegation
 	if err := json.Unmarshal(content.Body, &delegation); err != nil {
 		return err
 	}
@@ -240,7 +240,7 @@ func handleDelegation(db *gorm.DB, content node.Content, operation models.Mempoo
 }
 
 func handleDoubleBaking(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
-	var doubleBaking models.MempoolDoubleBaking
+	var doubleBaking models.DoubleBaking
 	if err := json.Unmarshal(content.Body, &doubleBaking); err != nil {
 		return err
 	}
@@ -250,7 +250,7 @@ func handleDoubleBaking(db *gorm.DB, content node.Content, operation models.Memp
 }
 
 func handleDoubleEndorsing(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
-	var doubleEndorsing models.MempoolDoubleEndorsing
+	var doubleEndorsing models.DoubleEndorsing
 	if err := json.Unmarshal(content.Body, &doubleEndorsing); err != nil {
 		return err
 	}
@@ -260,7 +260,7 @@ func handleDoubleEndorsing(db *gorm.DB, content node.Content, operation models.M
 }
 
 func handleNonceRevelation(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
-	var nonceRevelation models.MempoolNonceRevelation
+	var nonceRevelation models.NonceRevelation
 	if err := json.Unmarshal(content.Body, &nonceRevelation); err != nil {
 		return err
 	}
@@ -269,7 +269,7 @@ func handleNonceRevelation(db *gorm.DB, content node.Content, operation models.M
 }
 
 func handleOrigination(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
-	var origination models.MempoolOrigination
+	var origination models.Origination
 	if err := json.Unmarshal(content.Body, &origination); err != nil {
 		return err
 	}
@@ -289,7 +289,7 @@ func handleProposal(db *gorm.DB, content node.Content, operation models.MempoolO
 		return err
 	}
 	for i := range proposal.Proposals {
-		var p models.MempoolProposal
+		var p models.Proposal
 		p.MempoolOperation = operation
 		p.Proposals = proposal.Proposals[i]
 		p.Period = proposal.Period

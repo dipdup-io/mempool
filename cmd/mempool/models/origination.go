@@ -6,8 +6,8 @@ import (
 	"gorm.io/datatypes"
 )
 
-// MempoolOrigination -
-type MempoolOrigination struct {
+// Origination -
+type Origination struct {
 	MempoolOperation
 	Fee          int64  `json:"fee,string"`
 	Counter      int64  `gorm:"primaryKey" json:"counter,string"`
@@ -24,11 +24,11 @@ type MempoolOrigination struct {
 }
 
 // TableName -
-func (MempoolOrigination) TableName() string {
-	return "mempool_origination"
+func (Origination) TableName() string {
+	return "originations"
 }
 
 // Fill -
-func (mo *MempoolOrigination) Fill() {
+func (mo *Origination) Fill() {
 	mo.Storage = datatypes.JSON(mo.Script.Storage)
 }

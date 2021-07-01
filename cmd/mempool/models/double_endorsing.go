@@ -1,7 +1,7 @@
 package models
 
-// MempoolDoubleEndorsing -
-type MempoolDoubleEndorsing struct {
+// DoubleEndorsing -
+type DoubleEndorsing struct {
 	MempoolOperation
 	Op1Kind  string `json:"-" gorm:"column:op_1_kind"`
 	Op1Level uint64 `json:"-" gorm:"column:op_1_level"`
@@ -17,8 +17,8 @@ type MempoolDoubleEndorsing struct {
 }
 
 // TableName -
-func (MempoolDoubleEndorsing) TableName() string {
-	return "mempool_double_endorsing"
+func (DoubleEndorsing) TableName() string {
+	return "double_endorsings"
 }
 
 // DoubleEndorsingOperations -
@@ -28,7 +28,7 @@ type DoubleEndorsingOperations struct {
 }
 
 // Fill -
-func (mde *MempoolDoubleEndorsing) Fill() {
+func (mde *DoubleEndorsing) Fill() {
 	mde.Op1Kind = mde.Op1.Operations.Kind
 	mde.Op1Level = mde.Op1.Operations.Level
 	mde.Op2Kind = mde.Op2.Operations.Kind

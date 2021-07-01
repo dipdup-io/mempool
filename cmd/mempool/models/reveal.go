@@ -1,7 +1,7 @@
 package models
 
-// MempoolReveal -
-type MempoolReveal struct {
+// Reveal -
+type Reveal struct {
 	MempoolOperation
 	Source       string `json:"source" gorm:"reveal_source_idx"`
 	Fee          int64  `json:"fee,string"`
@@ -12,6 +12,6 @@ type MempoolReveal struct {
 }
 
 // TableName -
-func (MempoolReveal) TableName() string {
-	return "mempool_reveal"
+func (Reveal) TableName() string {
+	return "reveals"
 }

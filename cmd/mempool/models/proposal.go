@@ -1,13 +1,13 @@
 package models
 
-// MempoolProposal -
-type MempoolProposal struct {
+// Proposal -
+type Proposal struct {
 	MempoolOperation
 	Period    int64  `json:"period"`
 	Proposals string `json:"proposal"`
 }
 
 // TableName -
-func (MempoolProposal) TableName() string {
-	return "mempool_proposal"
+func (Proposal) TableName() string {
+	return "proposals"
 }
