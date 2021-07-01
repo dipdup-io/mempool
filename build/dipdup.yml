@@ -22,7 +22,7 @@ mempool:
           - reveal
           - seed_nonce_revelation
       datasources:
-          tzkt: https://staging.api.tzkt.io
+          tzkt: https://api.tzkt.io
           rpc: 
             - https://mainnet-tezos.giganode.io
 
