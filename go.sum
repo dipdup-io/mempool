@@ -61,8 +61,8 @@ github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/denisenkom/go-mssqldb v0.9.0 h1:RSohk2RsiZqLZ0zCjtfn3S4Gp4exhpBWHyQ7D0yGjAk=
 github.com/denisenkom/go-mssqldb v0.9.0/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
-github.com/dipdup-net/go-lib v0.1.8 h1:OdPR5EXzj2xEYeukZEcX12XaBbK8ot/YW70m0d3NMM8=
-github.com/dipdup-net/go-lib v0.1.8/go.mod h1:0cNnDttYnfIudJ4qNIzcIrfGmoIPV4yECAI3EGos9x0=
+github.com/dipdup-net/go-lib v0.1.9 h1:GF8ELBLWO3Pngvq0R9V9oxJ1Uf0nvNCQ9C/3/EpuTzQ=
+github.com/dipdup-net/go-lib v0.1.9/go.mod h1:0cNnDttYnfIudJ4qNIzcIrfGmoIPV4yECAI3EGos9x0=
 github.com/dustin/go-humanize v0.0.0-20171111073723-bb3d318650d4/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/eapache/go-resiliency v1.1.0/go.mod h1:kFI+JgMyC7bLPUVY133qvEBtVayf5mFgVsvEsIPBvNs=
 github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21/go.mod h1:+020luEh2TKB4/GOp8oxxtq0Daoen/Cii55CzbTV6DU=
