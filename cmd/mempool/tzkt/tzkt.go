@@ -8,6 +8,7 @@ import (
 
 	"github.com/dipdup-net/go-lib/tzkt/api"
 	"github.com/dipdup-net/go-lib/tzkt/events"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -208,32 +209,34 @@ func getUint64(data map[string]interface{}, key string) (uint64, error) {
 }
 
 func (tzkt *TzKT) processOperation(data map[string]interface{}, message *OperationMessage) error {
-	hash, err := getString(data, "hash")
-	if err != nil {
+	var operation api.Operation
+	if err := mapstructure.Decode(data, &operation); err != nil {
 		return err
 	}
-	kind, err := getString(data, "type")
-	if err != nil {
-		return err
+	operation.Kind = toNodeKinds[operation.Kind]
+	if value, ok := message.Hash.LoadOrStore(operation.Hash, operation); ok {
+		if stored, ok := value.(api.Operation); ok {
+			if operation.BakerFee != nil {
+				if stored.BakerFee != nil {
+					*stored.BakerFee += *operation.BakerFee
+				} else {
+					stored.BakerFee = operation.BakerFee
+				}
+			}
+			if operation.GasUsed != nil {
+				if stored.GasUsed != nil {
+					*stored.GasUsed += *operation.GasUsed
+				} else {
+					stored.GasUsed = operation.GasUsed
+				}
+			}
+			message.Hash.Store(operation.Hash, stored)
+		}
 	}
-	msgKind, ok := toNodeKinds[kind]
-	if !ok {
-		return errors.Wrap(ErrUnknownOperationKind, kind)
-	}
-	message.Hash.Store(hash, msgKind)
 
 	if message.Level == 0 {
-		level, err := getUint64(data, "level")
-		if err != nil {
-			return err
-		}
-		message.Level = level
-
-		block, err := getString(data, "block")
-		if err != nil {
-			return err
-		}
-		message.Block = block
+		message.Level = operation.Level
+		message.Block = operation.Block
 	}
 	return nil
 }
@@ -399,11 +402,7 @@ func (tzkt *TzKT) processSync(state syncState, msg *OperationMessage) error {
 		table := state[0]
 
 		operation := table.Items[0]
-		kind, ok := toNodeKinds[operation.Kind]
-		if !ok {
-			return errors.Wrap(ErrUnknownOperationKind, kind)
-		}
-		msg.Hash.LoadOrStore(operation.Hash, kind)
+		msg.Hash.LoadOrStore(operation.Hash, operation)
 		table.LastID = operation.ID
 
 		switch {
@@ -440,7 +439,7 @@ func (tzkt *TzKT) getTableData(table *tableState, indexerState, headLevel uint64
 	filters := map[string]string{
 		"limit":         fmt.Sprintf("%d", pageSize),
 		"level.le":      fmt.Sprintf("%d", headLevel),
-		"select.fields": "hash,block,level,id",
+		"select.fields": "hash,block,level,gasUsed,bakerFee,id",
 	}
 
 	if table.LastID == 0 {

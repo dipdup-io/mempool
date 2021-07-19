@@ -41,6 +41,7 @@ type Settings struct {
 	KeepInChainBlocks      uint64 `yaml:"keep_in_chain_blocks"`
 	MempoolRequestInterval uint64 `yaml:"mempool_request_interval_seconds"`
 	RPCTimeout             uint64 `yaml:"rpc_timeout_seconds"`
+	GasStatsLifetime       uint64 `yaml:"gas_stats_lifetime"`
 }
 
 // Load -

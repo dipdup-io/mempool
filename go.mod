@@ -4,13 +4,14 @@ go 1.15
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/dipdup-net/go-lib v0.1.10
+	github.com/dipdup-net/go-lib v0.1.12
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/jackc/pgproto3/v2 v2.1.0 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/karlseguin/ccache v2.0.3+incompatible
 	github.com/karlseguin/expect v1.0.8 // indirect
 	github.com/mattn/go-sqlite3 v1.14.7 // indirect
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0

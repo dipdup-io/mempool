@@ -150,12 +150,18 @@ func DeleteOldOperations(db *gorm.DB, timeout uint64, status string, kinds ...st
 
 // GetModelsBy -
 func GetModelsBy(kinds ...string) []interface{} {
+	var hasManager bool
 	data := make([]interface{}, 0, len(kinds))
 	for i := range kinds {
+		hasManager = hasManager || node.IsManager(kinds[i])
 		model, err := getModelByKind(kinds[i])
 		if err == nil {
 			data = append(data, model)
 		}
+	}
+
+	if hasManager {
+		data = append(data, &GasStats{})
 	}
 	return data
 }

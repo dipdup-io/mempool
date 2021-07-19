@@ -19,22 +19,26 @@ type Manager struct {
 	keepInChain      uint64
 	lostAfterSeconds uint64
 	blockTime        uint64
+	gasStatsLifetime uint64
 	kinds            []string
+	stop             chan struct{}
+	hasManager       bool
 
-	stop chan struct{}
-	wg   sync.WaitGroup
+	wg sync.WaitGroup
 }
 
 // NewManager -
-func NewManager(db *gorm.DB, settings config.Settings, blockTime uint64, kinds ...string) *Manager {
+func NewManager(db *gorm.DB, settings config.Settings, blockTime uint64, hasManager bool, kinds ...string) *Manager {
 	return &Manager{
 		db:               db,
 		keepOperations:   settings.KeepOperations,
+		gasStatsLifetime: settings.GasStatsLifetime,
 		keepInChain:      blockTime * settings.KeepInChainBlocks,
 		lostAfterSeconds: blockTime * settings.ExpiredAfter,
 		blockTime:        blockTime,
 		stop:             make(chan struct{}, 1),
 		kinds:            kinds,
+		hasManager:       hasManager,
 	}
 }
 
@@ -70,6 +74,11 @@ func (manager *Manager) work() {
 				}
 				if err := models.DeleteOldOperations(tx, manager.keepOperations, "", manager.kinds...); err != nil {
 					return errors.Wrap(err, "DeleteOldOperations")
+				}
+				if manager.hasManager {
+					if err := models.DeleteOldGasStats(tx, manager.gasStatsLifetime); err != nil {
+						return errors.Wrap(err, "DeleteOldGasStats")
+					}
 				}
 				return nil
 			})

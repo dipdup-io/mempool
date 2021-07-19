@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/dipdup-net/go-lib/node"
+	"github.com/dipdup-net/go-lib/tzkt/api"
 	"github.com/dipdup-net/go-lib/tzkt/events"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
@@ -47,11 +50,34 @@ func (indexer *Indexer) handleBlock(block tzkt.BlockMessage) error {
 
 func (indexer *Indexer) handleInChain(operations tzkt.OperationMessage) error {
 	return indexer.db.Transaction(func(tx *gorm.DB) error {
-		operations.Hash.Range(func(hash, kind interface{}) bool {
-			if err := models.SetInChain(tx, indexer.network, hash.(string), kind.(string), operations.Level); err != nil {
+		operations.Hash.Range(func(_, operation interface{}) bool {
+			apiOperation, ok := operation.(api.Operation)
+			if !ok {
+				return false
+			}
+			if err := models.SetInChain(tx, indexer.network, apiOperation.Hash, apiOperation.Kind, operations.Level); err != nil {
 				indexer.log().Error(err)
 				return false
 			}
+
+			if indexer.hasManager {
+				gasStats := models.GasStats{
+					Network:      indexer.network,
+					Hash:         apiOperation.Hash,
+					LevelInChain: operations.Level,
+				}
+				if apiOperation.GasUsed != nil {
+					gasStats.TotalGasUsed = *apiOperation.GasUsed
+				}
+				if apiOperation.BakerFee != nil {
+					gasStats.TotalFee = *apiOperation.BakerFee
+				}
+				if err := gasStats.Save(tx); err != nil {
+					indexer.log().Error(err)
+					return false
+				}
+			}
+
 			return true
 		})
 		return nil
@@ -99,6 +125,21 @@ func (indexer *Indexer) handleAppliedOperation(operation node.Applied) error {
 			}
 			if err := indexer.handleContent(tx, operation.Contents[i], mempoolOperation); err != nil {
 				return err
+			}
+
+			if indexer.hasManager {
+				key := fmt.Sprintf("gas:%s", operation.Hash)
+				if item := indexer.cache.Get(key); item == nil {
+					indexer.cache.Set(key, struct{}{}, time.Minute*60)
+					gasStats := models.GasStats{
+						Network:        indexer.network,
+						Hash:           operation.Hash,
+						LevelInMempool: indexer.state.Level,
+					}
+					if err := gasStats.Save(tx); err != nil {
+						return err
+					}
+				}
 			}
 		}
 		return nil

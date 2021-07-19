@@ -18,3 +18,4 @@ vendor/
 .env*
 *.db
 dipdup.yml
+script.py

@@ -25,18 +25,19 @@ type Indexer struct {
 	tzkt         *tzkt.TzKT
 	mempool      *receiver.Receiver
 	manager      *Manager
-	state        state.State
-	network      string
-	indexName    string
-	chainID      string
-	filters      config.Filters
 	branches     *BlockQueue
 	cache        *ccache.Cache
 	delegates    *CachedDelegates
+	state        state.State
+	filters      config.Filters
+	network      string
+	indexName    string
+	chainID      string
+	stop         chan struct{}
 	threadsCount int
+	hasManager   bool
 
-	stop chan struct{}
-	wg   sync.WaitGroup
+	wg sync.WaitGroup
 }
 
 // NewIndexer -
@@ -86,12 +87,23 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 		filters:      indexerCfg.Filters,
 		tzkt:         tzkt.NewTzKT(indexerCfg.DataSource.Tzkt, indexerCfg.Filters.Accounts, indexerCfg.Filters.Kinds),
 		mempool:      memInd,
-		manager:      NewManager(db, settings, uint64(constants.TimeBetweenBlocks[0]), indexerCfg.Filters.Kinds...),
 		cache:        ccache.New(ccache.Configure().MaxSize(2 ^ 13)),
 		threadsCount: 1,
 	}
 
-	indexer.log().Infof("operations TTL = %d", expiredAfter)
+	indexer.state = state.State{
+		IndexType: models.IndexTypeMempool,
+		IndexName: indexer.indexName,
+		Level:     head.Level,
+	}
+
+	for i := range indexerCfg.Filters.Kinds {
+		if node.IsManager(indexerCfg.Filters.Kinds[i]) {
+			indexer.hasManager = true
+			break
+		}
+	}
+	indexer.manager = NewManager(db, settings, uint64(constants.TimeBetweenBlocks[0]), indexer.hasManager, indexerCfg.Filters.Kinds...)
 	indexer.branches = newBlockQueue(expiredAfter, indexer.onPopBlockQueue, indexer.onRollbackBlockQueue)
 
 	for _, kind := range indexer.filters.Kinds {
@@ -152,16 +164,13 @@ func (indexer *Indexer) sync() {
 
 func (indexer *Indexer) initState() error {
 	current, err := state.Get(indexer.db, indexer.indexName)
-	if err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return err
-		}
-		indexer.state = state.State{
-			IndexType: models.IndexTypeMempool,
-			IndexName: indexer.indexName,
-		}
-	} else {
+	switch {
+	case err == nil:
 		indexer.state = current
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return nil
+	default:
+		return err
 	}
 
 	return nil
