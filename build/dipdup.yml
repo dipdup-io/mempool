@@ -8,6 +8,14 @@ mempool:
     rpc_timeout_seconds: 10
     gas_stats_lifetime: 3600
   indexers:
+    florencenet:
+      filters:
+        kinds:
+          - transaction
+      datasources:
+        tzkt: https://api.florencenet.tzkt.io
+        rpc:
+          - https://rpc.tzkt.io/florencenobanet
     mainnet:
       filters:
         kinds:
