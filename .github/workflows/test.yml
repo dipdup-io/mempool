@@ -1,10 +1,8 @@
-on:
-  push:
-    branches:
-      - master
-name: build
+name: Tests
+on: push
+
 jobs:
-  golangci:
+  lint:
     name: lint
     runs-on: ubuntu-latest
     steps:
@@ -35,6 +33,3 @@ jobs:
         run: |
           go mod download
           go test ./...
-      - name: docker-compose test build
-        run: |
-          docker-compose build indexer
