@@ -2,7 +2,7 @@ version: "3.6"
 
 services:
   indexer:
-    image: dipdup/mempool:latest
+    image: ${SWARMLET_REGISTRY}/mempool:latest
     build:
         dockerfile: build/Dockerfile
         context: .
@@ -58,7 +58,7 @@ services:
       labels:
         - traefik.enable=true
         - traefik.http.services.mempool.loadbalancer.server.port=8080
-        - traefik.http.routers.mempool.rule=Host(`mempool.dipdup.net`)
+        - traefik.http.routers.mempool.rule=Host(`mempool.${DOMAIN}`)
         - traefik.http.routers.mempool.entrypoints=http,https,ws,wss
         - traefik.http.routers.mempool.middlewares=redirect@file
     networks:
