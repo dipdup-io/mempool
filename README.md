@@ -1,6 +1,6 @@
 # Mempool indexer
 
-[![Tests](https://github.com/dipdup-net/mempool/Tests/badge.svg?)](https://github.com/dipdup-net/mempool/actions?query=workflow%3ATests)
+[![Tests](https://github.com/dipdup-net/mempool/workflows/Tests/badge.svg?)](https://github.com/dipdup-net/mempool/actions?query=workflow%3ATests)
 [![Docker images](https://github.com/dipdup-net/mempool/workflows/Release/badge.svg?)](https://hub.docker.com/r/dipdup/mempool)
 [![Made With](https://img.shields.io/badge/made%20with-dipdup-blue.svg?)](https://dipdup.net)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
