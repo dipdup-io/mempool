@@ -12,6 +12,11 @@ services:
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+    deploy:
+      mode: replicated
+      replicas: 1
+    networks:
+      - mempool-network
 
   db:
     image: postgres:13
@@ -27,6 +32,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      mode: replicated
+      replicas: 1
+    networks:
+      - mempool-network
 
   hasura:
     image: hasura/graphql-engine:v1.3.3
@@ -42,6 +52,24 @@ services:
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
       - HASURA_GRAPHQL_ADMIN_SECRET=${ADMIN_SECRET:-changeme}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.http.services.mempool.loadbalancer.server.port=8080
+        - traefik.http.routers.mempool.rule=Host(`mempool.dipdup.net`)
+        - traefik.http.routers.mempool.entrypoints=http,https,ws,wss
+        - traefik.http.routers.mempool.middlewares=redirect@file
+    networks:
+      - mempool-network
+      - traefik-public
+
   
 volumes:
   db:
+
+networks:
+  mempool-network:
+  traefik-public:
+    external: true
