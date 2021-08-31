@@ -39,9 +39,7 @@ services:
       - mempool-network
 
   hasura:
-    image: hasura/graphql-engine:v2.0.8
-    ports:
-      - 127.0.0.1:22000:8080
+    image: hasura/graphql-engine:v2.0.1
     depends_on:
       - db
     restart: always
@@ -59,7 +57,7 @@ services:
         - traefik.enable=true
         - traefik.http.services.mempool.loadbalancer.server.port=8080
         - traefik.http.routers.mempool.rule=Host(`mempool.${ROOT_DOMAIN}`)
-        - traefik.http.routers.mempool.entrypoints=http,https,ws,wss
+        - traefik.http.routers.mempool.entrypoints=http,https
         - traefik.http.routers.mempool.middlewares=redirect@file
     networks:
       - mempool-network
