@@ -2,7 +2,7 @@ version: "3.6"
 
 services:
   indexer:
-    image: ${SWARMLET_REGISTRY}/mempool:latest
+    image: ${SWARMLET_REGISTRY:-dipdup}/mempool:latest
     build:
         dockerfile: build/Dockerfile
         context: .
