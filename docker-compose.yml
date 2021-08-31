@@ -39,7 +39,7 @@ services:
       - mempool-network
 
   hasura:
-    image: hasura/graphql-engine:v1.3.3
+    image: hasura/graphql-engine:v2.0.8
     ports:
       - 127.0.0.1:22000:8080
     depends_on:
@@ -47,8 +47,8 @@ services:
     restart: always
     environment:
       - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
-      - HASURA_GRAPHQL_ENABLE_CONSOLE=true
-      - HASURA_GRAPHQL_DEV_MODE=true
+      - HASURA_GRAPHQL_ENABLE_CONSOLE=false
+      - HASURA_GRAPHQL_DEV_MODE=false
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
       - HASURA_GRAPHQL_ADMIN_SECRET=${ADMIN_SECRET:-changeme}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
