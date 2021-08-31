@@ -39,7 +39,7 @@ services:
       - mempool-network
 
   hasura:
-    image: hasura/graphql-engine:v2.0.1
+    image: hasura/graphql-engine:v2.0.8
     depends_on:
       - db
     restart: always
