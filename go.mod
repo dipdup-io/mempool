@@ -2,9 +2,11 @@ module github.com/dipdup-net/mempool
 
 go 1.15
 
+// replace github.com/dipdup-net/go-lib => ../go-lib
+
 require (
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/dipdup-net/go-lib v0.1.17
+	github.com/dipdup-net/go-lib v0.1.18
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/jackc/pgproto3/v2 v2.1.0 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
