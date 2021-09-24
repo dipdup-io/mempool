@@ -84,7 +84,7 @@ func (indexer *Indexer) handleInChain(operations tzkt.OperationMessage) error {
 	})
 }
 
-func (indexer *Indexer) handleFailedOperation(operation node.Failed, status string) error {
+func (indexer *Indexer) handleFailedOperation(operation node.Failed, status, protocol string) error {
 	return indexer.db.Transaction(func(tx *gorm.DB) error {
 		for i := range operation.Contents {
 			mempoolOperation := models.MempoolOperation{
@@ -94,6 +94,8 @@ func (indexer *Indexer) handleFailedOperation(operation node.Failed, status stri
 				Branch:    operation.Branch,
 				Signature: operation.Signature,
 				Errors:    datatypes.JSON(operation.Error),
+				Raw:       datatypes.JSON(operation.Raw),
+				Protocol:  protocol,
 			}
 			if !indexer.isKindAvailiable(operation.Contents[i].Kind) {
 				continue
@@ -106,7 +108,7 @@ func (indexer *Indexer) handleFailedOperation(operation node.Failed, status stri
 	})
 }
 
-func (indexer *Indexer) handleAppliedOperation(operation node.Applied) error {
+func (indexer *Indexer) handleAppliedOperation(operation node.Applied, protocol string) error {
 	return indexer.db.Transaction(func(tx *gorm.DB) error {
 		for i := range operation.Contents {
 			mempoolOperation := models.MempoolOperation{
@@ -115,6 +117,8 @@ func (indexer *Indexer) handleAppliedOperation(operation node.Applied) error {
 				Hash:      operation.Hash,
 				Branch:    operation.Branch,
 				Signature: operation.Signature,
+				Raw:       datatypes.JSON(operation.Raw),
+				Protocol:  protocol,
 			}
 			expirationLevel := indexer.branches.ExpirationLevel(operation.Branch)
 			if expirationLevel > 0 {

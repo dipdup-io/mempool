@@ -18,6 +18,7 @@ type Receiver struct {
 	db        *gorm.DB
 	state     state.State
 	indexName string
+	protocol  string
 
 	blockTime int64
 	interval  uint64
@@ -109,26 +110,30 @@ func (indexer *Receiver) process(rpc *node.NodeRPC) error {
 	}
 	for _, operation := range result.Applied {
 		indexer.operations <- Message{
-			Status: StatusApplied,
-			Body:   operation,
+			Status:   StatusApplied,
+			Body:     operation,
+			Protocol: indexer.protocol,
 		}
 	}
 	for _, operation := range result.BranchDelayed {
 		indexer.operations <- Message{
-			Status: StatusBranchDelayed,
-			Body:   operation,
+			Status:   StatusBranchDelayed,
+			Body:     operation,
+			Protocol: indexer.protocol,
 		}
 	}
 	for _, operation := range result.BranchRefused {
 		indexer.operations <- Message{
-			Status: StatusBranchRefused,
-			Body:   operation,
+			Status:   StatusBranchRefused,
+			Body:     operation,
+			Protocol: indexer.protocol,
 		}
 	}
 	for _, operation := range result.Refused {
 		indexer.operations <- Message{
-			Status: StatusRefused,
-			Body:   operation,
+			Status:   StatusRefused,
+			Body:     operation,
+			Protocol: indexer.protocol,
 		}
 	}
 	return nil
@@ -149,6 +154,7 @@ func (indexer *Receiver) checkHead(rpc *node.NodeRPC) error {
 		return errors.Errorf("Node is stucked url=%s node_level=%d indexer_level=%d", rpc.URL(), head.Level, indexer.state.Level)
 	}
 
+	indexer.protocol = head.Protocol
 	return nil
 }
 

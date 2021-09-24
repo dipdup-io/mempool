@@ -237,7 +237,7 @@ func (indexer *Indexer) listen() {
 				if indexer.isHashProcessed(applied.Hash) {
 					continue
 				}
-				if err := indexer.handleAppliedOperation(applied); err != nil {
+				if err := indexer.handleAppliedOperation(applied, msg.Protocol); err != nil {
 					log.Error(err)
 					continue
 				}
@@ -250,7 +250,7 @@ func (indexer *Indexer) listen() {
 				if indexer.isHashProcessed(failed.Hash) {
 					continue
 				}
-				if err := indexer.handleFailedOperation(failed, string(msg.Status)); err != nil {
+				if err := indexer.handleFailedOperation(failed, string(msg.Status), msg.Protocol); err != nil {
 					indexer.log().Error(err)
 					continue
 				}

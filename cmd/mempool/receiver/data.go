@@ -2,8 +2,9 @@ package receiver
 
 // Message -
 type Message struct {
-	Status Status
-	Body   interface{}
+	Status   Status
+	Protocol string
+	Body     interface{}
 }
 
 // Status

@@ -29,9 +29,11 @@ type MempoolOperation struct {
 	Status          string         `json:"status"`
 	Kind            string         `json:"kind"`
 	Signature       string         `json:"signature"`
+	Protocol        string         `json:"protocol"`
 	Level           uint64         `json:"level"`
 	Errors          datatypes.JSON `json:"errors,omitempty"`
 	ExpirationLevel *uint64        `json:"expiration_level"`
+	Raw             datatypes.JSON `json:"raw,omitempty"`
 }
 
 func networkAndBranch(network, branch string) func(db *gorm.DB) *gorm.DB {
