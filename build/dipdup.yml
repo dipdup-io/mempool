@@ -45,6 +45,25 @@ mempool:
           tzkt: https://api.tzkt.io
           rpc: 
             - https://mainnet-tezos.giganode.io
+    hangzhounet:
+      filters:
+        kinds:
+          - endorsement
+          - transaction
+          - activate_account
+          - ballot
+          - delegation
+          - double_baking_evidence
+          - double_endorsement_evidence
+          - origination
+          - proposals
+          - reveal
+          - seed_nonce_revelation
+          - register_global_constant
+      datasources:
+          tzkt: https://api.hangzhounet.tzkt.io
+          rpc: 
+            - https://rpc.tzkt.io/hangzhounet
 
 database:
   kind: postgres
