@@ -114,29 +114,16 @@ func (tzkt *TzKT) Blocks() <-chan BlockMessage {
 func (tzkt *TzKT) handleBlockMessage(msg events.Message) error {
 	switch msg.Type {
 	case events.MessageTypeData:
-		data, ok := msg.Body.([]interface{})
-		if !ok {
-			return errors.Wrapf(ErrInvalidBlockType, "%v", msg.Body)
-		}
-		if len(data) == 0 {
+		if msg.Body == nil {
 			return nil
 		}
-		blockData, ok := data[0].(map[string]interface{})
-		if !ok {
-			return errors.Wrapf(ErrInvalidBlockType, "%v", data[0])
-		}
-		hash, err := getString(blockData, "hash")
-		if err != nil {
-			return err
-		}
-		level, err := getUint64(blockData, "level")
-		if err != nil {
-			return err
-		}
-		tzkt.blocks <- BlockMessage{
-			Hash:  hash,
-			Level: level,
-			Type:  msg.Type,
+		blocks := msg.Body.([]events.Block)
+		for i := range blocks {
+			tzkt.blocks <- BlockMessage{
+				Hash:  blocks[i].Hash,
+				Level: blocks[i].Level,
+				Type:  msg.Type,
+			}
 		}
 	case events.MessageTypeState, events.MessageTypeReorg:
 		tzkt.blocks <- BlockMessage{
@@ -153,7 +140,11 @@ func (tzkt *TzKT) handleBlockMessage(msg events.Message) error {
 func (tzkt *TzKT) handleOperationMessage(msg events.Message) error {
 	switch msg.Type {
 	case events.MessageTypeData:
-		return tzkt.handleUpdateMessage(msg)
+		if msg.Body == nil {
+			return nil
+		}
+		operations := msg.Body.([]interface{})
+		return tzkt.handleUpdateMessage(operations)
 	case events.MessageTypeState, events.MessageTypeReorg:
 	default:
 		return errors.Wrapf(ErrUnknownMessageType, "%d", msg.Type)
@@ -162,19 +153,11 @@ func (tzkt *TzKT) handleOperationMessage(msg events.Message) error {
 	return nil
 }
 
-func (tzkt *TzKT) handleUpdateMessage(msg events.Message) error {
+func (tzkt *TzKT) handleUpdateMessage(operations []interface{}) error {
 	message := newOperationMessage()
 
-	body, ok := msg.Body.([]interface{})
-	if !ok {
-		return errors.Wrapf(ErrInvalidBodyType, "%T", msg.Body)
-	}
-	for i := range body {
-		operation, ok := body[i].(map[string]interface{})
-		if !ok {
-			return errors.Wrapf(ErrInvalidOperationType, "%T", body[i])
-		}
-		if err := tzkt.processOperation(operation, &message); err != nil {
+	for i := range operations {
+		if err := tzkt.processOperation(operations[i], &message); err != nil {
 			return err
 		}
 	}
@@ -184,33 +167,81 @@ func (tzkt *TzKT) handleUpdateMessage(msg events.Message) error {
 	return nil
 }
 
-func getString(data map[string]interface{}, key string) (string, error) {
-	value, ok := data[key]
-	if !ok {
-		return "", errors.Wrapf(ErrOperationDoesNotContain, "field=%s data=%v", key, data)
+func (tzkt *TzKT) getAPIOperation(data interface{}) (api.Operation, error) {
+	switch operation := data.(type) {
+
+	case *events.Delegation:
+		tx := api.Operation{
+			ID:       operation.ID,
+			Level:    operation.Level,
+			Hash:     operation.Hash,
+			Kind:     toNodeKinds[operation.Type],
+			Block:    operation.Block,
+			GasUsed:  &operation.GasUsed,
+			BakerFee: &operation.BakerFee,
+		}
+		if operation.NewDelegate != nil {
+			tx.Delegate = &api.Address{
+				Alias:   operation.NewDelegate.Alias,
+				Address: operation.NewDelegate.Address,
+			}
+		}
+		return tx, nil
+
+	case *events.Origination:
+		tx := api.Operation{
+			ID:       operation.ID,
+			Level:    operation.Level,
+			Hash:     operation.Hash,
+			Kind:     toNodeKinds[operation.Type],
+			Block:    operation.Block,
+			GasUsed:  &operation.GasUsed,
+			BakerFee: &operation.BakerFee,
+		}
+		return tx, nil
+
+	case *events.Reveal:
+		tx := api.Operation{
+			ID:       operation.ID,
+			Level:    operation.Level,
+			Hash:     operation.Hash,
+			Kind:     toNodeKinds[operation.Type],
+			Block:    operation.Block,
+			GasUsed:  &operation.GasUsed,
+			BakerFee: &operation.BakerFee,
+		}
+		return tx, nil
+
+	case *events.Transaction:
+		tx := api.Operation{
+			ID:       operation.ID,
+			Level:    operation.Level,
+			Hash:     operation.Hash,
+			Kind:     toNodeKinds[operation.Type],
+			Block:    operation.Block,
+			GasUsed:  &operation.GasUsed,
+			BakerFee: &operation.BakerFee,
+		}
+		if operation.Parameter != nil {
+			tx.Parameters = &api.Parameters{
+				Entrypoint: operation.Parameter.Entrypoint,
+				Value:      operation.Parameter.Value,
+			}
+		}
+		return tx, nil
+
+	case map[string]interface{}:
+		var general api.Operation
+		err := mapstructure.Decode(data, &general)
+		return general, err
+	default:
+		return api.Operation{}, errors.Wrapf(ErrInvalidOperationType, "%T", data)
 	}
-	s, ok := value.(string)
-	if !ok {
-		return "", errors.Wrapf(ErrInvalidFieldType, "field=%s expected_type=string type=%T data=%v", key, value, value)
-	}
-	return s, nil
 }
 
-func getUint64(data map[string]interface{}, key string) (uint64, error) {
-	value, ok := data[key]
-	if !ok {
-		return 0, errors.Wrapf(ErrOperationDoesNotContain, "field=%s data=%v", key, data)
-	}
-	f, ok := value.(float64)
-	if !ok {
-		return 0, errors.Wrapf(ErrInvalidFieldType, "field=%s expected_type=float64 type=%T data=%v", key, value, value)
-	}
-	return uint64(f), nil
-}
-
-func (tzkt *TzKT) processOperation(data map[string]interface{}, message *OperationMessage) error {
-	var operation api.Operation
-	if err := mapstructure.Decode(data, &operation); err != nil {
+func (tzkt *TzKT) processOperation(data interface{}, message *OperationMessage) error {
+	operation, err := tzkt.getAPIOperation(data)
+	if err != nil {
 		return err
 	}
 	operation.Kind = toNodeKinds[operation.Kind]

@@ -192,6 +192,8 @@ func getModelByKind(kind string) (interface{}, error) {
 		return &Reveal{}, nil
 	case node.KindTransaction:
 		return &Transaction{}, nil
+	case node.KindRegisterGlobalConstant:
+		return &RegisterGlobalConstant{}, nil
 	default:
 		return nil, errors.Wrap(node.ErrUnknownKind, kind)
 	}

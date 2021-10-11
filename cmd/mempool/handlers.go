@@ -178,6 +178,8 @@ func (indexer *Indexer) handleContent(db *gorm.DB, content node.Content, operati
 		return handleReveal(db, content, operation, indexer.filters.Accounts...)
 	case node.KindTransaction:
 		return handleTransaction(db, content, operation, indexer.filters.Accounts...)
+	case node.KindRegisterGlobalConstant:
+		return handleRegisterGloabalConstant(db, content, operation)
 	default:
 		return errors.Wrap(node.ErrUnknownKind, content.Kind)
 	}
@@ -343,6 +345,15 @@ func handleProposal(db *gorm.DB, content node.Content, operation models.MempoolO
 		}
 	}
 	return nil
+}
+
+func handleRegisterGloabalConstant(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
+	var registerGlobalConstant models.RegisterGlobalConstant
+	if err := json.Unmarshal(content.Body, &registerGlobalConstant); err != nil {
+		return err
+	}
+	registerGlobalConstant.MempoolOperation = operation
+	return db.Clauses(clause.OnConflict{DoNothing: true}).Create(&registerGlobalConstant).Error
 }
 
 func (indexer *Indexer) isKindAvailiable(kind string) bool {

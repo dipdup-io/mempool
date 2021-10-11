@@ -41,7 +41,7 @@ func (cfg MempoolDataSource) Validate() error {
 func (cfg Filters) Validate() error {
 	switch {
 	case len(cfg.Kinds) == 0:
-		cfg.Kinds = append(cfg.Kinds, node.KindTransaction)
+		cfg.Kinds = []string{node.KindTransaction}
 	default:
 		if err := validateKinds(cfg.Kinds...); err != nil {
 			return err
@@ -62,7 +62,7 @@ func validateKinds(kinds ...string) error {
 		for _, valid := range []string{
 			node.KindActivation, node.KindBallot, node.KindDelegation, node.KindDoubleBaking, node.KindDoubleEndorsing,
 			node.KindEndorsement, node.KindNonceRevelation, node.KindOrigination, node.KindProposal,
-			node.KindReveal, node.KindTransaction,
+			node.KindReveal, node.KindTransaction, node.KindRegisterGlobalConstant,
 		} {
 			if kind == valid {
 				found = true
