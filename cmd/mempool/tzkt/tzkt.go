@@ -502,6 +502,8 @@ func (tzkt *TzKT) getTableData(table *tableState, indexerState, headLevel uint64
 		return getOperations(table, filters, tzkt.api.GetReveals)
 	case api.KindTransaction:
 		return getOperations(table, filters, tzkt.api.GetTransactions)
+	case api.KindRegisterGlobalConstant:
+		return getOperations(table, filters, tzkt.api.GetRegisterConstants)
 	default:
 		return errors.Wrap(ErrUnknownOperationKind, table.Table)
 	}

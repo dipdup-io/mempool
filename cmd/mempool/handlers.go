@@ -18,6 +18,10 @@ import (
 )
 
 func (indexer *Indexer) handleBlock(block tzkt.BlockMessage) error {
+	if err := indexer.processOldOperations(); err != nil {
+		return err
+	}
+
 	switch block.Type {
 	case events.MessageTypeState:
 		if indexer.state.Level < block.Level {
@@ -46,6 +50,23 @@ func (indexer *Indexer) handleBlock(block tzkt.BlockMessage) error {
 		}
 	}
 	return indexer.branches.Add(block)
+}
+
+func (indexer *Indexer) processOldOperations() error {
+	return indexer.db.Transaction(func(tx *gorm.DB) error {
+		if err := models.DeleteOldOperations(tx, indexer.keepInChain, models.StatusInChain, indexer.filters.Kinds...); err != nil {
+			return errors.Wrap(err, "DeleteOldOperations in_chain")
+		}
+		if err := models.DeleteOldOperations(tx, indexer.keepOperations, "", indexer.filters.Kinds...); err != nil {
+			return errors.Wrap(err, "DeleteOldOperations")
+		}
+		if indexer.hasManager {
+			if err := models.DeleteOldGasStats(tx, indexer.gasStatsLifetime); err != nil {
+				return errors.Wrap(err, "DeleteOldGasStats")
+			}
+		}
+		return nil
+	})
 }
 
 func (indexer *Indexer) handleInChain(operations tzkt.OperationMessage) error {

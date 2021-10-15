@@ -21,21 +21,23 @@ import (
 
 // Indexer -
 type Indexer struct {
-	db           *gorm.DB
-	tzkt         *tzkt.TzKT
-	mempool      *receiver.Receiver
-	manager      *Manager
-	branches     *BlockQueue
-	cache        *ccache.Cache
-	delegates    *CachedDelegates
-	state        state.State
-	filters      config.Filters
-	network      string
-	indexName    string
-	chainID      string
-	stop         chan struct{}
-	threadsCount int
-	hasManager   bool
+	db               *gorm.DB
+	tzkt             *tzkt.TzKT
+	mempool          *receiver.Receiver
+	branches         *BlockQueue
+	cache            *ccache.Cache
+	delegates        *CachedDelegates
+	state            state.State
+	filters          config.Filters
+	network          string
+	indexName        string
+	chainID          string
+	keepInChain      uint64
+	keepOperations   uint64
+	gasStatsLifetime uint64
+	stop             chan struct{}
+	threadsCount     int
+	hasManager       bool
 
 	wg sync.WaitGroup
 }
@@ -80,15 +82,18 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 	}
 
 	indexer := &Indexer{
-		db:           db,
-		network:      network,
-		chainID:      head.ChainID,
-		indexName:    models.MempoolIndexName(network),
-		filters:      indexerCfg.Filters,
-		tzkt:         tzkt.NewTzKT(indexerCfg.DataSource.Tzkt, indexerCfg.Filters.Accounts, indexerCfg.Filters.Kinds),
-		mempool:      memInd,
-		cache:        ccache.New(ccache.Configure().MaxSize(2 ^ 13)),
-		threadsCount: 1,
+		db:               db,
+		network:          network,
+		chainID:          head.ChainID,
+		indexName:        models.MempoolIndexName(network),
+		filters:          indexerCfg.Filters,
+		tzkt:             tzkt.NewTzKT(indexerCfg.DataSource.Tzkt, indexerCfg.Filters.Accounts, indexerCfg.Filters.Kinds),
+		mempool:          memInd,
+		cache:            ccache.New(ccache.Configure().MaxSize(2 ^ 13)),
+		threadsCount:     1,
+		keepInChain:      uint64(constants.TimeBetweenBlocks[0]) * settings.KeepInChainBlocks,
+		keepOperations:   uint64(constants.TimeBetweenBlocks[0]) * settings.ExpiredAfter,
+		gasStatsLifetime: settings.GasStatsLifetime,
 	}
 
 	indexer.state = state.State{
@@ -103,7 +108,6 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 			break
 		}
 	}
-	indexer.manager = NewManager(db, settings, uint64(constants.TimeBetweenBlocks[0]), indexer.hasManager, indexerCfg.Filters.Kinds...)
 	indexer.branches = newBlockQueue(expiredAfter, indexer.onPopBlockQueue, indexer.onRollbackBlockQueue)
 
 	for _, kind := range indexer.filters.Kinds {
@@ -146,8 +150,7 @@ func (indexer *Indexer) Start() error {
 		return err
 	}
 
-	go indexer.mempool.Start()
-	indexer.manager.Start()
+	indexer.mempool.Start()
 
 	return nil
 }
@@ -183,10 +186,6 @@ func (indexer *Indexer) Close() error {
 		indexer.stop <- struct{}{}
 	}
 	indexer.wg.Wait()
-
-	if err := indexer.manager.Close(); err != nil {
-		return err
-	}
 
 	if err := indexer.tzkt.Close(); err != nil {
 		return err
