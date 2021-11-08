@@ -59,7 +59,8 @@ services:
         - traefik.http.services.mempool.loadbalancer.server.port=8080
         - traefik.http.routers.mempool.rule=Host(`mempool.${DIPDUP_ROOT_DOMAIN:-staging.dipdup.net}`)
         - traefik.http.routers.mempool.entrypoints=http,https
-        - traefik.http.routers.mempool.middlewares=redirect@file
+        - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+        - traefik.http.routers.mempool.middlewares=redirect-to-https
     networks:
       - mempool-network
       - traefik-public

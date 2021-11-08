@@ -1,0 +1,8 @@
+.github/
+.vscode/
+docker-compose.yml
+docker-compose.local.yml
+stack.yml
+README.md
+LICENSE
+.golangci.yml
