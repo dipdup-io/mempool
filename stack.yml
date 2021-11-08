@@ -3,7 +3,7 @@ version: "3.6"
 services:
   indexer:
     image: dipdup/mempool:${TAG:-latest}
-    command: -f dipdup.testnet.yml
+    command: -c dipdup.testnet.yml
     build:
         dockerfile: build/Dockerfile
         context: .
@@ -57,7 +57,7 @@ services:
       labels:
         - traefik.enable=true
         - traefik.http.services.mempool.loadbalancer.server.port=8080
-        - traefik.http.routers.mempool.rule=Host(`mempool.${DIPDUP_ROOT_DOMAIN:-test.dipdup.net}`)
+        - traefik.http.routers.mempool.rule=Host(`mempool.${DIPDUP_ROOT_DOMAIN:-staging.dipdup.net}`)
         - traefik.http.routers.mempool.entrypoints=http,https
         - traefik.http.routers.mempool.middlewares=redirect@file
     networks:
