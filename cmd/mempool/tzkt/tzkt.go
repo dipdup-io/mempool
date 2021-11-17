@@ -125,7 +125,7 @@ func (tzkt *TzKT) handleBlockMessage(msg events.Message) error {
 				Type:  msg.Type,
 			}
 		}
-	case events.MessageTypeState, events.MessageTypeReorg:
+	case events.MessageTypeState, events.MessageTypeReorg, events.MessageTypeSubscribed:
 		tzkt.blocks <- BlockMessage{
 			Level: msg.State,
 			Type:  msg.Type,
