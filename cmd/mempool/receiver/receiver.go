@@ -144,7 +144,7 @@ func (indexer *Receiver) checkHead(rpc *node.NodeRPC) error {
 		return nil
 	}
 
-	head, err := rpc.Header()
+	head, err := rpc.Header("head")
 	if err != nil {
 		return err
 	}

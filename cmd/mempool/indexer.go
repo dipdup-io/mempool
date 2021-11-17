@@ -58,7 +58,7 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 		return nil, errors.Errorf("Empty time_between_blocks in node response: %s", network)
 	}
 
-	head, err := rpc.Header()
+	head, err := rpc.Header("head")
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 
 	expiredAfter := settings.ExpiredAfter
 	if expiredAfter == 0 {
-		metadata, err := rpc.HeadMetadata()
+		metadata, err := rpc.HeadMetadata("head")
 		if err != nil {
 			return nil, err
 		}
