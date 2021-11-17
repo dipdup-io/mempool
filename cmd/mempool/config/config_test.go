@@ -25,25 +25,32 @@ func TestLoad(t *testing.T) {
 					DataSources: map[string]config.DataSource{
 						"tzkt_mainnet": {
 							Kind: "tzkt",
-							URL:  "https://staging.api.tzkt.io",
+							URL:  "https://api.tzkt.io",
 						},
 						"node_mainnet": {
 							Kind: "tezos-node",
-							URL:  "https://rpc.tzkt.io/mainnet",
+							URL:  "https://mainnet-tezos.giganode.io",
 						},
 					},
 					Database: config.Database{
 						Kind: "sqlite",
 						Path: "mempool.db",
 					},
+					Hasura: config.Hasura{
+						URL:                "http://hasura:8080",
+						Secret:             "admin_secret",
+						RowsLimit:          100,
+						EnableAggregations: true,
+					},
 				},
 				Mempool: Mempool{
 					Settings: Settings{
 						KeepOperations:         172800,
-						ExpiredAfter:           60,
+						ExpiredAfter:           120,
 						KeepInChainBlocks:      10,
-						MempoolRequestInterval: 10,
+						MempoolRequestInterval: 2,
 						RPCTimeout:             10,
+						GasStatsLifetime:       3600,
 					},
 					Indexers: map[string]*Indexer{
 						"mainnet": {
@@ -52,196 +59,17 @@ func TestLoad(t *testing.T) {
 								Accounts: []string{"KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"},
 							},
 							DataSource: MempoolDataSource{
-								Tzkt: "https://staging.api.tzkt.io",
-								RPC:  []string{"https://rpc.tzkt.io/mainnet"},
+								Tzkt: "https://api.tzkt.io",
+								RPC:  []string{"https://mainnet-tezos.giganode.io"},
 							},
 						},
-					},
-				},
-			},
-		}, {
-			name:     "config 2",
-			filename: "./test/config2.yaml",
-			want: &Config{
-				Config: config.Config{
-					Version: "0.0.1",
-					Contracts: map[string]config.Contract{
-						"test": {
-							Address: "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9",
-						},
-					},
-					Database: config.Database{
-						Kind: "sqlite",
-						Path: "mempool.db",
-					},
-				},
-				Mempool: Mempool{
-					Settings: Settings{
-						KeepOperations:         172800,
-						ExpiredAfter:           60,
-						KeepInChainBlocks:      10,
-						MempoolRequestInterval: 10,
-						RPCTimeout:             10,
-					},
-					Indexers: map[string]*Indexer{
-						"mainnet": {
+						"granadanet": {
 							Filters: Filters{
-								Kinds:    []string{"transaction"},
-								Accounts: []string{"KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"},
+								Kinds: []string{"endorsement"},
 							},
 							DataSource: MempoolDataSource{
-								Tzkt: "https://staging.api.tzkt.io",
-								RPC:  []string{"https://rpc.tzkt.io/mainnet"},
-							},
-						},
-					},
-				},
-			},
-		}, {
-			name:     "config 3",
-			filename: "./test/config3.yaml",
-			want: &Config{
-				Config: config.Config{
-					Version: "0.0.1",
-					Database: config.Database{
-						Kind: "sqlite",
-						Path: "mempool.db",
-					},
-				},
-				Mempool: Mempool{
-					Settings: Settings{
-						KeepOperations:         172800,
-						ExpiredAfter:           60,
-						KeepInChainBlocks:      10,
-						MempoolRequestInterval: 10,
-						RPCTimeout:             10,
-					},
-					Indexers: map[string]*Indexer{
-						"mainnet": {
-							Filters: Filters{
-								Kinds:    []string{"transaction"},
-								Accounts: []string{"KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"},
-							},
-							DataSource: MempoolDataSource{
-								Tzkt: "https://staging.api.tzkt.io",
-								RPC:  []string{"https://rpc.tzkt.io/mainnet"},
-							},
-						},
-					},
-				},
-			},
-		}, {
-			name:     "config 4",
-			filename: "./test/config4.yaml",
-			want: &Config{
-				Config: config.Config{
-					Version: "0.0.1",
-					Database: config.Database{
-						Kind: "sqlite",
-						Path: "mempool.db",
-					},
-					Contracts: map[string]config.Contract{
-						"test": {
-							Address: "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9",
-						},
-					},
-					DataSources: map[string]config.DataSource{
-						"tzkt_mainnet": {
-							Kind: "tzkt",
-							URL:  "https://staging.api.tzkt.io",
-						},
-						"node_mainnet": {
-							Kind: "tezos-node",
-							URL:  "https://rpc.tzkt.io/mainnet",
-						},
-					},
-				},
-				Mempool: Mempool{
-					Settings: Settings{
-						KeepOperations:         172800,
-						ExpiredAfter:           60,
-						KeepInChainBlocks:      10,
-						MempoolRequestInterval: 10,
-						RPCTimeout:             10,
-					},
-					Indexers: map[string]*Indexer{
-						"mainnet": {
-							Filters: Filters{
-								Kinds:    []string{"transaction"},
-								Accounts: []string{"KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"},
-							},
-							DataSource: MempoolDataSource{
-								Tzkt: "https://staging.api.tzkt.io",
-								RPC:  []string{"https://rpc.tzkt.io/mainnet"},
-							},
-						},
-					},
-				},
-			},
-		}, {
-			name:     "config 5 without envs",
-			filename: "./test/config5.yaml",
-			want: &Config{
-				Config: config.Config{
-					Version: "0.0.1",
-					Database: config.Database{
-						Kind: "sqlite",
-						Path: "mempool.db",
-					},
-				},
-				Mempool: Mempool{
-					Settings: Settings{
-						KeepOperations:         172800,
-						ExpiredAfter:           60,
-						KeepInChainBlocks:      10,
-						MempoolRequestInterval: 10,
-						RPCTimeout:             10,
-					},
-					Indexers: map[string]*Indexer{
-						"mainnet": {
-							Filters: Filters{
-								Kinds:    []string{"transaction"},
-								Accounts: []string{"KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"},
-							},
-							DataSource: MempoolDataSource{
-								Tzkt: "https://staging.api.tzkt.io",
-								RPC:  []string{"https://rpc.tzkt.io/mainnet"},
-							},
-						},
-					},
-				},
-			},
-		}, {
-			name:     "config 5 with envs",
-			filename: "./test/config5.yaml",
-			envs: map[string]string{
-				"ACCOUNT": "test",
-			},
-			want: &Config{
-				Config: config.Config{
-					Version: "0.0.1",
-					Database: config.Database{
-						Kind: "sqlite",
-						Path: "mempool.db",
-					},
-				},
-				Mempool: Mempool{
-					Settings: Settings{
-						KeepOperations:         172800,
-						ExpiredAfter:           60,
-						KeepInChainBlocks:      10,
-						MempoolRequestInterval: 10,
-						RPCTimeout:             10,
-					},
-					Indexers: map[string]*Indexer{
-						"mainnet": {
-							Filters: Filters{
-								Kinds:    []string{"transaction"},
-								Accounts: []string{"test"},
-							},
-							DataSource: MempoolDataSource{
-								Tzkt: "https://staging.api.tzkt.io",
-								RPC:  []string{"https://rpc.tzkt.io/mainnet"},
+								Tzkt: "https://api.granadanet.tzkt.io",
+								RPC:  []string{"https://testnet-tezos.giganode.io"},
 							},
 						},
 					},
