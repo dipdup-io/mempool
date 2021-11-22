@@ -45,3 +45,6 @@ hasura:
   admin_secret: admin_secret
   select_limit: 100
   allow_aggregation: true
+
+prometheus:
+  url: 127.0.0.1:2112

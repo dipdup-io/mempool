@@ -1,6 +1,8 @@
 package receiver
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -8,6 +10,7 @@ import (
 	"github.com/dipdup-net/go-lib/state"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -16,16 +19,17 @@ import (
 type Receiver struct {
 	urls      []string
 	db        *gorm.DB
+	metric    *prometheus.CounterVec
 	state     state.State
 	indexName string
 	protocol  string
+	network   string
 
 	blockTime int64
 	interval  uint64
 	timeout   uint64
 
 	wg         sync.WaitGroup
-	stop       chan struct{}
 	operations chan Message
 }
 
@@ -36,9 +40,9 @@ func New(urls []string, network string, opts ...ReceiverOption) (*Receiver, erro
 	}
 	indexer := Receiver{
 		urls:       urls,
-		stop:       make(chan struct{}, len(urls)+1),
 		operations: make(chan Message, 1024),
 		indexName:  models.MempoolIndexName(network),
+		network:    network,
 	}
 
 	for i := range opts {
@@ -49,30 +53,23 @@ func New(urls []string, network string, opts ...ReceiverOption) (*Receiver, erro
 }
 
 // Start -
-func (indexer *Receiver) Start() {
+func (indexer *Receiver) Start(ctx context.Context) {
 	if indexer.db != nil {
 		indexer.wg.Add(1)
-		go indexer.updateState()
+		go indexer.updateState(ctx)
 	}
 
 	for i := range indexer.urls {
 		indexer.wg.Add(1)
-		go indexer.run(indexer.urls[i])
+		go indexer.run(ctx, indexer.urls[i])
 	}
 }
 
 // Close -
 func (indexer *Receiver) Close() error {
-	for range indexer.urls {
-		indexer.stop <- struct{}{}
-	}
-	if indexer.db != nil {
-		indexer.stop <- struct{}{}
-	}
 	indexer.wg.Wait()
 
 	close(indexer.operations)
-	close(indexer.stop)
 	return nil
 }
 
@@ -81,33 +78,40 @@ func (indexer *Receiver) Operations() <-chan Message {
 	return indexer.operations
 }
 
-func (indexer *Receiver) run(url string) {
+func (indexer *Receiver) run(ctx context.Context, url string) {
 	defer indexer.wg.Done()
 
-	rpc := node.NewNodeRPC(url, node.WithTimeout(indexer.timeout))
+	rpc := node.NewNodeRPC(url)
+	if err := indexer.process(ctx, rpc); err != nil {
+		log.Error(err)
+	}
+
+	ticker := time.NewTicker(time.Duration(indexer.interval) * time.Second)
+	defer ticker.Stop()
 
 	for {
 		select {
-		case <-indexer.stop:
+		case <-ctx.Done():
 			return
-		default:
-			if err := indexer.process(rpc); err != nil {
+		case <-ticker.C:
+			if err := indexer.process(ctx, rpc); err != nil {
 				log.Error(err)
 			}
-			time.Sleep(time.Duration(indexer.interval) * time.Second)
 		}
 	}
 }
 
-func (indexer *Receiver) process(rpc *node.NodeRPC) error {
-	if err := indexer.checkHead(rpc); err != nil {
+func (indexer *Receiver) process(ctx context.Context, rpc *node.NodeRPC) error {
+	if err := indexer.checkHead(ctx, rpc); err != nil {
 		return err
 	}
 
-	result, err := rpc.PendingOperations()
+	result, err := rpc.PendingOperations(node.WithContext(ctx))
 	if err != nil {
+		indexer.incrementMetric(rpc.URL(), indexer.network, err)
 		return err
 	}
+
 	for _, operation := range result.Applied {
 		indexer.operations <- Message{
 			Status:   StatusApplied,
@@ -139,13 +143,14 @@ func (indexer *Receiver) process(rpc *node.NodeRPC) error {
 	return nil
 }
 
-func (indexer *Receiver) checkHead(rpc *node.NodeRPC) error {
+func (indexer *Receiver) checkHead(ctx context.Context, rpc *node.NodeRPC) error {
 	if indexer.db == nil {
 		return nil
 	}
 
-	head, err := rpc.Header("head")
+	head, err := rpc.Header("head", node.WithContext(ctx))
 	if err != nil {
+		indexer.incrementMetric(rpc.URL(), indexer.network, err)
 		return err
 	}
 
@@ -158,7 +163,7 @@ func (indexer *Receiver) checkHead(rpc *node.NodeRPC) error {
 	return nil
 }
 
-func (indexer *Receiver) updateState() {
+func (indexer *Receiver) updateState(ctx context.Context) {
 	defer indexer.wg.Done()
 
 	ticker := time.NewTicker(time.Second * time.Duration(indexer.blockTime))
@@ -171,7 +176,7 @@ func (indexer *Receiver) updateState() {
 
 	for {
 		select {
-		case <-indexer.stop:
+		case <-ctx.Done():
 			return
 		case <-ticker.C:
 			if err := indexer.setState(); err != nil {
@@ -192,4 +197,20 @@ func (indexer *Receiver) setState() error {
 	}
 	indexer.state = state
 	return nil
+}
+
+func (indexer *Receiver) incrementMetric(url, network string, err error) {
+	if err == nil || indexer.metric == nil {
+		return
+	}
+
+	reqErr, ok := err.(node.RequestError)
+	if !ok {
+		return
+	}
+	indexer.metric.With(prometheus.Labels{
+		"network": network,
+		"node":    url,
+		"code":    fmt.Sprintf("%d", reqErr.Code),
+	}).Inc()
 }

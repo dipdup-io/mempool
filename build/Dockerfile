@@ -6,7 +6,6 @@ FROM golang:1.15-alpine as builder
 ENV CGO_ENABLED=1
 ENV GO111MODULE=on
 ENV GOOS=linux
-ENV CONFIG=config.yaml
 
 RUN apk --no-cache add ca-certificates
 RUN apk add --update git musl-dev gcc build-base
@@ -31,7 +30,7 @@ WORKDIR /app/mempool
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/bin/dipdup-mempool /go/bin/dipdup-mempool
-COPY ./build/*.yml ./
+COPY ./build/dipdup.yml ./
 COPY ./cmd/mempool/views/*.sql ./views/
 
 ENTRYPOINT ["/go/bin/dipdup-mempool"]

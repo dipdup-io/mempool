@@ -1,6 +1,9 @@
 package receiver
 
-import "gorm.io/gorm"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"gorm.io/gorm"
+)
 
 // ReceiverOption -
 type ReceiverOption func(*Receiver)
@@ -36,5 +39,14 @@ func WithStorage(db *gorm.DB, blockTime int64) ReceiverOption {
 			m.blockTime = 60
 		}
 		m.db = db
+	}
+}
+
+// WithPrometheusMetric -
+func WithPrometheusMetric(metric *prometheus.CounterVec) ReceiverOption {
+	return func(m *Receiver) {
+		if metric != nil {
+			m.metric = metric
+		}
 	}
 }

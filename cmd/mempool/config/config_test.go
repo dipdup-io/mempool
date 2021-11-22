@@ -42,6 +42,10 @@ func TestLoad(t *testing.T) {
 						RowsLimit:          100,
 						EnableAggregations: true,
 					},
+
+					Prometheus: config.Prometheus{
+						URL: "127.0.0.1:2112",
+					},
 				},
 				Mempool: Mempool{
 					Settings: Settings{

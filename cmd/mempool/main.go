@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/dipdup-net/go-lib/cmdline"
@@ -13,6 +16,7 @@ import (
 	"github.com/dipdup-net/go-lib/hasura"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -35,29 +39,12 @@ func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
+	ctx, cancel := context.WithCancel(context.Background())
 	indexers := make(map[string]*Indexer)
 
 	kinds := make(map[string]struct{})
 
-	for network, mempool := range cfg.Mempool.Indexers {
-		for _, kind := range mempool.Filters.Kinds {
-			kinds[kind] = struct{}{}
-		}
-
-		indexer, err := NewIndexer(network, *mempool, cfg.Database, cfg.Mempool.Settings)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-		indexers[network] = indexer
-
-		if err := indexer.Start(); err != nil {
-			log.Error(err)
-			return
-		}
-	}
-
-	views, err := createViews(cfg.Database)
+	views, err := createViews(ctx, cfg.Database)
 	if err != nil {
 		log.Error(err)
 		return
@@ -69,13 +56,42 @@ func main() {
 			t = append(t, kind)
 		}
 		tables := models.GetModelsBy(t...)
-		if err := hasura.Create(cfg.Hasura, cfg.Database, views, tables...); err != nil {
+		if err := hasura.Create(ctx, cfg.Hasura, cfg.Database, views, tables...); err != nil {
+			log.Error(err)
+			return
+		}
+	}
+
+	var prometheusServer *http.Server
+	if cfg.Prometheus.URL != "" {
+		registerPrometheusMetrics()
+
+		var prometheusWaitGroup sync.WaitGroup
+		prometheusWaitGroup.Add(1)
+		prometheusServer = startPrometheusServer(cfg.Prometheus.URL, &prometheusWaitGroup)
+	}
+
+	for network, mempool := range cfg.Mempool.Indexers {
+		for _, kind := range mempool.Filters.Kinds {
+			kinds[kind] = struct{}{}
+		}
+
+		indexer, err := NewIndexer(ctx, network, *mempool, cfg.Database, cfg.Mempool.Settings)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		indexers[network] = indexer
+
+		if err := indexer.Start(ctx); err != nil {
 			log.Error(err)
 			return
 		}
 	}
 
 	<-signals
+	cancel()
+
 	log.Warn("Trying carefully stopping....")
 	for _, indexer := range indexers {
 		if err := indexer.Close(); err != nil {
@@ -84,16 +100,22 @@ func main() {
 		}
 	}
 
+	if prometheusServer != nil {
+		if err := prometheusServer.Shutdown(context.Background()); err != nil {
+			log.Error(err)
+		}
+	}
+
 	close(signals)
 }
 
-func createViews(database libCfg.Database) ([]string, error) {
+func createViews(ctx context.Context, database libCfg.Database) ([]string, error) {
 	files, err := ioutil.ReadDir("views")
 	if err != nil {
 		return nil, err
 	}
 
-	db, err := models.OpenDatabaseConnection(database)
+	db, err := models.OpenDatabaseConnection(ctx, database)
 	if err != nil {
 		return nil, err
 	}
@@ -122,4 +144,20 @@ func createViews(database libCfg.Database) ([]string, error) {
 	}
 
 	return views, nil
+}
+
+func startPrometheusServer(address string, wg *sync.WaitGroup) *http.Server {
+	srv := &http.Server{Addr: address}
+
+	http.Handle("/metrics", promhttp.Handler())
+
+	go func() {
+		defer wg.Done()
+
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("ListenAndServe(): %v", err)
+		}
+	}()
+
+	return srv
 }
