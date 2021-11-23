@@ -64,7 +64,6 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 	}
 
 	memInd, err := receiver.New(indexerCfg.DataSource.RPC, network,
-		receiver.WithInterval(settings.MempoolRequestInterval),
 		receiver.WithTimeout(settings.RPCTimeout),
 		receiver.WithStorage(db, constants.TimeBetweenBlocks[0]),
 		receiver.WithPrometheus(prom),
@@ -234,7 +233,7 @@ func (indexer *Indexer) listen(ctx context.Context) {
 					continue
 				}
 			case receiver.StatusBranchDelayed, receiver.StatusBranchRefused, receiver.StatusRefused, receiver.StatusUnprocessed:
-				failed, ok := msg.Body.(node.Failed)
+				failed, ok := msg.Body.(node.FailedMonitor)
 				if !ok {
 					indexer.log().Errorf("Invalid %s operation %v", msg.Status, failed)
 					continue

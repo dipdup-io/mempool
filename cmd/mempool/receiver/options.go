@@ -8,17 +8,6 @@ import (
 // ReceiverOption -
 type ReceiverOption func(*Receiver)
 
-// WithInterval -
-func WithInterval(seconds uint64) ReceiverOption {
-	return func(m *Receiver) {
-		if seconds > 0 {
-			m.interval = seconds
-		} else {
-			m.interval = 10
-		}
-	}
-}
-
 // WithTimeout -
 func WithTimeout(seconds uint64) ReceiverOption {
 	return func(m *Receiver) {

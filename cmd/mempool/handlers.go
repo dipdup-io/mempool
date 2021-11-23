@@ -113,7 +113,7 @@ func (indexer *Indexer) handleInChain(operations tzkt.OperationMessage) error {
 	})
 }
 
-func (indexer *Indexer) handleFailedOperation(operation node.Failed, status, protocol string) error {
+func (indexer *Indexer) handleFailedOperation(operation node.FailedMonitor, status, protocol string) error {
 	return indexer.db.Transaction(func(tx *gorm.DB) error {
 		for i := range operation.Contents {
 			mempoolOperation := models.MempoolOperation{

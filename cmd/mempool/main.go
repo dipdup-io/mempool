@@ -42,26 +42,8 @@ func main() {
 
 	kinds := make(map[string]struct{})
 
-	views, err := createViews(ctx, cfg.Database)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	if cfg.Hasura.URL != "" {
-		t := make([]string, 0)
-		for kind := range kinds {
-			t = append(t, kind)
-		}
-		tables := models.GetModelsBy(t...)
-		if err := hasura.Create(ctx, cfg.Hasura, cfg.Database, views, tables...); err != nil {
-			log.Error(err)
-			return
-		}
-	}
-
 	var prometheusService *prometheus.Service
-	if cfg.Prometheus.URL != "" {
+	if cfg.Prometheus != nil {
 		prometheusService = prometheus.NewService(cfg.Prometheus)
 		registerPrometheusMetrics(prometheusService)
 		prometheusService.Start()
@@ -80,6 +62,23 @@ func main() {
 		indexers[network] = indexer
 
 		if err := indexer.Start(ctx); err != nil {
+			log.Error(err)
+			return
+		}
+	}
+	views, err := createViews(ctx, cfg.Database)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	if cfg.Hasura != nil {
+		t := make([]string, 0)
+		for kind := range kinds {
+			t = append(t, kind)
+		}
+		tables := models.GetModelsBy(t...)
+		if err := hasura.Create(ctx, cfg.Hasura, cfg.Database, views, tables...); err != nil {
 			log.Error(err)
 			return
 		}

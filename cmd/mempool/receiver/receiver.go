@@ -18,6 +18,7 @@ import (
 // Receiver -
 type Receiver struct {
 	urls      []string
+	monitors  []*node.Monitor
 	db        *gorm.DB
 	prom      *prometheus.Service
 	state     state.State
@@ -26,7 +27,6 @@ type Receiver struct {
 	network   string
 
 	blockTime int64
-	interval  uint64
 	timeout   uint64
 
 	wg         sync.WaitGroup
@@ -38,11 +38,18 @@ func New(urls []string, network string, opts ...ReceiverOption) (*Receiver, erro
 	if len(urls) == 0 {
 		return nil, errors.Errorf("Empty url list: %s", network)
 	}
+
+	monitors := make([]*node.Monitor, len(urls))
+	for i := range urls {
+		monitors[i] = node.NewMonitor(urls[i])
+	}
+
 	indexer := Receiver{
 		urls:       urls,
 		operations: make(chan Message, 1024),
 		indexName:  models.MempoolIndexName(network),
 		network:    network,
+		monitors:   monitors,
 	}
 
 	for i := range opts {
@@ -54,20 +61,31 @@ func New(urls []string, network string, opts ...ReceiverOption) (*Receiver, erro
 
 // Start -
 func (indexer *Receiver) Start(ctx context.Context) {
-	if indexer.db != nil {
+	if indexer.db != nil && len(indexer.urls) > 0 {
 		indexer.wg.Add(1)
-		go indexer.updateState(ctx)
+		go indexer.updateState(ctx, indexer.urls[0])
 	}
 
-	for i := range indexer.urls {
+	for i := range indexer.monitors {
 		indexer.wg.Add(1)
-		go indexer.run(ctx, indexer.urls[i])
+		go indexer.run(ctx, indexer.monitors[i])
+
+		indexer.monitors[i].SubscribeOnMempoolApplied(ctx)
+		indexer.monitors[i].SubscribeOnMempoolBranchDelayed(ctx)
+		indexer.monitors[i].SubscribeOnMempoolBranchRefused(ctx)
+		indexer.monitors[i].SubscribeOnMempoolRefused(ctx)
 	}
 }
 
 // Close -
 func (indexer *Receiver) Close() error {
 	indexer.wg.Wait()
+
+	for i := range indexer.monitors {
+		if err := indexer.monitors[i].Close(); err != nil {
+			return err
+		}
+	}
 
 	close(indexer.operations)
 	return nil
@@ -78,69 +96,47 @@ func (indexer *Receiver) Operations() <-chan Message {
 	return indexer.operations
 }
 
-func (indexer *Receiver) run(ctx context.Context, url string) {
+func (indexer *Receiver) run(ctx context.Context, monitor *node.Monitor) {
 	defer indexer.wg.Done()
-
-	rpc := node.NewNodeRPC(url)
-	if err := indexer.process(ctx, rpc); err != nil {
-		log.Error(err)
-	}
-
-	ticker := time.NewTicker(time.Duration(indexer.interval) * time.Second)
-	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
-			if err := indexer.process(ctx, rpc); err != nil {
-				log.Error(err)
+		case applied := <-monitor.Applied():
+			for i := range applied {
+				indexer.operations <- Message{
+					Status:   StatusApplied,
+					Body:     *applied[i],
+					Protocol: indexer.protocol,
+				}
+			}
+		case branchDelayed := <-monitor.BranchDelayed():
+			for i := range branchDelayed {
+				indexer.operations <- Message{
+					Status:   StatusBranchDelayed,
+					Body:     *branchDelayed[i],
+					Protocol: indexer.protocol,
+				}
+			}
+		case branchRefused := <-monitor.BranchRefused():
+			for i := range branchRefused {
+				indexer.operations <- Message{
+					Status:   StatusBranchRefused,
+					Body:     *branchRefused[i],
+					Protocol: indexer.protocol,
+				}
+			}
+		case refused := <-monitor.Refused():
+			for i := range refused {
+				indexer.operations <- Message{
+					Status:   StatusRefused,
+					Body:     *refused[i],
+					Protocol: indexer.protocol,
+				}
 			}
 		}
 	}
-}
-
-func (indexer *Receiver) process(ctx context.Context, rpc *node.NodeRPC) error {
-	if err := indexer.checkHead(ctx, rpc); err != nil {
-		return err
-	}
-
-	result, err := rpc.PendingOperations(node.WithContext(ctx))
-	if err != nil {
-		indexer.incrementMetric(rpc.URL(), indexer.network, err)
-		return err
-	}
-
-	for _, operation := range result.Applied {
-		indexer.operations <- Message{
-			Status:   StatusApplied,
-			Body:     operation,
-			Protocol: indexer.protocol,
-		}
-	}
-	for _, operation := range result.BranchDelayed {
-		indexer.operations <- Message{
-			Status:   StatusBranchDelayed,
-			Body:     operation,
-			Protocol: indexer.protocol,
-		}
-	}
-	for _, operation := range result.BranchRefused {
-		indexer.operations <- Message{
-			Status:   StatusBranchRefused,
-			Body:     operation,
-			Protocol: indexer.protocol,
-		}
-	}
-	for _, operation := range result.Refused {
-		indexer.operations <- Message{
-			Status:   StatusRefused,
-			Body:     operation,
-			Protocol: indexer.protocol,
-		}
-	}
-	return nil
 }
 
 func (indexer *Receiver) checkHead(ctx context.Context, rpc *node.NodeRPC) error {
@@ -163,13 +159,18 @@ func (indexer *Receiver) checkHead(ctx context.Context, rpc *node.NodeRPC) error
 	return nil
 }
 
-func (indexer *Receiver) updateState(ctx context.Context) {
+func (indexer *Receiver) updateState(ctx context.Context, url string) {
 	defer indexer.wg.Done()
+
+	rpc := node.NewNodeRPC(url)
 
 	ticker := time.NewTicker(time.Second * time.Duration(indexer.blockTime))
 	defer ticker.Stop()
 
 	// init
+	if err := indexer.checkHead(ctx, rpc); err != nil {
+		log.Error(err)
+	}
 	if err := indexer.setState(); err != nil {
 		log.Error(err)
 	}
@@ -179,6 +180,10 @@ func (indexer *Receiver) updateState(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+			if err := indexer.checkHead(ctx, rpc); err != nil {
+				log.Error(err)
+				continue
+			}
 			if err := indexer.setState(); err != nil {
 				log.Error(err)
 				continue

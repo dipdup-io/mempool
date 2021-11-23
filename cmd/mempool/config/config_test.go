@@ -49,12 +49,11 @@ func TestLoad(t *testing.T) {
 				},
 				Mempool: Mempool{
 					Settings: Settings{
-						KeepOperations:         172800,
-						ExpiredAfter:           120,
-						KeepInChainBlocks:      10,
-						MempoolRequestInterval: 2,
-						RPCTimeout:             10,
-						GasStatsLifetime:       3600,
+						KeepOperations:    172800,
+						ExpiredAfter:      120,
+						KeepInChainBlocks: 10,
+						RPCTimeout:        10,
+						GasStatsLifetime:  3600,
 					},
 					Indexers: map[string]*Indexer{
 						"mainnet": {
