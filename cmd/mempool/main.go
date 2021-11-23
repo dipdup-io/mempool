@@ -4,19 +4,17 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 
 	"github.com/dipdup-net/go-lib/cmdline"
 	libCfg "github.com/dipdup-net/go-lib/config"
 	"github.com/dipdup-net/go-lib/hasura"
+	"github.com/dipdup-net/go-lib/prometheus"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -62,13 +60,11 @@ func main() {
 		}
 	}
 
-	var prometheusServer *http.Server
+	var prometheusService *prometheus.Service
 	if cfg.Prometheus.URL != "" {
-		registerPrometheusMetrics()
-
-		var prometheusWaitGroup sync.WaitGroup
-		prometheusWaitGroup.Add(1)
-		prometheusServer = startPrometheusServer(cfg.Prometheus.URL, &prometheusWaitGroup)
+		prometheusService = prometheus.NewService(cfg.Prometheus)
+		registerPrometheusMetrics(prometheusService)
+		prometheusService.Start()
 	}
 
 	for network, mempool := range cfg.Mempool.Indexers {
@@ -76,7 +72,7 @@ func main() {
 			kinds[kind] = struct{}{}
 		}
 
-		indexer, err := NewIndexer(ctx, network, *mempool, cfg.Database, cfg.Mempool.Settings)
+		indexer, err := NewIndexer(ctx, network, *mempool, cfg.Database, cfg.Mempool.Settings, prometheusService)
 		if err != nil {
 			log.Error(err)
 			return
@@ -100,8 +96,8 @@ func main() {
 		}
 	}
 
-	if prometheusServer != nil {
-		if err := prometheusServer.Shutdown(context.Background()); err != nil {
+	if prometheusService != nil {
+		if err := prometheusService.Close(); err != nil {
 			log.Error(err)
 		}
 	}
@@ -144,20 +140,4 @@ func createViews(ctx context.Context, database libCfg.Database) ([]string, error
 	}
 
 	return views, nil
-}
-
-func startPrometheusServer(address string, wg *sync.WaitGroup) *http.Server {
-	srv := &http.Server{Addr: address}
-
-	http.Handle("/metrics", promhttp.Handler())
-
-	go func() {
-		defer wg.Done()
-
-		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalf("ListenAndServe(): %v", err)
-		}
-	}()
-
-	return srv
 }

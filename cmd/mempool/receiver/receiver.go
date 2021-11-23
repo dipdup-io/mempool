@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/dipdup-net/go-lib/node"
+	"github.com/dipdup-net/go-lib/prometheus"
 	"github.com/dipdup-net/go-lib/state"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -19,7 +19,7 @@ import (
 type Receiver struct {
 	urls      []string
 	db        *gorm.DB
-	metric    *prometheus.CounterVec
+	prom      *prometheus.Service
 	state     state.State
 	indexName string
 	protocol  string
@@ -200,7 +200,7 @@ func (indexer *Receiver) setState() error {
 }
 
 func (indexer *Receiver) incrementMetric(url, network string, err error) {
-	if err == nil || indexer.metric == nil {
+	if err == nil || indexer.prom == nil {
 		return
 	}
 
@@ -208,9 +208,9 @@ func (indexer *Receiver) incrementMetric(url, network string, err error) {
 	if !ok {
 		return
 	}
-	indexer.metric.With(prometheus.Labels{
+	indexer.prom.IncrementCounter("mempool_rpc_errors_count", map[string]string{
 		"network": network,
 		"node":    url,
 		"code":    fmt.Sprintf("%d", reqErr.Code),
-	}).Inc()
+	})
 }

@@ -81,11 +81,13 @@ func (indexer *Indexer) handleInChain(operations tzkt.OperationMessage) error {
 				return false
 			}
 
-			incrementMetric(operationCountMetricName, map[string]string{
-				"kind":    apiOperation.Kind,
-				"status":  models.StatusInChain,
-				"network": indexer.network,
-			})
+			if indexer.prom != nil {
+				indexer.prom.IncrementCounter(operationCountMetricName, map[string]string{
+					"kind":    apiOperation.Kind,
+					"status":  models.StatusInChain,
+					"network": indexer.network,
+				})
+			}
 
 			if indexer.hasManager {
 				gasStats := models.GasStats{
@@ -179,12 +181,13 @@ func (indexer *Indexer) handleAppliedOperation(operation node.Applied, protocol 
 
 func (indexer *Indexer) handleContent(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
 	operation.Kind = content.Kind
-
-	incrementMetric(operationCountMetricName, map[string]string{
-		"kind":    content.Kind,
-		"status":  operation.Status,
-		"network": indexer.network,
-	})
+	if indexer.prom != nil {
+		indexer.prom.IncrementCounter(operationCountMetricName, map[string]string{
+			"kind":    content.Kind,
+			"status":  operation.Status,
+			"network": indexer.network,
+		})
+	}
 
 	switch content.Kind {
 	case node.KindActivation:

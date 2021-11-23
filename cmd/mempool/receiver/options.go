@@ -1,7 +1,7 @@
 package receiver
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/dipdup-net/go-lib/prometheus"
 	"gorm.io/gorm"
 )
 
@@ -42,11 +42,9 @@ func WithStorage(db *gorm.DB, blockTime int64) ReceiverOption {
 	}
 }
 
-// WithPrometheusMetric -
-func WithPrometheusMetric(metric *prometheus.CounterVec) ReceiverOption {
+// WithPrometheus -
+func WithPrometheus(prom *prometheus.Service) ReceiverOption {
 	return func(m *Receiver) {
-		if metric != nil {
-			m.metric = metric
-		}
+		m.prom = prom
 	}
 }

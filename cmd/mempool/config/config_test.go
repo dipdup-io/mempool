@@ -36,14 +36,14 @@ func TestLoad(t *testing.T) {
 						Kind: "sqlite",
 						Path: "mempool.db",
 					},
-					Hasura: config.Hasura{
+					Hasura: &config.Hasura{
 						URL:                "http://hasura:8080",
 						Secret:             "admin_secret",
 						RowsLimit:          100,
 						EnableAggregations: true,
 					},
 
-					Prometheus: config.Prometheus{
+					Prometheus: &config.Prometheus{
 						URL: "127.0.0.1:2112",
 					},
 				},

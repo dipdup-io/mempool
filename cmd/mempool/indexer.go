@@ -11,6 +11,7 @@ import (
 
 	generalConfig "github.com/dipdup-net/go-lib/config"
 	"github.com/dipdup-net/go-lib/node"
+	"github.com/dipdup-net/go-lib/prometheus"
 	"github.com/dipdup-net/go-lib/state"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
@@ -24,6 +25,7 @@ type Indexer struct {
 	db               *gorm.DB
 	tzkt             *tzkt.TzKT
 	mempool          *receiver.Receiver
+	prom             *prometheus.Service
 	branches         *BlockQueue
 	cache            *Cache
 	delegates        *CachedDelegates
@@ -41,7 +43,7 @@ type Indexer struct {
 }
 
 // NewIndexer -
-func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, database generalConfig.Database, settings config.Settings) (*Indexer, error) {
+func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, database generalConfig.Database, settings config.Settings, prom *prometheus.Service) (*Indexer, error) {
 	db, err := models.OpenDatabaseConnection(ctx, database, indexerCfg.Filters.Kinds...)
 	if err != nil {
 		return nil, err
@@ -65,7 +67,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		receiver.WithInterval(settings.MempoolRequestInterval),
 		receiver.WithTimeout(settings.RPCTimeout),
 		receiver.WithStorage(db, constants.TimeBetweenBlocks[0]),
-		receiver.WithPrometheusMetric(getMetric(rpcErrorsCountName)),
+		receiver.WithPrometheus(prom),
 	)
 	if err != nil {
 		return nil, err
@@ -88,6 +90,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		filters:          indexerCfg.Filters,
 		tzkt:             tzkt.NewTzKT(indexerCfg.DataSource.Tzkt, indexerCfg.Filters.Accounts, indexerCfg.Filters.Kinds),
 		mempool:          memInd,
+		prom:             prom,
 		cache:            NewCache(2 * time.Hour),
 		keepInChain:      uint64(constants.TimeBetweenBlocks[0]) * settings.KeepInChainBlocks,
 		keepOperations:   uint64(constants.TimeBetweenBlocks[0]) * settings.ExpiredAfter,
