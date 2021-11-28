@@ -1,16 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/karlseguin/ccache"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	generalConfig "github.com/dipdup-net/go-lib/config"
 	"github.com/dipdup-net/go-lib/node"
+	"github.com/dipdup-net/go-lib/prometheus"
 	"github.com/dipdup-net/go-lib/state"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
@@ -24,8 +25,9 @@ type Indexer struct {
 	db               *gorm.DB
 	tzkt             *tzkt.TzKT
 	mempool          *receiver.Receiver
+	prom             *prometheus.Service
 	branches         *BlockQueue
-	cache            *ccache.Cache
+	cache            *Cache
 	delegates        *CachedDelegates
 	state            state.State
 	filters          config.Filters
@@ -35,21 +37,19 @@ type Indexer struct {
 	keepInChain      uint64
 	keepOperations   uint64
 	gasStatsLifetime uint64
-	stop             chan struct{}
-	threadsCount     int
 	hasManager       bool
 
 	wg sync.WaitGroup
 }
 
 // NewIndexer -
-func NewIndexer(network string, indexerCfg config.Indexer, database generalConfig.Database, settings config.Settings) (*Indexer, error) {
-	db, err := models.OpenDatabaseConnection(database, indexerCfg.Filters.Kinds...)
+func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, database generalConfig.Database, settings config.Settings, prom *prometheus.Service) (*Indexer, error) {
+	db, err := models.OpenDatabaseConnection(ctx, database, indexerCfg.Filters.Kinds...)
 	if err != nil {
 		return nil, err
 	}
 
-	rpc := node.NewNodeRPC(indexerCfg.DataSource.RPC[0], node.WithTimeout(settings.RPCTimeout))
+	rpc := node.NewNodeRPC(indexerCfg.DataSource.RPC[0])
 	constants, err := rpc.Constants()
 	if err != nil {
 		return nil, err
@@ -64,9 +64,9 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 	}
 
 	memInd, err := receiver.New(indexerCfg.DataSource.RPC, network,
-		receiver.WithInterval(settings.MempoolRequestInterval),
 		receiver.WithTimeout(settings.RPCTimeout),
 		receiver.WithStorage(db, constants.TimeBetweenBlocks[0]),
+		receiver.WithPrometheus(prom),
 	)
 	if err != nil {
 		return nil, err
@@ -89,8 +89,8 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 		filters:          indexerCfg.Filters,
 		tzkt:             tzkt.NewTzKT(indexerCfg.DataSource.Tzkt, indexerCfg.Filters.Accounts, indexerCfg.Filters.Kinds),
 		mempool:          memInd,
-		cache:            ccache.New(ccache.Configure().MaxSize(2 ^ 13)),
-		threadsCount:     1,
+		prom:             prom,
+		cache:            NewCache(2 * time.Hour),
 		keepInChain:      uint64(constants.TimeBetweenBlocks[0]) * settings.KeepInChainBlocks,
 		keepOperations:   uint64(constants.TimeBetweenBlocks[0]) * settings.ExpiredAfter,
 		gasStatsLifetime: settings.GasStatsLifetime,
@@ -113,18 +113,15 @@ func NewIndexer(network string, indexerCfg config.Indexer, database generalConfi
 	for _, kind := range indexer.filters.Kinds {
 		if kind == node.KindEndorsement {
 			indexer.delegates = newCachedDelegates(indexer.tzkt, constants.BlocksPerCycle)
-			indexer.threadsCount += 1
 			break
 		}
 	}
-
-	indexer.stop = make(chan struct{}, indexer.threadsCount)
 
 	return indexer, nil
 }
 
 // Start -
-func (indexer *Indexer) Start() error {
+func (indexer *Indexer) Start(ctx context.Context) error {
 	indexer.log().WithField("kinds", indexer.filters.Kinds).Info("Starting...")
 
 	if err := indexer.initState(); err != nil {
@@ -132,17 +129,17 @@ func (indexer *Indexer) Start() error {
 	}
 
 	indexer.wg.Add(1)
-	go indexer.listen()
+	go indexer.listen(ctx)
 
 	if indexer.delegates != nil {
-		if err := indexer.delegates.Init(); err != nil {
+		if err := indexer.delegates.Init(ctx); err != nil {
 			return err
 		}
 		indexer.wg.Add(1)
-		go indexer.setEndorsementBakers()
+		go indexer.setEndorsementBakers(ctx)
 	}
 
-	if err := indexer.tzkt.Connect(); err != nil {
+	if err := indexer.tzkt.Connect(ctx); err != nil {
 		return err
 	}
 
@@ -150,17 +147,17 @@ func (indexer *Indexer) Start() error {
 		return err
 	}
 
-	indexer.mempool.Start()
+	indexer.mempool.Start(ctx)
 
 	return nil
 }
 
-func (indexer *Indexer) sync() {
+func (indexer *Indexer) sync(ctx context.Context) {
 	indexer.wg.Add(1)
 	indexer.log().Info("start syncing...")
 	go func() {
 		defer indexer.wg.Done()
-		indexer.tzkt.Sync(indexer.state.Level, indexer.stop)
+		indexer.tzkt.Sync(ctx, indexer.state.Level)
 	}()
 
 }
@@ -182,9 +179,6 @@ func (indexer *Indexer) initState() error {
 // Close -
 func (indexer *Indexer) Close() error {
 	indexer.log().Info("Stopping...")
-	for i := 0; i < 2; i++ {
-		indexer.stop <- struct{}{}
-	}
 	indexer.wg.Wait()
 
 	if err := indexer.tzkt.Close(); err != nil {
@@ -202,18 +196,16 @@ func (indexer *Indexer) Close() error {
 		return err
 	}
 
-	close(indexer.stop)
-
 	indexer.log().Info("Indexer was stopped")
 	return nil
 }
 
-func (indexer *Indexer) listen() {
+func (indexer *Indexer) listen(ctx context.Context) {
 	defer indexer.wg.Done()
 
 	for {
 		select {
-		case <-indexer.stop:
+		case <-ctx.Done():
 			return
 		case operations := <-indexer.tzkt.Operations():
 			if err := indexer.handleInChain(operations); err != nil {
@@ -221,7 +213,7 @@ func (indexer *Indexer) listen() {
 				continue
 			}
 		case block := <-indexer.tzkt.Blocks():
-			if err := indexer.handleBlock(block); err != nil {
+			if err := indexer.handleBlock(ctx, block); err != nil {
 				indexer.log().Error(err)
 				continue
 			}
@@ -241,7 +233,7 @@ func (indexer *Indexer) listen() {
 					continue
 				}
 			case receiver.StatusBranchDelayed, receiver.StatusBranchRefused, receiver.StatusRefused, receiver.StatusUnprocessed:
-				failed, ok := msg.Body.(node.Failed)
+				failed, ok := msg.Body.(node.FailedMonitor)
 				if !ok {
 					indexer.log().Errorf("Invalid %s operation %v", msg.Status, failed)
 					continue
@@ -262,9 +254,8 @@ func (indexer *Indexer) listen() {
 
 func (indexer *Indexer) isHashProcessed(hash string) bool {
 	key := fmt.Sprintf("hash:%s", hash)
-	item := indexer.cache.Get(key)
-	if item == nil {
-		indexer.cache.Set(key, struct{}{}, time.Minute*10)
+	if !indexer.cache.Has(key) {
+		indexer.cache.Set(key)
 		return false
 	}
 	return true

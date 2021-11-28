@@ -4,9 +4,7 @@ go 1.15
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/dipdup-net/go-lib v0.1.35
-	github.com/karlseguin/ccache v2.0.3+incompatible
-	github.com/karlseguin/expect v1.0.8 // indirect
+	github.com/dipdup-net/go-lib v0.1.38
 	github.com/mattn/go-sqlite3 v1.14.8 // indirect
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/pkg/errors v0.9.1

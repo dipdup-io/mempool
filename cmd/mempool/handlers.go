@@ -1,10 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/dipdup-net/go-lib/node"
 	"github.com/dipdup-net/go-lib/tzkt/api"
@@ -17,7 +17,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (indexer *Indexer) handleBlock(block tzkt.BlockMessage) error {
+func (indexer *Indexer) handleBlock(ctx context.Context, block tzkt.BlockMessage) error {
 	if err := indexer.processOldOperations(); err != nil {
 		return err
 	}
@@ -25,10 +25,10 @@ func (indexer *Indexer) handleBlock(block tzkt.BlockMessage) error {
 	switch block.Type {
 	case events.MessageTypeState:
 		if indexer.state.Level < block.Level {
-			indexer.sync()
+			indexer.sync(ctx)
 		}
 		if space := indexer.branches.Space(); space > 0 {
-			blocks, err := indexer.tzkt.GetBlocks(space, indexer.state.Level)
+			blocks, err := indexer.tzkt.GetBlocks(ctx, space, indexer.state.Level)
 			if err != nil {
 				return err
 			}
@@ -81,6 +81,14 @@ func (indexer *Indexer) handleInChain(operations tzkt.OperationMessage) error {
 				return false
 			}
 
+			if indexer.prom != nil {
+				indexer.prom.IncrementCounter(operationCountMetricName, map[string]string{
+					"kind":    apiOperation.Kind,
+					"status":  models.StatusInChain,
+					"network": indexer.network,
+				})
+			}
+
 			if indexer.hasManager {
 				gasStats := models.GasStats{
 					Network:      indexer.network,
@@ -105,7 +113,7 @@ func (indexer *Indexer) handleInChain(operations tzkt.OperationMessage) error {
 	})
 }
 
-func (indexer *Indexer) handleFailedOperation(operation node.Failed, status, protocol string) error {
+func (indexer *Indexer) handleFailedOperation(operation node.FailedMonitor, status, protocol string) error {
 	return indexer.db.Transaction(func(tx *gorm.DB) error {
 		for i := range operation.Contents {
 			mempoolOperation := models.MempoolOperation{
@@ -154,8 +162,8 @@ func (indexer *Indexer) handleAppliedOperation(operation node.Applied, protocol 
 
 			if indexer.hasManager {
 				key := fmt.Sprintf("gas:%s", operation.Hash)
-				if item := indexer.cache.Get(key); item == nil {
-					indexer.cache.Set(key, struct{}{}, time.Minute*60)
+				if !indexer.cache.Has(key) {
+					indexer.cache.Set(key)
 					gasStats := models.GasStats{
 						Network:        indexer.network,
 						Hash:           operation.Hash,
@@ -173,6 +181,13 @@ func (indexer *Indexer) handleAppliedOperation(operation node.Applied, protocol 
 
 func (indexer *Indexer) handleContent(db *gorm.DB, content node.Content, operation models.MempoolOperation) error {
 	operation.Kind = content.Kind
+	if indexer.prom != nil {
+		indexer.prom.IncrementCounter(operationCountMetricName, map[string]string{
+			"kind":    content.Kind,
+			"status":  operation.Status,
+			"network": indexer.network,
+		})
+	}
 
 	switch content.Kind {
 	case node.KindActivation:

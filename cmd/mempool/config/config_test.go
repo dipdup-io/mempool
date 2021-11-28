@@ -36,21 +36,24 @@ func TestLoad(t *testing.T) {
 						Kind: "sqlite",
 						Path: "mempool.db",
 					},
-					Hasura: config.Hasura{
+					Hasura: &config.Hasura{
 						URL:                "http://hasura:8080",
 						Secret:             "admin_secret",
 						RowsLimit:          100,
 						EnableAggregations: true,
 					},
+
+					Prometheus: &config.Prometheus{
+						URL: "127.0.0.1:2112",
+					},
 				},
 				Mempool: Mempool{
 					Settings: Settings{
-						KeepOperations:         172800,
-						ExpiredAfter:           120,
-						KeepInChainBlocks:      10,
-						MempoolRequestInterval: 2,
-						RPCTimeout:             10,
-						GasStatsLifetime:       3600,
+						KeepOperations:    172800,
+						ExpiredAfter:      120,
+						KeepInChainBlocks: 10,
+						RPCTimeout:        10,
+						GasStatsLifetime:  3600,
 					},
 					Indexers: map[string]*Indexer{
 						"mainnet": {

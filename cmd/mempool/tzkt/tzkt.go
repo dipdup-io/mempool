@@ -1,6 +1,7 @@
 package tzkt
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -27,7 +28,6 @@ type TzKT struct {
 
 	operations chan OperationMessage
 	blocks     chan BlockMessage
-	stop       chan struct{}
 	wg         sync.WaitGroup
 }
 
@@ -46,12 +46,11 @@ func NewTzKT(url string, accounts []string, kinds []string) *TzKT {
 		api:        api.New(url),
 		operations: make(chan OperationMessage, 1024),
 		blocks:     make(chan BlockMessage, 1024),
-		stop:       make(chan struct{}, 1),
 	}
 }
 
 // Connect -
-func (tzkt *TzKT) Connect() error {
+func (tzkt *TzKT) Connect(ctx context.Context) error {
 	if err := tzkt.client.Connect(); err != nil {
 		return err
 	}
@@ -63,7 +62,7 @@ func (tzkt *TzKT) Connect() error {
 
 		for {
 			select {
-			case <-tzkt.stop:
+			case <-ctx.Done():
 				return
 			case msg := <-tzkt.client.Listen():
 				switch msg.Channel {
@@ -75,8 +74,6 @@ func (tzkt *TzKT) Connect() error {
 					if err := tzkt.handleBlockMessage(msg); err != nil {
 						log.Error(err)
 					}
-				default:
-					log.Errorf("Unknown channel %s", msg.Channel)
 				}
 			}
 		}
@@ -87,7 +84,6 @@ func (tzkt *TzKT) Connect() error {
 
 // Close -
 func (tzkt *TzKT) Close() error {
-	tzkt.stop <- struct{}{}
 	tzkt.wg.Wait()
 
 	if err := tzkt.client.Close(); err != nil {
@@ -96,7 +92,6 @@ func (tzkt *TzKT) Close() error {
 
 	close(tzkt.operations)
 	close(tzkt.blocks)
-	close(tzkt.stop)
 
 	return nil
 }
@@ -348,10 +343,10 @@ func (state syncState) nextToRequest() *tableState {
 }
 
 // Sync -
-func (tzkt *TzKT) Sync(indexerLevel uint64, stop chan struct{}) {
+func (tzkt *TzKT) Sync(ctx context.Context, indexerLevel uint64) {
 	tzkt.state = indexerLevel
 
-	head, err := tzkt.api.GetHead()
+	head, err := tzkt.api.GetHead(ctx)
 	if err != nil {
 		log.Error(err)
 		return
@@ -360,7 +355,7 @@ func (tzkt *TzKT) Sync(indexerLevel uint64, stop chan struct{}) {
 	log.Infof("current TzKT level is %d. Current mempool indexer level is %d", head.Level, tzkt.state)
 	for {
 		select {
-		case <-stop:
+		case <-ctx.Done():
 			return
 		default:
 			if head.Level <= tzkt.state || tzkt.state == 0 {
@@ -374,13 +369,13 @@ func (tzkt *TzKT) Sync(indexerLevel uint64, stop chan struct{}) {
 				return
 			}
 
-			if err := tzkt.init(state, tzkt.state, head.Level); err != nil {
+			if err := tzkt.init(ctx, state, tzkt.state, head.Level); err != nil {
 				log.Error(err)
 				return
 			}
 
 			tzkt.state = head.Level
-			head, err = tzkt.api.GetHead()
+			head, err = tzkt.api.GetHead(ctx)
 			if err != nil {
 				log.Error(err)
 				return
@@ -389,13 +384,13 @@ func (tzkt *TzKT) Sync(indexerLevel uint64, stop chan struct{}) {
 	}
 }
 
-func (tzkt *TzKT) init(state syncState, indexerState, headLevel uint64) error {
+func (tzkt *TzKT) init(ctx context.Context, state syncState, indexerState, headLevel uint64) error {
 	msg := newOperationMessage()
 
 	for !state.finished() {
 
 		for table := state.nextToRequest(); table != nil; table = state.nextToRequest() {
-			if err := tzkt.getTableData(table, indexerState, headLevel); err != nil {
+			if err := tzkt.getTableData(ctx, table, indexerState, headLevel); err != nil {
 				return err
 			}
 		}
@@ -466,7 +461,7 @@ func (tzkt *TzKT) processSync(state syncState, msg *OperationMessage) error {
 	return nil
 }
 
-func (tzkt *TzKT) getTableData(table *tableState, indexerState, headLevel uint64) error {
+func (tzkt *TzKT) getTableData(ctx context.Context, table *tableState, indexerState, headLevel uint64) error {
 	filters := map[string]string{
 		"limit":         fmt.Sprintf("%d", pageSize),
 		"level.le":      fmt.Sprintf("%d", headLevel),
@@ -481,36 +476,36 @@ func (tzkt *TzKT) getTableData(table *tableState, indexerState, headLevel uint64
 
 	switch table.Table {
 	case api.KindActivation:
-		return getOperations(table, filters, tzkt.api.GetActivations)
+		return getOperations(ctx, table, filters, tzkt.api.GetActivations)
 	case api.KindBallot:
-		return getOperations(table, filters, tzkt.api.GetBallots)
+		return getOperations(ctx, table, filters, tzkt.api.GetBallots)
 	case api.KindDelegation:
-		return getOperations(table, filters, tzkt.api.GetDelegations)
+		return getOperations(ctx, table, filters, tzkt.api.GetDelegations)
 	case api.KindDoubleBaking:
-		return getOperations(table, filters, tzkt.api.GetDoubleBakings)
+		return getOperations(ctx, table, filters, tzkt.api.GetDoubleBakings)
 	case api.KindDoubleEndorsing:
-		return getOperations(table, filters, tzkt.api.GetDoubleEndorsings)
+		return getOperations(ctx, table, filters, tzkt.api.GetDoubleEndorsings)
 	case api.KindEndorsement:
-		return getOperations(table, filters, tzkt.api.GetEndorsements)
+		return getOperations(ctx, table, filters, tzkt.api.GetEndorsements)
 	case api.KindNonceRevelation:
-		return getOperations(table, filters, tzkt.api.GetNonceRevelations)
+		return getOperations(ctx, table, filters, tzkt.api.GetNonceRevelations)
 	case api.KindOrigination:
-		return getOperations(table, filters, tzkt.api.GetOriginations)
+		return getOperations(ctx, table, filters, tzkt.api.GetOriginations)
 	case api.KindProposal:
-		return getOperations(table, filters, tzkt.api.GetProposals)
+		return getOperations(ctx, table, filters, tzkt.api.GetProposals)
 	case api.KindReveal:
-		return getOperations(table, filters, tzkt.api.GetReveals)
+		return getOperations(ctx, table, filters, tzkt.api.GetReveals)
 	case api.KindTransaction:
-		return getOperations(table, filters, tzkt.api.GetTransactions)
+		return getOperations(ctx, table, filters, tzkt.api.GetTransactions)
 	case api.KindRegisterGlobalConstant:
-		return getOperations(table, filters, tzkt.api.GetRegisterConstants)
+		return getOperations(ctx, table, filters, tzkt.api.GetRegisterConstants)
 	default:
 		return errors.Wrap(ErrUnknownOperationKind, table.Table)
 	}
 }
 
-func getOperations(table *tableState, filters map[string]string, requestFunc func(map[string]string) ([]api.Operation, error)) error {
-	operations, err := requestFunc(filters)
+func getOperations(ctx context.Context, table *tableState, filters map[string]string, requestFunc func(context.Context, map[string]string) ([]api.Operation, error)) error {
+	operations, err := requestFunc(ctx, filters)
 	if err != nil {
 		return err
 	}
@@ -525,14 +520,14 @@ func getOperations(table *tableState, filters map[string]string, requestFunc fun
 }
 
 // GetBlocks -
-func (tzkt *TzKT) GetBlocks(limit, state uint64) ([]BlockMessage, error) {
+func (tzkt *TzKT) GetBlocks(ctx context.Context, limit, state uint64) ([]BlockMessage, error) {
 	filters := map[string]string{
 		"sort.desc":     "level",
 		"limit":         fmt.Sprintf("%d", limit),
 		"level.le":      fmt.Sprintf("%d", state),
 		"select.fields": "hash,level",
 	}
-	blocks, err := tzkt.api.GetBlocks(filters)
+	blocks, err := tzkt.api.GetBlocks(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -548,8 +543,8 @@ func (tzkt *TzKT) GetBlocks(limit, state uint64) ([]BlockMessage, error) {
 }
 
 // Delegates -
-func (tzkt *TzKT) Delegates() ([]api.Delegate, error) {
-	return tzkt.api.GetDelegates(map[string]string{
+func (tzkt *TzKT) Delegates(ctx context.Context) ([]api.Delegate, error) {
+	return tzkt.api.GetDelegates(ctx, map[string]string{
 		"active": "true",
 		"select": "publicKey,address",
 		"limit":  "1000",
@@ -557,8 +552,8 @@ func (tzkt *TzKT) Delegates() ([]api.Delegate, error) {
 }
 
 // Rights -
-func (tzkt *TzKT) Rights(level uint64) ([]api.Right, error) {
-	return tzkt.api.GetRights(map[string]string{
+func (tzkt *TzKT) Rights(ctx context.Context, level uint64) ([]api.Right, error) {
+	return tzkt.api.GetRights(ctx, map[string]string{
 		"type":   "endorsing",
 		"level":  fmt.Sprintf("%d", level),
 		"select": "baker,status",

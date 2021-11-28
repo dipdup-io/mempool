@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"time"
 
 	"github.com/dipdup-net/go-lib/tzkt/api"
@@ -10,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (indexer *Indexer) setEndorsementBakers() {
+func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 	defer indexer.wg.Done()
 
 	log.Info("Thread for finding endorsement baker started")
@@ -23,7 +24,7 @@ func (indexer *Indexer) setEndorsementBakers() {
 
 	for {
 		select {
-		case <-indexer.stop:
+		case <-ctx.Done():
 			return
 		case <-ticker.C:
 			if err := indexer.db.Transaction(func(tx *gorm.DB) error {
@@ -33,12 +34,12 @@ func (indexer *Indexer) setEndorsementBakers() {
 				}
 
 				for _, e := range endorsements {
-					if err := indexer.delegates.Update(e.Level); err != nil {
+					if err := indexer.delegates.Update(ctx, e.Level); err != nil {
 						return err
 					}
 
 					if currentLevel != e.Level {
-						rights, err = indexer.tzkt.Rights(e.Level + 1)
+						rights, err = indexer.tzkt.Rights(ctx, e.Level+1)
 						if err != nil {
 							return err
 						}

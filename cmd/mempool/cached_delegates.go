@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
 )
 
@@ -21,16 +23,16 @@ func newCachedDelegates(tzkt *tzkt.TzKT, blocksForCycle uint64) *CachedDelegates
 }
 
 // Update -
-func (cd *CachedDelegates) Update(level uint64) error {
+func (cd *CachedDelegates) Update(ctx context.Context, level uint64) error {
 	if level%cd.blocksForCycle != 0 {
 		return nil
 	}
-	return cd.Init()
+	return cd.Init(ctx)
 }
 
 // Init -
-func (cd *CachedDelegates) Init() error {
-	delegates, err := cd.tzkt.Delegates()
+func (cd *CachedDelegates) Init(ctx context.Context) error {
+	delegates, err := cd.tzkt.Delegates(ctx)
 	if err != nil {
 		return err
 	}

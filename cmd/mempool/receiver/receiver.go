@@ -1,10 +1,13 @@
 package receiver
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/dipdup-net/go-lib/node"
+	"github.com/dipdup-net/go-lib/prometheus"
 	"github.com/dipdup-net/go-lib/state"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/pkg/errors"
@@ -15,17 +18,18 @@ import (
 // Receiver -
 type Receiver struct {
 	urls      []string
+	monitors  []*node.Monitor
 	db        *gorm.DB
+	prom      *prometheus.Service
 	state     state.State
 	indexName string
 	protocol  string
+	network   string
 
 	blockTime int64
-	interval  uint64
 	timeout   uint64
 
 	wg         sync.WaitGroup
-	stop       chan struct{}
 	operations chan Message
 }
 
@@ -34,11 +38,18 @@ func New(urls []string, network string, opts ...ReceiverOption) (*Receiver, erro
 	if len(urls) == 0 {
 		return nil, errors.Errorf("Empty url list: %s", network)
 	}
+
+	monitors := make([]*node.Monitor, len(urls))
+	for i := range urls {
+		monitors[i] = node.NewMonitor(urls[i])
+	}
+
 	indexer := Receiver{
 		urls:       urls,
-		stop:       make(chan struct{}, len(urls)+1),
 		operations: make(chan Message, 1024),
 		indexName:  models.MempoolIndexName(network),
+		network:    network,
+		monitors:   monitors,
 	}
 
 	for i := range opts {
@@ -49,30 +60,34 @@ func New(urls []string, network string, opts ...ReceiverOption) (*Receiver, erro
 }
 
 // Start -
-func (indexer *Receiver) Start() {
-	if indexer.db != nil {
+func (indexer *Receiver) Start(ctx context.Context) {
+	if indexer.db != nil && len(indexer.urls) > 0 {
 		indexer.wg.Add(1)
-		go indexer.updateState()
+		go indexer.updateState(ctx, indexer.urls[0])
 	}
 
-	for i := range indexer.urls {
+	for i := range indexer.monitors {
 		indexer.wg.Add(1)
-		go indexer.run(indexer.urls[i])
+		go indexer.run(ctx, indexer.monitors[i])
+
+		indexer.monitors[i].SubscribeOnMempoolApplied(ctx)
+		indexer.monitors[i].SubscribeOnMempoolBranchDelayed(ctx)
+		indexer.monitors[i].SubscribeOnMempoolBranchRefused(ctx)
+		indexer.monitors[i].SubscribeOnMempoolRefused(ctx)
 	}
 }
 
 // Close -
 func (indexer *Receiver) Close() error {
-	for range indexer.urls {
-		indexer.stop <- struct{}{}
-	}
-	if indexer.db != nil {
-		indexer.stop <- struct{}{}
-	}
 	indexer.wg.Wait()
 
+	for i := range indexer.monitors {
+		if err := indexer.monitors[i].Close(); err != nil {
+			return err
+		}
+	}
+
 	close(indexer.operations)
-	close(indexer.stop)
 	return nil
 }
 
@@ -81,71 +96,57 @@ func (indexer *Receiver) Operations() <-chan Message {
 	return indexer.operations
 }
 
-func (indexer *Receiver) run(url string) {
+func (indexer *Receiver) run(ctx context.Context, monitor *node.Monitor) {
 	defer indexer.wg.Done()
-
-	rpc := node.NewNodeRPC(url, node.WithTimeout(indexer.timeout))
 
 	for {
 		select {
-		case <-indexer.stop:
+		case <-ctx.Done():
 			return
-		default:
-			if err := indexer.process(rpc); err != nil {
-				log.Error(err)
+		case applied := <-monitor.Applied():
+			for i := range applied {
+				indexer.operations <- Message{
+					Status:   StatusApplied,
+					Body:     *applied[i],
+					Protocol: indexer.protocol,
+				}
 			}
-			time.Sleep(time.Duration(indexer.interval) * time.Second)
+		case branchDelayed := <-monitor.BranchDelayed():
+			for i := range branchDelayed {
+				indexer.operations <- Message{
+					Status:   StatusBranchDelayed,
+					Body:     *branchDelayed[i],
+					Protocol: indexer.protocol,
+				}
+			}
+		case branchRefused := <-monitor.BranchRefused():
+			for i := range branchRefused {
+				indexer.operations <- Message{
+					Status:   StatusBranchRefused,
+					Body:     *branchRefused[i],
+					Protocol: indexer.protocol,
+				}
+			}
+		case refused := <-monitor.Refused():
+			for i := range refused {
+				indexer.operations <- Message{
+					Status:   StatusRefused,
+					Body:     *refused[i],
+					Protocol: indexer.protocol,
+				}
+			}
 		}
 	}
 }
 
-func (indexer *Receiver) process(rpc *node.NodeRPC) error {
-	if err := indexer.checkHead(rpc); err != nil {
-		return err
-	}
-
-	result, err := rpc.PendingOperations()
-	if err != nil {
-		return err
-	}
-	for _, operation := range result.Applied {
-		indexer.operations <- Message{
-			Status:   StatusApplied,
-			Body:     operation,
-			Protocol: indexer.protocol,
-		}
-	}
-	for _, operation := range result.BranchDelayed {
-		indexer.operations <- Message{
-			Status:   StatusBranchDelayed,
-			Body:     operation,
-			Protocol: indexer.protocol,
-		}
-	}
-	for _, operation := range result.BranchRefused {
-		indexer.operations <- Message{
-			Status:   StatusBranchRefused,
-			Body:     operation,
-			Protocol: indexer.protocol,
-		}
-	}
-	for _, operation := range result.Refused {
-		indexer.operations <- Message{
-			Status:   StatusRefused,
-			Body:     operation,
-			Protocol: indexer.protocol,
-		}
-	}
-	return nil
-}
-
-func (indexer *Receiver) checkHead(rpc *node.NodeRPC) error {
+func (indexer *Receiver) checkHead(ctx context.Context, rpc *node.NodeRPC) error {
 	if indexer.db == nil {
 		return nil
 	}
 
-	head, err := rpc.Header("head")
+	head, err := rpc.Header("head", node.WithContext(ctx))
 	if err != nil {
+		indexer.incrementMetric(rpc.URL(), indexer.network, err)
 		return err
 	}
 
@@ -158,22 +159,31 @@ func (indexer *Receiver) checkHead(rpc *node.NodeRPC) error {
 	return nil
 }
 
-func (indexer *Receiver) updateState() {
+func (indexer *Receiver) updateState(ctx context.Context, url string) {
 	defer indexer.wg.Done()
+
+	rpc := node.NewNodeRPC(url)
 
 	ticker := time.NewTicker(time.Second * time.Duration(indexer.blockTime))
 	defer ticker.Stop()
 
 	// init
+	if err := indexer.checkHead(ctx, rpc); err != nil {
+		log.Error(err)
+	}
 	if err := indexer.setState(); err != nil {
 		log.Error(err)
 	}
 
 	for {
 		select {
-		case <-indexer.stop:
+		case <-ctx.Done():
 			return
 		case <-ticker.C:
+			if err := indexer.checkHead(ctx, rpc); err != nil {
+				log.Error(err)
+				continue
+			}
 			if err := indexer.setState(); err != nil {
 				log.Error(err)
 				continue
@@ -192,4 +202,20 @@ func (indexer *Receiver) setState() error {
 	}
 	indexer.state = state
 	return nil
+}
+
+func (indexer *Receiver) incrementMetric(url, network string, err error) {
+	if err == nil || indexer.prom == nil {
+		return
+	}
+
+	reqErr, ok := err.(node.RequestError)
+	if !ok {
+		return
+	}
+	indexer.prom.IncrementCounter("mempool_rpc_errors_count", map[string]string{
+		"network": network,
+		"node":    url,
+		"code":    fmt.Sprintf("%d", reqErr.Code),
+	})
 }

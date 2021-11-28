@@ -1,14 +1,16 @@
 package models
 
 import (
+	"context"
+
 	"github.com/dipdup-net/go-lib/config"
 	"github.com/dipdup-net/go-lib/state"
 	"gorm.io/gorm"
 )
 
 // OpenDatabaseConnection -
-func OpenDatabaseConnection(cfg config.Database, kinds ...string) (*gorm.DB, error) {
-	db, err := state.OpenConnection(cfg)
+func OpenDatabaseConnection(ctx context.Context, cfg config.Database, kinds ...string) (*gorm.DB, error) {
+	db, err := state.OpenConnection(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}

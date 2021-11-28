@@ -4,7 +4,6 @@ mempool:
   settings:
     keep_operations_seconds: 172800
     keep_in_chain_blocks: 10
-    mempool_request_interval_seconds: 2
     rpc_timeout_seconds: 10
     gas_stats_lifetime: 3600
     expired_after_blocks: 120
@@ -97,3 +96,6 @@ hasura:
   admin_secret: ${ADMIN_SECRET:-changeme}
   select_limit: 100
   allow_aggregation: false
+
+prometheus:
+  url: 127.0.0.1:2112

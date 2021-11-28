@@ -36,12 +36,11 @@ type MempoolDataSource struct {
 
 // Settings -
 type Settings struct {
-	KeepOperations         uint64 `yaml:"keep_operations_seconds" validate:"required,min=1"`
-	ExpiredAfter           uint64 `yaml:"expired_after_blocks" validate:"required,min=1"`
-	KeepInChainBlocks      uint64 `yaml:"keep_in_chain_blocks" validate:"required,min=1"`
-	MempoolRequestInterval uint64 `yaml:"mempool_request_interval_seconds" validate:"required,min=1"`
-	RPCTimeout             uint64 `yaml:"rpc_timeout_seconds" validate:"required,min=1"`
-	GasStatsLifetime       uint64 `yaml:"gas_stats_lifetime" validate:"required,min=1"`
+	KeepOperations    uint64 `yaml:"keep_operations_seconds" validate:"required,min=1"`
+	ExpiredAfter      uint64 `yaml:"expired_after_blocks" validate:"required,min=1"`
+	KeepInChainBlocks uint64 `yaml:"keep_in_chain_blocks" validate:"required,min=1"`
+	RPCTimeout        uint64 `yaml:"rpc_timeout_seconds" validate:"required,min=1"`
+	GasStatsLifetime  uint64 `yaml:"gas_stats_lifetime" validate:"required,min=1"`
 }
 
 // Load -
