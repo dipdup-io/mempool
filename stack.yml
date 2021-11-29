@@ -2,8 +2,8 @@ version: "3.6"
 
 services:
   indexer:
-    image: dipdup/mempool:${TAG:-latest}
-    command: -c dipdup.testnet.yml
+    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-net/mempool:${TAG:-latest}
+    command: "-c dipdup.${MEMPOOL_ENV}.yml"
     build:
         dockerfile: build/Dockerfile
         context: .
@@ -16,8 +16,12 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+      labels:
+        - prometheus-job=${MEMPOOL_SERVICE}
+        - prometheus-port=2112
     networks:
       - mempool-network
+      - traefik-public
 
   db:
     image: postgres:13
@@ -56,11 +60,11 @@ services:
       replicas: 1
       labels:
         - traefik.enable=true
-        - traefik.http.services.mempool.loadbalancer.server.port=8080
-        - traefik.http.routers.mempool.rule=Host(`mempool.${DIPDUP_ROOT_DOMAIN:-staging.dipdup.net}`)
-        - traefik.http.routers.mempool.entrypoints=http,https
+        - traefik.http.services.${MEMPOOL_SERVICE}.loadbalancer.server.port=8080
+        - traefik.http.routers.${MEMPOOL_SERVICE}.rule=Host(`${MEMPOOL_SERVICE}.${MEMPOOL_ROOT_DOMAIN}`)
+        - traefik.http.routers.${MEMPOOL_SERVICE}.entrypoints=http,https
         - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
-        - traefik.http.routers.mempool.middlewares=redirect-to-https
+        - traefik.http.routers.${MEMPOOL_SERVICE}.middlewares=redirect-to-https
     networks:
       - mempool-network
       - traefik-public
