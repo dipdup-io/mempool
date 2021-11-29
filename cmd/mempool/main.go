@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/dipdup-net/go-lib/cmdline"
 	libCfg "github.com/dipdup-net/go-lib/config"
@@ -38,6 +39,8 @@ func main() {
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	indexers := make(map[string]*Indexer)
 
 	kinds := make(map[string]struct{})
@@ -49,23 +52,41 @@ func main() {
 		prometheusService.Start()
 	}
 
+	indexerCancels := make(map[string]context.CancelFunc)
 	for network, mempool := range cfg.Mempool.Indexers {
 		for _, kind := range mempool.Filters.Kinds {
 			kinds[kind] = struct{}{}
 		}
 
-		indexer, err := NewIndexer(ctx, network, *mempool, cfg.Database, cfg.Mempool.Settings, prometheusService)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-		indexers[network] = indexer
+		go func(network string, mempool *config.Indexer) {
+			indexerCancel, err := startIndexer(ctx, network, cfg, mempool, prometheusService)
+			if err != nil {
+				log.Error(err)
+			} else {
+				indexerCancels[network] = indexerCancel
+				return
+			}
 
-		if err := indexer.Start(ctx); err != nil {
-			log.Error(err)
-			return
-		}
+			ticker := time.NewTicker(time.Minute)
+			defer ticker.Stop()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					cancelFunc, err := startIndexer(ctx, network, cfg, mempool, prometheusService)
+					if err != nil {
+						log.Error(err)
+					} else {
+						indexerCancels[network] = cancelFunc
+						return
+					}
+				}
+			}
+		}(network, mempool)
 	}
+
 	views, err := createViews(ctx, cfg.Database)
 	if err != nil {
 		log.Error(err)
@@ -85,9 +106,13 @@ func main() {
 	}
 
 	<-signals
-	cancel()
-
 	log.Warn("Trying carefully stopping....")
+
+	for network, indexerCancel := range indexerCancels {
+		log.Infof("stopping %s indexer...", network)
+		indexerCancel()
+	}
+
 	for _, indexer := range indexers {
 		if err := indexer.Close(); err != nil {
 			log.Error(err)
@@ -139,4 +164,19 @@ func createViews(ctx context.Context, database libCfg.Database) ([]string, error
 	}
 
 	return views, nil
+}
+
+func startIndexer(ctx context.Context, network string, cfg config.Config, mempool *config.Indexer, prometheusService *prometheus.Service) (context.CancelFunc, error) {
+	indexerCtx, cancel := context.WithCancel(ctx)
+	indexer, err := NewIndexer(indexerCtx, network, *mempool, cfg.Database, cfg.Mempool.Settings, prometheusService)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+
+	if err := indexer.Start(indexerCtx); err != nil {
+		cancel()
+		return nil, err
+	}
+	return cancel, nil
 }

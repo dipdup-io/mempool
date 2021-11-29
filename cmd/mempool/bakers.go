@@ -14,7 +14,7 @@ import (
 func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 	defer indexer.wg.Done()
 
-	log.Info("Thread for finding endorsement baker started")
+	log.WithField("network", indexer.network).Info("Thread for finding endorsement baker started")
 
 	ticker := time.NewTicker(time.Second * 10)
 	defer ticker.Stop()

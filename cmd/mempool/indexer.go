@@ -50,7 +50,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 	}
 
 	rpc := node.NewNodeRPC(indexerCfg.DataSource.RPC[0])
-	constants, err := rpc.Constants()
+	constants, err := rpc.Constants(node.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		return nil, errors.Errorf("Empty time_between_blocks in node response: %s", network)
 	}
 
-	head, err := rpc.Header("head")
+	head, err := rpc.Header("head", node.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 
 	expiredAfter := settings.ExpiredAfter
 	if expiredAfter == 0 {
-		metadata, err := rpc.HeadMetadata("head")
+		metadata, err := rpc.HeadMetadata("head", node.WithContext(ctx))
 		if err != nil {
 			return nil, err
 		}
