@@ -19,6 +19,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type startResult struct {
+	cancel  context.CancelFunc
+	indexer *Indexer
+}
+
 func main() {
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
@@ -52,6 +57,7 @@ func main() {
 		prometheusService.Start()
 	}
 
+	started := make(chan struct{}, len(cfg.Mempool.Indexers))
 	indexerCancels := make(map[string]context.CancelFunc)
 	for network, mempool := range cfg.Mempool.Indexers {
 		for _, kind := range mempool.Filters.Kinds {
@@ -59,11 +65,13 @@ func main() {
 		}
 
 		go func(network string, mempool *config.Indexer) {
-			indexerCancel, err := startIndexer(ctx, network, cfg, mempool, prometheusService)
+			result, err := startIndexer(ctx, network, cfg, mempool, prometheusService)
 			if err != nil {
 				log.Error(err)
 			} else {
-				indexerCancels[network] = indexerCancel
+				indexers[network] = result.indexer
+				indexerCancels[network] = result.cancel
+				started <- struct{}{}
 				return
 			}
 
@@ -75,17 +83,21 @@ func main() {
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					cancelFunc, err := startIndexer(ctx, network, cfg, mempool, prometheusService)
+					result, err := startIndexer(ctx, network, cfg, mempool, prometheusService)
 					if err != nil {
 						log.Error(err)
 					} else {
-						indexerCancels[network] = cancelFunc
+						indexers[network] = result.indexer
+						indexerCancels[network] = result.cancel
+						started <- struct{}{}
 						return
 					}
 				}
 			}
 		}(network, mempool)
 	}
+
+	<-started
 
 	views, err := createViews(ctx, cfg.Database)
 	if err != nil {
@@ -166,17 +178,21 @@ func createViews(ctx context.Context, database libCfg.Database) ([]string, error
 	return views, nil
 }
 
-func startIndexer(ctx context.Context, network string, cfg config.Config, mempool *config.Indexer, prometheusService *prometheus.Service) (context.CancelFunc, error) {
+func startIndexer(ctx context.Context, network string, cfg config.Config, mempool *config.Indexer, prometheusService *prometheus.Service) (startResult, error) {
+	var result startResult
+
 	indexerCtx, cancel := context.WithCancel(ctx)
 	indexer, err := NewIndexer(indexerCtx, network, *mempool, cfg.Database, cfg.Mempool.Settings, prometheusService)
 	if err != nil {
 		cancel()
-		return nil, err
+		return result, err
 	}
+	result.indexer = indexer
 
 	if err := indexer.Start(indexerCtx); err != nil {
 		cancel()
-		return nil, err
+		return result, err
 	}
-	return cancel, nil
+	result.cancel = cancel
+	return result, nil
 }

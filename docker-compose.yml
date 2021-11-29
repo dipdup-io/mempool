@@ -19,6 +19,8 @@ services:
     restart: always
     volumes:
       - db:/var/lib/postgres/data
+    ports:
+      - 127.0.0.1:5432:5432
     environment: 
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
