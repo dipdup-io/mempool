@@ -66,11 +66,11 @@ func (tzkt *TzKT) Connect(ctx context.Context) error {
 				return
 			case msg := <-tzkt.client.Listen():
 				switch msg.Channel {
-				case "operations":
+				case events.ChannelOperations:
 					if err := tzkt.handleOperationMessage(msg); err != nil {
 						log.Error(err)
 					}
-				case "blocks":
+				case events.ChannelBlocks:
 					if err := tzkt.handleBlockMessage(msg); err != nil {
 						log.Error(err)
 					}
@@ -388,17 +388,21 @@ func (tzkt *TzKT) init(ctx context.Context, state syncState, indexerState, headL
 	msg := newOperationMessage()
 
 	for !state.finished() {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			for table := state.nextToRequest(); table != nil; table = state.nextToRequest() {
+				if err := tzkt.getTableData(ctx, table, indexerState, headLevel); err != nil {
+					return err
+				}
+			}
 
-		for table := state.nextToRequest(); table != nil; table = state.nextToRequest() {
-			if err := tzkt.getTableData(ctx, table, indexerState, headLevel); err != nil {
+			sort.Sort(state)
+
+			if err := tzkt.processSync(ctx, state, &msg); err != nil {
 				return err
 			}
-		}
-
-		sort.Sort(state)
-
-		if err := tzkt.processSync(state, &msg); err != nil {
-			return err
 		}
 	}
 
@@ -423,30 +427,35 @@ func (tzkt *TzKT) Subscribe() error {
 	return nil
 }
 
-func (tzkt *TzKT) processSync(state syncState, msg *OperationMessage) error {
+func (tzkt *TzKT) processSync(ctx context.Context, state syncState, msg *OperationMessage) error {
 	for len(state[0].Items) > 0 {
-		table := state[0]
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			table := state[0]
 
-		operation := table.Items[0]
-		msg.Hash.LoadOrStore(operation.Hash, operation)
-		table.LastID = operation.ID
+			operation := table.Items[0]
+			msg.Hash.LoadOrStore(operation.Hash, operation)
+			table.LastID = operation.ID
 
-		switch {
-		case msg.Level == 0:
-			msg.Level = operation.Level
-			msg.Block = operation.Block
-		case msg.Level != operation.Level:
-			tzkt.blocks <- BlockMessage{
-				Type:  events.MessageTypeData,
-				Level: msg.Level,
-				Hash:  msg.Block,
+			switch {
+			case msg.Level == 0:
+				msg.Level = operation.Level
+				msg.Block = operation.Block
+			case msg.Level != operation.Level:
+				tzkt.blocks <- BlockMessage{
+					Type:  events.MessageTypeData,
+					Level: msg.Level,
+					Hash:  msg.Block,
+				}
+				tzkt.operations <- msg.copy()
+				msg.clear()
 			}
-			tzkt.operations <- msg.copy()
-			msg.clear()
-		}
 
-		table.Items = table.Items[1:]
-		sort.Sort(state)
+			table.Items = table.Items[1:]
+			sort.Sort(state)
+		}
 	}
 
 	if msg.Level > 0 && state.finished() {

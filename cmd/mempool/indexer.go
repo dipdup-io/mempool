@@ -122,7 +122,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 
 // Start -
 func (indexer *Indexer) Start(ctx context.Context) error {
-	indexer.log().WithField("kinds", indexer.filters.Kinds).Info("Starting...")
+	indexer.log().WithField("kinds", indexer.filters.Kinds).Info("starting...")
 
 	if err := indexer.initState(); err != nil {
 		return err
@@ -178,7 +178,8 @@ func (indexer *Indexer) initState() error {
 
 // Close -
 func (indexer *Indexer) Close() error {
-	indexer.log().Info("Stopping...")
+	indexer.log().Info("stopping...")
+
 	indexer.wg.Wait()
 
 	if err := indexer.tzkt.Close(); err != nil {
@@ -196,7 +197,7 @@ func (indexer *Indexer) Close() error {
 		return err
 	}
 
-	indexer.log().Info("Indexer was stopped")
+	indexer.log().Info("indexer was stopped")
 	return nil
 }
 
@@ -222,7 +223,7 @@ func (indexer *Indexer) listen(ctx context.Context) {
 			case receiver.StatusApplied:
 				applied, ok := msg.Body.(node.Applied)
 				if !ok {
-					indexer.log().Errorf("Invalid applied operation %v", applied)
+					indexer.log().Errorf("invalid applied operation %v", applied)
 					continue
 				}
 				if indexer.isHashProcessed(applied.Hash) {
@@ -235,7 +236,7 @@ func (indexer *Indexer) listen(ctx context.Context) {
 			case receiver.StatusBranchDelayed, receiver.StatusBranchRefused, receiver.StatusRefused, receiver.StatusUnprocessed:
 				failed, ok := msg.Body.(node.FailedMonitor)
 				if !ok {
-					indexer.log().Errorf("Invalid %s operation %v", msg.Status, failed)
+					indexer.log().Errorf("invalid %s operation %v", msg.Status, failed)
 					continue
 				}
 				if indexer.isHashProcessed(failed.Hash) {
@@ -246,7 +247,7 @@ func (indexer *Indexer) listen(ctx context.Context) {
 					continue
 				}
 			default:
-				indexer.log().Errorf("Invalid mempool operation status %s", msg.Status)
+				indexer.log().Errorf("invalid mempool operation status %s", msg.Status)
 			}
 		}
 	}
@@ -262,7 +263,7 @@ func (indexer *Indexer) isHashProcessed(hash string) bool {
 }
 
 func (indexer *Indexer) onPopBlockQueue(block Block) error {
-	indexer.log().WithField("level", block.Level).Infof("Operations with branch %s is expired", block.Branch)
+	indexer.log().WithField("level", block.Level).Infof("operations with branch %s is expired", block.Branch)
 	return indexer.db.Transaction(func(tx *gorm.DB) error {
 		return models.SetExpired(tx, indexer.network, block.Branch, indexer.filters.Kinds...)
 	})
