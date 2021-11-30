@@ -81,4 +81,4 @@ hasura:
   allow_aggregation: false
 
 prometheus:
-  url: 127.0.0.1:2112
+  url: ${PROMETHEUS_BIND:-0.0.0.0:2112}
