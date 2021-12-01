@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -44,11 +45,6 @@ func main() {
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	indexers := make(map[string]*Indexer)
-
-	kinds := make(map[string]struct{})
 
 	var prometheusService *prometheus.Service
 	if cfg.Prometheus != nil {
@@ -57,23 +53,37 @@ func main() {
 		prometheusService.Start()
 	}
 
+	var wg sync.WaitGroup
 	started := make(chan struct{}, len(cfg.Mempool.Indexers))
 	indexerCancels := make(map[string]context.CancelFunc)
+	kinds := make(map[string]struct{})
+	indexers := make(map[string]*Indexer)
+
 	for network, mempool := range cfg.Mempool.Indexers {
 		for _, kind := range mempool.Filters.Kinds {
 			kinds[kind] = struct{}{}
 		}
 
-		go func(network string, mempool *config.Indexer) {
+		startFunc := func(network string, mempool *config.Indexer) error {
 			result, err := startIndexer(ctx, network, cfg, mempool, prometheusService)
 			if err != nil {
-				log.Error(err)
-			} else {
-				indexers[network] = result.indexer
-				indexerCancels[network] = result.cancel
-				started <- struct{}{}
+				return err
+			}
+
+			indexers[network] = result.indexer
+			indexerCancels[network] = result.cancel
+			started <- struct{}{}
+			return nil
+		}
+
+		wg.Add(1)
+		go func(network string, mempool *config.Indexer) {
+			defer wg.Done()
+
+			if err := startFunc(network, mempool); err == nil {
 				return
 			}
+			log.Error(err)
 
 			ticker := time.NewTicker(time.Minute)
 			defer ticker.Stop()
@@ -83,15 +93,10 @@ func main() {
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					result, err := startIndexer(ctx, network, cfg, mempool, prometheusService)
-					if err != nil {
-						log.Error(err)
-					} else {
-						indexers[network] = result.indexer
-						indexerCancels[network] = result.cancel
-						started <- struct{}{}
+					if err := startFunc(network, mempool); err == nil {
 						return
 					}
+					log.Error(err)
 				}
 			}
 		}(network, mempool)
@@ -102,6 +107,7 @@ func main() {
 	views, err := createViews(ctx, cfg.Database)
 	if err != nil {
 		log.Error(err)
+		cancel()
 		return
 	}
 
@@ -113,6 +119,7 @@ func main() {
 		tables := models.GetModelsBy(t...)
 		if err := hasura.Create(ctx, cfg.Hasura, cfg.Database, views, tables...); err != nil {
 			log.Error(err)
+			cancel()
 			return
 		}
 	}
@@ -120,16 +127,14 @@ func main() {
 	<-signals
 	log.Warn("Trying carefully stopping....")
 
-	for network, indexerCancel := range indexerCancels {
-		log.Infof("stopping %s indexer...", network)
+	for _, indexerCancel := range indexerCancels {
 		indexerCancel()
 	}
 
+	cancel()
+
 	for _, indexer := range indexers {
-		if err := indexer.Close(); err != nil {
-			log.Error(err)
-			return
-		}
+		indexer.Close()
 	}
 
 	if prometheusService != nil {
@@ -138,7 +143,10 @@ func main() {
 		}
 	}
 
+	wg.Wait()
+
 	close(signals)
+	close(started)
 }
 
 func createViews(ctx context.Context, database libCfg.Database) ([]string, error) {

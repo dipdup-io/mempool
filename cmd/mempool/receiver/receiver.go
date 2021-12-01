@@ -80,14 +80,6 @@ func (indexer *Receiver) Start(ctx context.Context) {
 // Close -
 func (indexer *Receiver) Close() error {
 	indexer.wg.Wait()
-
-	for i := range indexer.monitors {
-		if err := indexer.monitors[i].Close(); err != nil {
-			return err
-		}
-	}
-
-	close(indexer.operations)
 	return nil
 }
 
@@ -102,6 +94,13 @@ func (indexer *Receiver) run(ctx context.Context, monitor *node.Monitor) {
 	for {
 		select {
 		case <-ctx.Done():
+			for i := range indexer.monitors {
+				if err := indexer.monitors[i].Close(); err != nil {
+					log.Error(err)
+				}
+			}
+
+			close(indexer.operations)
 			return
 		case applied := <-monitor.Applied():
 			for i := range applied {

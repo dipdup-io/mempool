@@ -153,8 +153,8 @@ func (indexer *Indexer) Start(ctx context.Context) error {
 }
 
 func (indexer *Indexer) sync(ctx context.Context) {
-	indexer.wg.Add(1)
 	indexer.log().Info("start syncing...")
+	indexer.wg.Add(1)
 	go func() {
 		defer indexer.wg.Done()
 		indexer.tzkt.Sync(ctx, indexer.state.Level)
@@ -177,11 +177,13 @@ func (indexer *Indexer) initState() error {
 }
 
 // Close -
-func (indexer *Indexer) Close() error {
-	indexer.log().Info("stopping...")
-
+func (indexer *Indexer) Close() {
 	indexer.wg.Wait()
+	indexer.log().Info("indexer was stopped")
+}
 
+func (indexer *Indexer) close() error {
+	indexer.log().Info("stopping...")
 	if err := indexer.tzkt.Close(); err != nil {
 		return err
 	}
@@ -196,8 +198,6 @@ func (indexer *Indexer) Close() error {
 	if err := sqlDB.Close(); err != nil {
 		return err
 	}
-
-	indexer.log().Info("indexer was stopped")
 	return nil
 }
 
@@ -207,6 +207,7 @@ func (indexer *Indexer) listen(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			indexer.close()
 			return
 		case operations := <-indexer.tzkt.Operations():
 			if err := indexer.handleInChain(operations); err != nil {

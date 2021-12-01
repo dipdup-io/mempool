@@ -63,6 +63,9 @@ func (tzkt *TzKT) Connect(ctx context.Context) error {
 		for {
 			select {
 			case <-ctx.Done():
+				if err := tzkt.close(); err != nil {
+					log.Error(err)
+				}
 				return
 			case msg := <-tzkt.client.Listen():
 				switch msg.Channel {
@@ -85,14 +88,16 @@ func (tzkt *TzKT) Connect(ctx context.Context) error {
 // Close -
 func (tzkt *TzKT) Close() error {
 	tzkt.wg.Wait()
+	return nil
+}
 
+func (tzkt *TzKT) close() error {
 	if err := tzkt.client.Close(); err != nil {
 		return err
 	}
 
 	close(tzkt.operations)
 	close(tzkt.blocks)
-
 	return nil
 }
 
@@ -356,6 +361,9 @@ func (tzkt *TzKT) Sync(ctx context.Context, indexerLevel uint64) {
 	for {
 		select {
 		case <-ctx.Done():
+			if err := tzkt.close(); err != nil {
+				log.Error(err)
+			}
 			return
 		default:
 			if head.Level <= tzkt.state || tzkt.state == 0 {
