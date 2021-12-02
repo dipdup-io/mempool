@@ -3,6 +3,8 @@ package endorsement
 import (
 	"testing"
 
+	"github.com/dipdup-net/go-lib/node"
+	"github.com/dipdup-net/go-lib/tools/forge"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 )
 
@@ -71,9 +73,9 @@ func TestCheckKey(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := tt.endorsement.Forge()
+			data, err := forge.Endorsement(node.Endorsement{Level: tt.endorsement.Level}, tt.endorsement.Branch)
 			if err != nil {
-				t.Errorf("tt.endorsement.Forge() err = %s", err.Error())
+				t.Errorf("forge.Endorsement() err = %s", err.Error())
 				return
 			}
 			if got := CheckKey(tt.key, tt.signature, tt.chainID, data); got != tt.want {

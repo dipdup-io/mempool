@@ -3,12 +3,12 @@ package endorsement
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"fmt"
 	"math/big"
 
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/ed25519"
 
+	"github.com/pkg/errors"
 	"github.com/ubiq/go-ubiq/crypto/secp256k1"
 )
 
@@ -97,8 +97,7 @@ func getCoordinates(data []byte) (*big.Int, *big.Int, error) {
 	if y == nil {
 		// If this happens then you're dealing with an invalid point.
 		// Panic, return an error, whatever you want.
-		fmt.Println("Invalid point")
-		return new(big.Int), new(big.Int), fmt.Errorf("Invalid point")
+		return new(big.Int), new(big.Int), errors.New("Invalid point")
 	}
 
 	// Finally, check if you have the correct root. If not you want

@@ -5,6 +5,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/dipdup-net/go-lib/node"
+	"github.com/dipdup-net/go-lib/tools/forge"
 	"github.com/dipdup-net/go-lib/tzkt/api"
 	"github.com/dipdup-net/mempool/cmd/mempool/endorsement"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
@@ -49,7 +51,10 @@ func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 						sort.Sort(BySlots(rights))
 					}
 
-					forged, err := e.Forge()
+					forged, err := forge.Endorsement(node.Endorsement{
+						Level:    e.Level,
+						Metadata: &node.EndorsementMetadata{},
+					}, e.Branch)
 					if err != nil {
 						return err
 					}

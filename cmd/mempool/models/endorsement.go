@@ -1,8 +1,6 @@
 package models
 
 import (
-	"bytes"
-
 	"gorm.io/gorm"
 )
 
@@ -16,23 +14,6 @@ type Endorsement struct {
 // TableName -
 func (Endorsement) TableName() string {
 	return "endorsements"
-}
-
-// Forge -
-func (endorsement Endorsement) Forge() ([]byte, error) {
-	var buf bytes.Buffer
-
-	if _, err := buf.Write(forgeString(endorsement.Branch)); err != nil {
-		return nil, err
-	}
-	if _, err := buf.Write(forgeNat(0)); err != nil {
-		return nil, err
-	}
-	if _, err := buf.Write(forgeInt(int64(endorsement.Level))); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
 }
 
 // EndorsementsWithoutBaker -
