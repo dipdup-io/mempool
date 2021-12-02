@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"github.com/dipdup-net/go-lib/tzkt/api"
@@ -44,6 +45,8 @@ func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 							return err
 						}
 						currentLevel = e.Level
+
+						sort.Sort(BySlots(rights))
 					}
 
 					forged, err := e.Forge()
@@ -51,7 +54,7 @@ func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 						return err
 					}
 
-					for i := range rights {
+					for i := len(rights) - 1; i >= 0; i-- {
 						address := rights[i].Baker.Address
 						publicKey, ok := indexer.delegates.Delegates[address]
 						if !ok {
@@ -75,3 +78,15 @@ func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 		}
 	}
 }
+
+// BySlots -
+type BySlots []api.Right
+
+// Len -
+func (rights BySlots) Len() int { return len(rights) }
+
+// Less -
+func (rights BySlots) Less(i, j int) bool { return rights[i].Slots < rights[j].Slots }
+
+// Swap -
+func (rights BySlots) Swap(i, j int) { rights[i], rights[j] = rights[j], rights[i] }
