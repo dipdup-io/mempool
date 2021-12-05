@@ -78,7 +78,7 @@ func TestCheckKey(t *testing.T) {
 				t.Errorf("forge.Endorsement() err = %s", err.Error())
 				return
 			}
-			if got := CheckKey(tt.key, tt.signature, tt.chainID, data); got != tt.want {
+			if got := CheckKey(tt.key[:4], DecodePublicKey(tt.key), DecodeSignature(tt.signature), Hash(tt.chainID, data)); got != tt.want {
 				t.Errorf("CheckKey() = %v, want %v", got, tt.want)
 			}
 		})

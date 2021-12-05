@@ -8,26 +8,24 @@ import (
 
 	"github.com/dipdup-net/go-lib/node"
 	"github.com/dipdup-net/go-lib/prometheus"
-	"github.com/dipdup-net/go-lib/state"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
+	pg "github.com/go-pg/pg/v10"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
 // Receiver -
 type Receiver struct {
 	urls      []string
 	monitors  []*node.Monitor
-	db        *gorm.DB
+	db        *pg.DB
 	prom      *prometheus.Service
-	state     state.State
+	state     models.State
 	indexName string
 	protocol  string
 	network   string
 
 	blockTime int64
-	timeout   uint64
 
 	wg         sync.WaitGroup
 	operations chan Message
@@ -192,9 +190,9 @@ func (indexer *Receiver) updateState(ctx context.Context, url string) {
 }
 
 func (indexer *Receiver) setState() error {
-	state, err := state.Get(indexer.db, indexer.indexName)
+	state, err := models.GetState(indexer.db, indexer.indexName)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, pg.ErrNoRows) {
 			return nil
 		}
 		return err

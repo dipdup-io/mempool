@@ -2,33 +2,28 @@ package models
 
 import (
 	"encoding/json"
-
-	"gorm.io/datatypes"
 )
 
 // Origination -
 type Origination struct {
+	//nolint
+	tableName struct{} `pg:"originations"`
 	MempoolOperation
 	Fee          int64  `json:"fee,string"`
-	Counter      int64  `gorm:"primaryKey" json:"counter,string"`
+	Counter      int64  `json:"counter,string" pg:",pk" `
 	GasLimit     int64  `json:"gas_limit,string"`
 	StorageLimit int64  `json:"storage_limit,string"`
 	Balance      string `json:"balance"`
 	Delegate     string `json:",omitempty"`
-	Source       string `json:"source,omitempty" gorm:"origination_source_idx"`
+	Source       string `json:"source,omitempty" index:"origination_source_idx"`
 	Script       struct {
 		Storage json.RawMessage `json:"storage"`
-	} `json:"script" gorm:"-"`
+	} `json:"script" pg:"-"`
 
-	Storage datatypes.JSON `json:"-"`
-}
-
-// TableName -
-func (Origination) TableName() string {
-	return "originations"
+	Storage JSONB `json:"-" pg:"type:jsonb"`
 }
 
 // Fill -
 func (mo *Origination) Fill() {
-	mo.Storage = datatypes.JSON(mo.Script.Storage)
+	mo.Storage = JSONB(mo.Script.Storage)
 }

@@ -6,31 +6,33 @@ import (
 	"sync"
 	"time"
 
+	pg "github.com/go-pg/pg/v10"
+	"github.com/karlseguin/ccache"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	generalConfig "github.com/dipdup-net/go-lib/config"
 	"github.com/dipdup-net/go-lib/node"
 	"github.com/dipdup-net/go-lib/prometheus"
-	"github.com/dipdup-net/go-lib/state"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/dipdup-net/mempool/cmd/mempool/receiver"
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
-	"gorm.io/gorm"
 )
 
 // Indexer -
 type Indexer struct {
-	db               *gorm.DB
+	db               *pg.DB
 	tzkt             *tzkt.TzKT
 	mempool          *receiver.Receiver
 	prom             *prometheus.Service
 	branches         *BlockQueue
 	cache            *Cache
+	rights           *ccache.Cache
 	delegates        *CachedDelegates
-	state            state.State
+	state            models.State
 	filters          config.Filters
+	endorsements     chan *models.Endorsement
 	network          string
 	indexName        string
 	chainID          string
@@ -64,7 +66,6 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 	}
 
 	memInd, err := receiver.New(indexerCfg.DataSource.RPC, network,
-		receiver.WithTimeout(settings.RPCTimeout),
 		receiver.WithStorage(db, constants.TimeBetweenBlocks[0]),
 		receiver.WithPrometheus(prom),
 	)
@@ -94,9 +95,11 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		keepInChain:      uint64(constants.TimeBetweenBlocks[0]) * settings.KeepInChainBlocks,
 		keepOperations:   uint64(constants.TimeBetweenBlocks[0]) * settings.ExpiredAfter,
 		gasStatsLifetime: settings.GasStatsLifetime,
+		endorsements:     make(chan *models.Endorsement, 1024*32),
+		rights:           ccache.New(ccache.Configure().MaxSize(60)),
 	}
 
-	indexer.state = state.State{
+	indexer.state = models.State{
 		IndexType: models.IndexTypeMempool,
 		IndexName: indexer.indexName,
 		Level:     head.Level,
@@ -137,6 +140,23 @@ func (indexer *Indexer) Start(ctx context.Context) error {
 		}
 		indexer.wg.Add(1)
 		go indexer.setEndorsementBakers(ctx)
+
+		var offset int
+		for {
+			endorsements, err := models.EndorsementsWithoutBaker(indexer.db, indexer.network, 100, offset)
+			if err != nil {
+				log.Error(err)
+				break
+			}
+			for i := range endorsements {
+				indexer.endorsements <- &endorsements[i]
+			}
+
+			if len(endorsements) < 100 {
+				break
+			}
+			offset += len(endorsements)
+		}
 	}
 
 	if err := indexer.tzkt.Connect(ctx); err != nil {
@@ -163,11 +183,11 @@ func (indexer *Indexer) sync(ctx context.Context) {
 }
 
 func (indexer *Indexer) initState() error {
-	current, err := state.Get(indexer.db, indexer.indexName)
+	current, err := models.GetState(indexer.db, indexer.indexName)
 	switch {
 	case err == nil:
 		indexer.state = current
-	case errors.Is(err, gorm.ErrRecordNotFound):
+	case errors.Is(err, pg.ErrNoRows):
 		return nil
 	default:
 		return err
@@ -191,13 +211,12 @@ func (indexer *Indexer) close() error {
 	if err := indexer.mempool.Close(); err != nil {
 		return err
 	}
-	sqlDB, err := indexer.db.DB()
-	if err != nil {
+	if err := indexer.db.Close(); err != nil {
 		return err
 	}
-	if err := sqlDB.Close(); err != nil {
-		return err
-	}
+
+	close(indexer.endorsements)
+
 	return nil
 }
 
@@ -210,7 +229,7 @@ func (indexer *Indexer) listen(ctx context.Context) {
 			indexer.close()
 			return
 		case operations := <-indexer.tzkt.Operations():
-			if err := indexer.handleInChain(operations); err != nil {
+			if err := indexer.handleInChain(ctx, operations); err != nil {
 				indexer.log().Error(err)
 				continue
 			}
@@ -230,7 +249,7 @@ func (indexer *Indexer) listen(ctx context.Context) {
 				if indexer.isHashProcessed(applied.Hash) {
 					continue
 				}
-				if err := indexer.handleAppliedOperation(applied, msg.Protocol); err != nil {
+				if err := indexer.handleAppliedOperation(ctx, applied, msg.Protocol); err != nil {
 					log.Error(err)
 					continue
 				}
@@ -243,7 +262,7 @@ func (indexer *Indexer) listen(ctx context.Context) {
 				if indexer.isHashProcessed(failed.Hash) {
 					continue
 				}
-				if err := indexer.handleFailedOperation(failed, string(msg.Status), msg.Protocol); err != nil {
+				if err := indexer.handleFailedOperation(ctx, failed, string(msg.Status), msg.Protocol); err != nil {
 					indexer.log().Error(err)
 					continue
 				}
@@ -265,20 +284,33 @@ func (indexer *Indexer) isHashProcessed(hash string) bool {
 
 func (indexer *Indexer) onPopBlockQueue(block Block) error {
 	indexer.log().WithField("level", block.Level).Infof("operations with branch %s is expired", block.Branch)
-	return indexer.db.Transaction(func(tx *gorm.DB) error {
-		return models.SetExpired(tx, indexer.network, block.Branch, indexer.filters.Kinds...)
-	})
+	return models.SetExpired(indexer.db, indexer.network, block.Branch, indexer.filters.Kinds...)
 }
 
 func (indexer *Indexer) onRollbackBlockQueue(block Block) error {
 	log.Warnf("Rollback to %d level", block.Level)
-	return indexer.db.Transaction(func(tx *gorm.DB) error {
-		if err := models.Rollback(tx, indexer.network, block.Branch, block.Level, indexer.filters.Kinds...); err != nil {
+
+	tx, err := indexer.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Close()
+
+	indexer.state.Level = block.Level
+	if err := models.Rollback(tx, indexer.network, block.Branch, block.Level, indexer.filters.Kinds...); err != nil {
+		if err := tx.Rollback(); err != nil {
 			return err
 		}
-		indexer.state.Level = block.Level
-		return indexer.state.Update(tx)
-	})
+		return err
+	}
+	if err := indexer.state.Update(tx); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (indexer *Indexer) log() *log.Entry {

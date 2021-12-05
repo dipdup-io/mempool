@@ -5,14 +5,15 @@ go 1.15
 require (
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/dipdup-net/go-lib v0.1.43
-	github.com/mattn/go-sqlite3 v1.14.8 // indirect
+	github.com/go-pg/pg/v10 v10.10.6
+	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/karlseguin/ccache v2.0.3+incompatible
+	github.com/karlseguin/expect v1.0.8 // indirect
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/pkg/errors v0.9.1
+	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/ubiq/go-ubiq v3.0.1+incompatible
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
-	gorm.io/datatypes v1.0.2
-	gorm.io/driver/postgres v1.1.2 // indirect
-	gorm.io/gorm v1.21.16
 )

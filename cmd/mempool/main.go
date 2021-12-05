@@ -18,6 +18,9 @@ import (
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	log "github.com/sirupsen/logrus"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 type startResult struct {
@@ -26,6 +29,10 @@ type startResult struct {
 }
 
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 	})
@@ -80,7 +87,8 @@ func main() {
 		go func(network string, mempool *config.Indexer) {
 			defer wg.Done()
 
-			if err := startFunc(network, mempool); err == nil {
+			err := startFunc(network, mempool)
+			if err == nil {
 				return
 			}
 			log.Error(err)
@@ -93,7 +101,8 @@ func main() {
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					if err := startFunc(network, mempool); err == nil {
+					err := startFunc(network, mempool)
+					if err == nil {
 						return
 					}
 					log.Error(err)
@@ -159,11 +168,7 @@ func createViews(ctx context.Context, database libCfg.Database) ([]string, error
 	if err != nil {
 		return nil, err
 	}
-	sql, err := db.DB()
-	if err != nil {
-		return nil, err
-	}
-	defer sql.Close()
+	defer db.Close()
 
 	views := make([]string, 0)
 	for i := range files {
@@ -177,7 +182,7 @@ func createViews(ctx context.Context, database libCfg.Database) ([]string, error
 			return nil, err
 		}
 
-		if err := db.Exec(string(raw)).Error; err != nil {
+		if _, err := db.Exec(string(raw)); err != nil {
 			return nil, err
 		}
 		views = append(views, strings.Split(files[i].Name(), ".")[0])

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -560,11 +561,12 @@ func (tzkt *TzKT) GetBlocks(ctx context.Context, limit, state uint64) ([]BlockMe
 }
 
 // Delegates -
-func (tzkt *TzKT) Delegates(ctx context.Context) ([]api.Delegate, error) {
+func (tzkt *TzKT) Delegates(ctx context.Context, limit, offset int64) ([]api.Delegate, error) {
 	return tzkt.api.GetDelegates(ctx, map[string]string{
 		"active": "true",
 		"select": "publicKey,address",
-		"limit":  "1000",
+		"limit":  strconv.FormatInt(limit, 10),
+		"offset": strconv.FormatInt(offset, 10),
 	})
 }
 
@@ -572,7 +574,7 @@ func (tzkt *TzKT) Delegates(ctx context.Context) ([]api.Delegate, error) {
 func (tzkt *TzKT) Rights(ctx context.Context, level uint64) ([]api.Right, error) {
 	return tzkt.api.GetRights(ctx, map[string]string{
 		"type":   "endorsing",
-		"level":  fmt.Sprintf("%d", level),
-		"select": "baker,status",
+		"level":  strconv.FormatUint(level, 10),
+		"select": "baker,status,slots",
 	})
 }

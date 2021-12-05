@@ -2,25 +2,14 @@ package receiver
 
 import (
 	"github.com/dipdup-net/go-lib/prometheus"
-	"gorm.io/gorm"
+	pg "github.com/go-pg/pg/v10"
 )
 
 // ReceiverOption -
 type ReceiverOption func(*Receiver)
 
-// WithTimeout -
-func WithTimeout(seconds uint64) ReceiverOption {
-	return func(m *Receiver) {
-		if seconds > 0 {
-			m.timeout = seconds
-		} else {
-			m.timeout = 10
-		}
-	}
-}
-
 // WithStorage -
-func WithStorage(db *gorm.DB, blockTime int64) ReceiverOption {
+func WithStorage(db *pg.DB, blockTime int64) ReceiverOption {
 	return func(m *Receiver) {
 		if blockTime > 0 {
 			m.blockTime = blockTime

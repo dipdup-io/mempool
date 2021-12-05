@@ -1,12 +1,12 @@
 package models
 
 import (
+	"context"
 	"time"
 
 	"github.com/dipdup-net/go-lib/node"
+	pg "github.com/go-pg/pg/v10"
 	"github.com/pkg/errors"
-	"gorm.io/datatypes"
-	"gorm.io/gorm"
 )
 
 // Statuses
@@ -21,49 +21,61 @@ const (
 
 // MempoolOperation -
 type MempoolOperation struct {
-	CreatedAt       int            `gorm:"autoCreateTime"`
-	UpdatedAt       int            `gorm:"autoUpdateTime"`
-	Network         string         `gorm:"primaryKey" json:"network"`
-	Hash            string         `gorm:"primaryKey" json:"hash"`
-	Branch          string         `json:"branch"`
-	Status          string         `json:"status"`
-	Kind            string         `json:"kind"`
-	Signature       string         `json:"signature"`
-	Protocol        string         `json:"protocol"`
-	Level           uint64         `json:"level"`
-	Errors          datatypes.JSON `json:"errors,omitempty"`
-	ExpirationLevel *uint64        `json:"expiration_level"`
-	Raw             datatypes.JSON `json:"raw,omitempty"`
+	CreatedAt       int64   `json:"-"`
+	UpdatedAt       int64   `json:"-"`
+	Network         string  `json:"network" pg:",pk"`
+	Hash            string  `json:"hash" pg:",pk"`
+	Branch          string  `json:"branch"`
+	Status          string  `json:"status"`
+	Kind            string  `json:"kind"`
+	Signature       string  `json:"signature"`
+	Protocol        string  `json:"protocol"`
+	Level           uint64  `json:"level"`
+	Errors          JSONB   `json:"errors,omitempty" pg:"type:jsonb"`
+	ExpirationLevel *uint64 `json:"expiration_level"`
+	Raw             JSONB   `json:"raw,omitempty" pg:"type:jsonb"`
 }
 
-func networkAndBranch(network, branch string) func(db *gorm.DB) *gorm.DB {
-	return func(db *gorm.DB) *gorm.DB {
-		return db.Where("network = ?", network).Where("branch = ?", branch)
+// BeforeInsert -
+func (op *MempoolOperation) BeforeInsert(ctx context.Context) (context.Context, error) {
+	op.CreatedAt = time.Now().Unix()
+	op.UpdatedAt = op.CreatedAt
+	return ctx, nil
+}
+
+// BeforeUpdate -
+func (op *MempoolOperation) BeforeUpdate(ctx context.Context) (context.Context, error) {
+	op.UpdatedAt = time.Now().Unix()
+	return ctx, nil
+}
+
+func networkAndBranch(network, branch string) func(db *pg.Query) (*pg.Query, error) {
+	return func(db *pg.Query) (*pg.Query, error) {
+		return db.Where("network = ?", network).Where("branch = ?", branch), nil
 	}
 }
 
-func isApplied(db *gorm.DB) *gorm.DB {
-	return db.Where("status = ?", StatusApplied)
+func isApplied(db *pg.Query) (*pg.Query, error) {
+	return db.Where("status = ?", StatusApplied), nil
 }
 
-func isInChain(db *gorm.DB) *gorm.DB {
-	return db.Where("status = ?", StatusInChain)
+func isInChain(db *pg.Query) (*pg.Query, error) {
+	return db.Where("status = ?", StatusInChain), nil
 }
 
 // SetInChain -
-func SetInChain(db *gorm.DB, network, hash, kind string, level uint64) error {
+func SetInChain(db pg.DBI, network, hash, kind string, level uint64) error {
 	model, err := getModelByKind(kind)
 	if err != nil {
 		return err
 	}
-	query := db.Model(model).Where("network = ? AND hash = ?", network, hash)
 
-	if err := query.Updates(map[string]interface{}{
-		"status": StatusInChain,
-		"level":  level,
-		"errors": nil,
-	}).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if _, err := db.Model(model).
+		Set("status = ?, level = ?, errors = NULL", StatusInChain, level).
+		Where("hash = ?", hash).
+		Where("network = ?", network).
+		Update(); err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
 			return nil
 		}
 		return err
@@ -72,7 +84,7 @@ func SetInChain(db *gorm.DB, network, hash, kind string, level uint64) error {
 }
 
 // SetExpired -
-func SetExpired(db *gorm.DB, network, branch string, kinds ...string) error {
+func SetExpired(db pg.DBI, network, branch string, kinds ...string) error {
 	if len(kinds) == 0 {
 		return nil
 	}
@@ -82,9 +94,8 @@ func SetExpired(db *gorm.DB, network, branch string, kinds ...string) error {
 		if err != nil {
 			return err
 		}
-		if err := db.Model(model).
-			Scopes(networkAndBranch(network, branch), isApplied).
-			Update("status", StatusExpired).Error; err != nil {
+
+		if _, err := db.Model(model).Set("status = ?", StatusExpired).Apply(networkAndBranch(network, branch)).Apply(isApplied).Update(); err != nil {
 			return err
 		}
 	}
@@ -92,7 +103,7 @@ func SetExpired(db *gorm.DB, network, branch string, kinds ...string) error {
 }
 
 // Rollback -
-func Rollback(db *gorm.DB, network, branch string, level uint64, kinds ...string) error {
+func Rollback(db pg.DBI, network, branch string, level uint64, kinds ...string) error {
 	if len(kinds) == 0 {
 		return nil
 	}
@@ -102,22 +113,24 @@ func Rollback(db *gorm.DB, network, branch string, level uint64, kinds ...string
 		if err != nil {
 			return err
 		}
-		if err := db.Model(model).
-			Scopes(networkAndBranch(network, branch)).
-			Where(
-				db.Where("status = ?", StatusApplied).
-					Or(
-						db.Where("status = ?", StatusInChain).Where("level = ?", level),
-					),
-			).
-			Update("status", StatusBranchRefused).Error; err != nil {
+
+		query := db.Model(model).Apply(networkAndBranch(network, branch))
+
+		if _, err := query.Set("status", StatusBranchRefused).
+			WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				return q.Where("status = ?", StatusApplied).WhereOrGroup(func(q1 *pg.Query) (*pg.Query, error) {
+					return q1.Where("status = ?", StatusInChain).Where("level = ?", level), nil
+				}), nil
+			}).
+			Update(); err != nil {
 			return err
 		}
 
-		if err := db.Model(model).
-			Scopes(networkAndBranch(network, branch), isInChain).
+		if _, err := db.Model(model).
+			Set("status = ?", StatusApplied).
+			Apply(networkAndBranch(network, branch)).Apply(isInChain).
 			Where("level < ?", level).
-			Update("status", StatusApplied).Error; err != nil {
+			Update(); err != nil {
 			return err
 		}
 	}
@@ -126,7 +139,7 @@ func Rollback(db *gorm.DB, network, branch string, level uint64, kinds ...string
 }
 
 // DeleteOldOperations -
-func DeleteOldOperations(db *gorm.DB, timeout uint64, status string, kinds ...string) error {
+func DeleteOldOperations(db pg.DBI, timeout uint64, status string, kinds ...string) error {
 	if len(kinds) == 0 {
 		return nil
 	}
@@ -137,13 +150,13 @@ func DeleteOldOperations(db *gorm.DB, timeout uint64, status string, kinds ...st
 			return err
 		}
 		ts := time.Now().Unix() - int64(timeout)
-		query := db.Where("updated_at < ?", ts)
+		query := db.Model(model).Where("updated_at < ?", ts)
 
 		if status != "" {
 			query.Where("status = ?", status)
 		}
 
-		if err := query.Delete(model).Error; err != nil {
+		if _, err := query.Delete(); err != nil {
 			return err
 		}
 	}

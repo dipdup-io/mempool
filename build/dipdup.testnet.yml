@@ -26,7 +26,7 @@ mempool:
       datasources:
           tzkt: https://api.granadanet.tzkt.io
           rpc: 
-            - https://testnet-tezos.giganode.io
+            - https://rpc.tzkt.io/granadanet
     hangzhounet:
       filters:
         kinds:

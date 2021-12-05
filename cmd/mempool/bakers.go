@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -10,8 +12,8 @@ import (
 	"github.com/dipdup-net/go-lib/tzkt/api"
 	"github.com/dipdup-net/mempool/cmd/mempool/endorsement"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
+	pg "github.com/go-pg/pg/v10"
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
 func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
@@ -19,69 +21,83 @@ func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 
 	log.WithField("network", indexer.network).Info("Thread for finding endorsement baker started")
 
-	ticker := time.NewTicker(time.Second * 10)
-	defer ticker.Stop()
-
-	var currentLevel uint64
-	var rights []api.Right
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
-			if err := indexer.db.Transaction(func(tx *gorm.DB) error {
-				endorsements, err := models.EndorsementsWithoutBaker(tx)
-				if err != nil {
-					return err
-				}
-
-				for _, e := range endorsements {
-					if err := indexer.delegates.Update(ctx, e.Level); err != nil {
-						return err
-					}
-
-					if currentLevel != e.Level {
-						rights, err = indexer.tzkt.Rights(ctx, e.Level+1)
-						if err != nil {
-							return err
-						}
-						currentLevel = e.Level
-
-						sort.Sort(BySlots(rights))
-					}
-
-					forged, err := forge.Endorsement(node.Endorsement{
-						Level:    e.Level,
-						Metadata: &node.EndorsementMetadata{},
-					}, e.Branch)
-					if err != nil {
-						return err
-					}
-
-					for i := len(rights) - 1; i >= 0; i-- {
-						address := rights[i].Baker.Address
-						publicKey, ok := indexer.delegates.Delegates[address]
-						if !ok {
-							continue
-						}
-						if !endorsement.CheckKey(publicKey, e.Signature, indexer.chainID, forged) {
-							continue
-						}
-						if err := tx.Model(&e).Update("baker", address).Error; err != nil {
-							return err
-						}
-						break
-					}
-				}
-
-				return nil
+		case endorsement := <-indexer.endorsements:
+			if err := indexer.db.RunInTransaction(ctx, func(tx *pg.Tx) error {
+				return indexer.findBaker(ctx, tx, endorsement)
 			}); err != nil {
 				log.Error(err)
-				continue
 			}
 		}
 	}
+}
+
+func (indexer *Indexer) getEndorsingRights(ctx context.Context, level uint64) ([]api.Right, error) {
+	rights, err := indexer.rights.Fetch(fmt.Sprintf("rights/%s/%d", indexer.network, level), 15*time.Minute, func() (interface{}, error) {
+		rights, err := indexer.tzkt.Rights(ctx, level)
+		if err != nil {
+			return nil, err
+		}
+
+		sort.Sort(BySlots(rights))
+		return rights, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result, ok := rights.Value().([]api.Right); !ok {
+		return nil, errors.New("invalid rights type")
+	} else {
+		return result, nil
+	}
+}
+
+func (indexer *Indexer) findBaker(ctx context.Context, tx pg.DBI, e *models.Endorsement) error {
+	if err := indexer.delegates.Update(ctx, e.Level); err != nil {
+		return err
+	}
+
+	rights, err := indexer.getEndorsingRights(ctx, e.Level)
+	if err != nil {
+		return err
+	}
+
+	forged, err := forge.Endorsement(node.Endorsement{
+		Level:    e.Level,
+		Metadata: &node.EndorsementMetadata{},
+	}, e.Branch)
+	if err != nil {
+		return err
+	}
+
+	hash := endorsement.Hash(indexer.chainID, forged)
+	decodedSignature := endorsement.DecodeSignature(e.Signature)
+
+	query := tx.Model(e).WherePK()
+	for i := len(rights) - 1; i >= 0; i-- {
+		if rights[i].Slots == 0 {
+			break
+		}
+		address := rights[i].Baker.Address
+		publicKey, ok := indexer.delegates.Delegates[address]
+		if !ok {
+			continue
+		}
+		if !endorsement.CheckKey(publicKey.Prefix, publicKey.Key, decodedSignature, hash) {
+			continue
+		}
+		e.Baker = address
+		break
+	}
+	if e.Baker == "" {
+		e.Baker = "unknown"
+	}
+
+	_, err = query.Update("baker", e.Baker)
+	return err
 }
 
 // BySlots -

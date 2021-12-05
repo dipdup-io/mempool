@@ -2,23 +2,21 @@ package models
 
 // DoubleEndorsing -
 type DoubleEndorsing struct {
+	//nolint
+	tableName struct{} `pg:"double_endorsings"`
+
 	MempoolOperation
-	Op1Kind  string `json:"-" gorm:"column:op_1_kind"`
-	Op1Level uint64 `json:"-" gorm:"column:op_1_level"`
-	Op2Kind  string `json:"-" gorm:"column:op_2_kind"`
-	Op2Level uint64 `json:"-" gorm:"column:op_2_level"`
+	Op1Kind  string `json:"-" pg:"op_1_kind"`
+	Op1Level uint64 `json:"-" pg:"op_1_level"`
+	Op2Kind  string `json:"-" pg:"op_2_kind"`
+	Op2Level uint64 `json:"-" pg:"op_2_level"`
 
 	Op1 struct {
 		Operations DoubleEndorsingOperations `json:"operations"`
-	} `json:"op1" gorm:"-"`
+	} `json:"op1" pg:"-"`
 	Op2 struct {
 		Operations DoubleEndorsingOperations `json:"operations"`
-	} `json:"op2" gorm:"-"`
-}
-
-// TableName -
-func (DoubleEndorsing) TableName() string {
-	return "double_endorsings"
+	} `json:"op2" pg:"-"`
 }
 
 // DoubleEndorsingOperations -

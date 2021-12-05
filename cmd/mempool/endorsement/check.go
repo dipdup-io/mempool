@@ -14,21 +14,20 @@ import (
 
 var watermarks = map[string][]byte{}
 
+// Hash -
+func Hash(chainID string, msg []byte) [32]byte {
+	return blake2b.Sum256(append(getWatermark(chainID), msg...))
+}
+
 // CheckKey -
-func CheckKey(key, signature, chainID string, msg []byte) bool {
-	decodedKey := decodePublicKey(key)
-	decodedSig := decodeSignature(signature)
-	watermark := getWatermark(chainID)
-
-	hash := blake2b.Sum256(append(watermark, msg...))
-
-	switch key[:4] {
+func CheckKey(prefix string, key, signature []byte, hash [32]byte) bool {
+	switch prefix {
 	case "edpk":
-		return ed25519.Verify(decodedKey, hash[:], decodedSig)
+		return ed25519.Verify(key, hash[:], signature)
 	case "sppk":
-		return secp256k1.VerifySignature(decodedKey, hash[:], decodedSig)
+		return secp256k1.VerifySignature(key, hash[:], signature)
 	case "p2pk":
-		return verifyP256(decodedKey, hash[:], decodedSig)
+		return verifyP256(key, hash[:], signature)
 	default:
 		return false
 	}

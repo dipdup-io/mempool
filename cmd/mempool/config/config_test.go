@@ -52,7 +52,6 @@ func TestLoad(t *testing.T) {
 						KeepOperations:    172800,
 						ExpiredAfter:      120,
 						KeepInChainBlocks: 10,
-						RPCTimeout:        10,
 						GasStatsLifetime:  3600,
 					},
 					Indexers: map[string]*Indexer{
