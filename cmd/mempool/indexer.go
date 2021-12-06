@@ -82,6 +82,11 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		expiredAfter = metadata.MaxOperationsTTL
 	}
 
+	gasStatsLifetime := settings.GasStatsLifetime
+	if gasStatsLifetime == 0 {
+		gasStatsLifetime = 3600
+	}
+
 	indexer := &Indexer{
 		db:               db,
 		network:          network,
@@ -94,7 +99,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		cache:            NewCache(2 * time.Hour),
 		keepInChain:      uint64(constants.TimeBetweenBlocks[0]) * settings.KeepInChainBlocks,
 		keepOperations:   uint64(constants.TimeBetweenBlocks[0]) * settings.ExpiredAfter,
-		gasStatsLifetime: settings.GasStatsLifetime,
+		gasStatsLifetime: gasStatsLifetime,
 		endorsements:     make(chan *models.Endorsement, 1024*32),
 		rights:           ccache.New(ccache.Configure().MaxSize(60)),
 	}
