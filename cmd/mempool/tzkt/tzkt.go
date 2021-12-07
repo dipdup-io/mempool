@@ -12,7 +12,7 @@ import (
 	"github.com/dipdup-net/go-lib/tzkt/events"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -65,18 +65,18 @@ func (tzkt *TzKT) Connect(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				if err := tzkt.close(); err != nil {
-					log.Error(err)
+					log.Err(err).Msg("")
 				}
 				return
 			case msg := <-tzkt.client.Listen():
 				switch msg.Channel {
 				case events.ChannelOperations:
 					if err := tzkt.handleOperationMessage(msg); err != nil {
-						log.Error(err)
+						log.Err(err).Msg("")
 					}
 				case events.ChannelBlocks:
 					if err := tzkt.handleBlockMessage(msg); err != nil {
-						log.Error(err)
+						log.Err(err).Msg("")
 					}
 				}
 			}
@@ -354,39 +354,39 @@ func (tzkt *TzKT) Sync(ctx context.Context, indexerLevel uint64) {
 
 	head, err := tzkt.api.GetHead(ctx)
 	if err != nil {
-		log.Error(err)
+		log.Err(err).Msg("")
 		return
 	}
 
-	log.Infof("current TzKT level is %d. Current mempool indexer level is %d", head.Level, tzkt.state)
+	log.Info().Msgf("current TzKT level is %d. Current mempool indexer level is %d", head.Level, tzkt.state)
 	for {
 		select {
 		case <-ctx.Done():
 			if err := tzkt.close(); err != nil {
-				log.Error(err)
+				log.Err(err).Msg("")
 			}
 			return
 		default:
 			if head.Level <= tzkt.state || tzkt.state == 0 {
-				log.Info("synced")
+				log.Info().Msg("synced")
 				return
 			}
 			state := newSyncState(tzkt.kinds...)
 
 			if len(state) == 0 {
-				log.Error(ErrEmptyKindList)
+				log.Err(ErrEmptyKindList).Msg("tzkt.Sync")
 				return
 			}
 
 			if err := tzkt.init(ctx, state, tzkt.state, head.Level); err != nil {
-				log.Error(err)
+				log.Err(err).Msg("tzkt.Sync")
 				return
 			}
 
 			tzkt.state = head.Level
 			head, err = tzkt.api.GetHead(ctx)
 			if err != nil {
-				log.Error(err)
+				log.Err(err).Msg("tzkt.Sync")
 				return
 			}
 		}

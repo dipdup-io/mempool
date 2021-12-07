@@ -9,9 +9,11 @@ import (
 	pg "github.com/go-pg/pg/v10"
 	"github.com/karlseguin/ccache"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	generalConfig "github.com/dipdup-net/go-lib/config"
+	"github.com/dipdup-net/go-lib/database"
 	"github.com/dipdup-net/go-lib/node"
 	"github.com/dipdup-net/go-lib/prometheus"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
@@ -22,7 +24,7 @@ import (
 
 // Indexer -
 type Indexer struct {
-	db               *pg.DB
+	db               *database.PgGo
 	tzkt             *tzkt.TzKT
 	mempool          *receiver.Receiver
 	prom             *prometheus.Service
@@ -30,7 +32,7 @@ type Indexer struct {
 	cache            *Cache
 	rights           *ccache.Cache
 	delegates        *CachedDelegates
-	state            models.State
+	state            database.State
 	filters          config.Filters
 	endorsements     chan *models.Endorsement
 	network          string
@@ -45,8 +47,8 @@ type Indexer struct {
 }
 
 // NewIndexer -
-func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, database generalConfig.Database, settings config.Settings, prom *prometheus.Service) (*Indexer, error) {
-	db, err := models.OpenDatabaseConnection(ctx, database, indexerCfg.Filters.Kinds...)
+func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, dbCfg generalConfig.Database, settings config.Settings, prom *prometheus.Service) (*Indexer, error) {
+	db, err := models.OpenDatabaseConnection(ctx, dbCfg, indexerCfg.Filters.Kinds...)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +106,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		rights:           ccache.New(ccache.Configure().MaxSize(60)),
 	}
 
-	indexer.state = models.State{
+	indexer.state = database.State{
 		IndexType: models.IndexTypeMempool,
 		IndexName: indexer.indexName,
 		Level:     head.Level,
@@ -130,7 +132,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 
 // Start -
 func (indexer *Indexer) Start(ctx context.Context) error {
-	indexer.log().WithField("kinds", indexer.filters.Kinds).Info("starting...")
+	indexer.info().Strs("kinds", indexer.filters.Kinds).Msg("starting...")
 
 	if err := indexer.initState(); err != nil {
 		return err
@@ -148,9 +150,9 @@ func (indexer *Indexer) Start(ctx context.Context) error {
 
 		var offset int
 		for {
-			endorsements, err := models.EndorsementsWithoutBaker(indexer.db, indexer.network, 100, offset)
+			endorsements, err := models.EndorsementsWithoutBaker(indexer.db.DB(), indexer.network, 100, offset)
 			if err != nil {
-				log.Error(err)
+				log.Err(err).Msg("")
 				break
 			}
 			for i := range endorsements {
@@ -178,7 +180,7 @@ func (indexer *Indexer) Start(ctx context.Context) error {
 }
 
 func (indexer *Indexer) sync(ctx context.Context) {
-	indexer.log().Info("start syncing...")
+	indexer.info().Msg("start syncing...")
 	indexer.wg.Add(1)
 	go func() {
 		defer indexer.wg.Done()
@@ -188,7 +190,7 @@ func (indexer *Indexer) sync(ctx context.Context) {
 }
 
 func (indexer *Indexer) initState() error {
-	current, err := models.GetState(indexer.db, indexer.indexName)
+	current, err := indexer.db.State(indexer.indexName)
 	switch {
 	case err == nil:
 		indexer.state = current
@@ -204,11 +206,11 @@ func (indexer *Indexer) initState() error {
 // Close -
 func (indexer *Indexer) Close() {
 	indexer.wg.Wait()
-	indexer.log().Info("indexer was stopped")
+	indexer.info().Msg("indexer was stopped")
 }
 
 func (indexer *Indexer) close() error {
-	indexer.log().Info("stopping...")
+	indexer.info().Msg("stopping...")
 	if err := indexer.tzkt.Close(); err != nil {
 		return err
 	}
@@ -235,12 +237,12 @@ func (indexer *Indexer) listen(ctx context.Context) {
 			return
 		case operations := <-indexer.tzkt.Operations():
 			if err := indexer.handleInChain(ctx, operations); err != nil {
-				indexer.log().Error(err)
+				indexer.error().Err(err).Msg("handleInChain")
 				continue
 			}
 		case block := <-indexer.tzkt.Blocks():
 			if err := indexer.handleBlock(ctx, block); err != nil {
-				indexer.log().Error(err)
+				indexer.error().Err(err).Msg("handleBlock")
 				continue
 			}
 		case msg := <-indexer.mempool.Operations():
@@ -248,31 +250,31 @@ func (indexer *Indexer) listen(ctx context.Context) {
 			case receiver.StatusApplied:
 				applied, ok := msg.Body.(node.Applied)
 				if !ok {
-					indexer.log().Errorf("invalid applied operation %v", applied)
+					indexer.error().Msgf("invalid applied operation %v", applied)
 					continue
 				}
 				if indexer.isHashProcessed(applied.Hash) {
 					continue
 				}
 				if err := indexer.handleAppliedOperation(ctx, applied, msg.Protocol); err != nil {
-					log.Error(err)
+					log.Err(err).Msg("handleAppliedOperation")
 					continue
 				}
 			case receiver.StatusBranchDelayed, receiver.StatusBranchRefused, receiver.StatusRefused, receiver.StatusUnprocessed:
 				failed, ok := msg.Body.(node.FailedMonitor)
 				if !ok {
-					indexer.log().Errorf("invalid %s operation %v", msg.Status, failed)
+					indexer.error().Msgf("invalid %s operation %v", msg.Status, failed)
 					continue
 				}
 				if indexer.isHashProcessed(failed.Hash) {
 					continue
 				}
 				if err := indexer.handleFailedOperation(ctx, failed, string(msg.Status), msg.Protocol); err != nil {
-					indexer.log().Error(err)
+					indexer.error().Err(err).Msg("handleFailedOperation")
 					continue
 				}
 			default:
-				indexer.log().Errorf("invalid mempool operation status %s", msg.Status)
+				indexer.error().Msgf("invalid mempool operation status %s", msg.Status)
 			}
 		}
 	}
@@ -288,36 +290,27 @@ func (indexer *Indexer) isHashProcessed(hash string) bool {
 }
 
 func (indexer *Indexer) onPopBlockQueue(block Block) error {
-	indexer.log().WithField("level", block.Level).Infof("operations with branch %s is expired", block.Branch)
-	return models.SetExpired(indexer.db, indexer.network, block.Branch, indexer.filters.Kinds...)
+	indexer.info().Uint64("block", block.Level).Msgf("operations with branch %s is expired", block.Branch)
+	return models.SetExpired(indexer.db.DB(), indexer.network, block.Branch, indexer.filters.Kinds...)
 }
 
-func (indexer *Indexer) onRollbackBlockQueue(block Block) error {
-	log.Warnf("Rollback to %d level", block.Level)
-
-	tx, err := indexer.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Close()
-
+func (indexer *Indexer) onRollbackBlockQueue(ctx context.Context, block Block) error {
+	log.Warn().Msgf("Rollback to %d level", block.Level)
 	indexer.state.Level = block.Level
-	if err := models.Rollback(tx, indexer.network, block.Branch, block.Level, indexer.filters.Kinds...); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return err
-		}
-		return err
-	}
-	if err := indexer.state.Update(tx); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return err
-		}
-		return err
-	}
 
-	return tx.Commit()
+	return indexer.db.DB().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		if err := models.Rollback(tx, indexer.network, block.Branch, block.Level, indexer.filters.Kinds...); err != nil {
+			return err
+		}
+		return indexer.db.UpdateState(indexer.state)
+	})
+
 }
 
-func (indexer *Indexer) log() *log.Entry {
-	return log.WithField("state", indexer.state.Level).WithField("name", indexer.indexName)
+func (indexer *Indexer) error() *zerolog.Event {
+	return log.Error().Uint64("state", indexer.state.Level).Str("name", indexer.indexName)
+}
+
+func (indexer *Indexer) info() *zerolog.Event {
+	return log.Info().Uint64("state", indexer.state.Level).Str("name", indexer.indexName)
 }

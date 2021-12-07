@@ -1,15 +1,15 @@
 package receiver
 
 import (
+	"github.com/dipdup-net/go-lib/database"
 	"github.com/dipdup-net/go-lib/prometheus"
-	pg "github.com/go-pg/pg/v10"
 )
 
 // ReceiverOption -
 type ReceiverOption func(*Receiver)
 
 // WithStorage -
-func WithStorage(db *pg.DB, blockTime int64) ReceiverOption {
+func WithStorage(db *database.PgGo, blockTime int64) ReceiverOption {
 	return func(m *Receiver) {
 		if blockTime > 0 {
 			m.blockTime = blockTime

@@ -13,23 +13,23 @@ import (
 	"github.com/dipdup-net/mempool/cmd/mempool/endorsement"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	pg "github.com/go-pg/pg/v10"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 	defer indexer.wg.Done()
 
-	log.WithField("network", indexer.network).Info("Thread for finding endorsement baker started")
+	log.Info().Str("network", indexer.network).Msg("Thread for finding endorsement baker started")
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case endorsement := <-indexer.endorsements:
-			if err := indexer.db.RunInTransaction(ctx, func(tx *pg.Tx) error {
+			if err := indexer.db.DB().RunInTransaction(ctx, func(tx *pg.Tx) error {
 				return indexer.findBaker(ctx, tx, endorsement)
 			}); err != nil {
-				log.Error(err)
+				log.Err(err).Msg("")
 			}
 		}
 	}

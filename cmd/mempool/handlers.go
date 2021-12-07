@@ -32,7 +32,7 @@ func (indexer *Indexer) handleBlock(ctx context.Context, block tzkt.BlockMessage
 			}
 
 			for i := len(blocks) - 1; i > -1; i-- {
-				if err := indexer.branches.Add(blocks[i]); err != nil {
+				if err := indexer.branches.Add(ctx, blocks[i]); err != nil {
 					return err
 				}
 			}
@@ -41,17 +41,17 @@ func (indexer *Indexer) handleBlock(ctx context.Context, block tzkt.BlockMessage
 	case events.MessageTypeData:
 		if block.Level > indexer.state.Level {
 			indexer.state.Level = block.Level
-			indexer.log().Info("indexer state was updated")
-			if err := indexer.state.Update(indexer.db); err != nil {
+			indexer.info().Msg("indexer state was updated")
+			if err := indexer.db.UpdateState(indexer.state); err != nil {
 				return err
 			}
 		}
 	}
-	return indexer.branches.Add(block)
+	return indexer.branches.Add(ctx, block)
 }
 
 func (indexer *Indexer) handleOldOperations(ctx context.Context) error {
-	return indexer.db.RunInTransaction(ctx, func(tx *pg.Tx) error {
+	return indexer.db.DB().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		return indexer.processOldOperations(tx)
 	})
 }
@@ -72,7 +72,7 @@ func (indexer *Indexer) processOldOperations(db pg.DBI) error {
 }
 
 func (indexer *Indexer) handleInChain(ctx context.Context, operations tzkt.OperationMessage) error {
-	return indexer.db.RunInTransaction(ctx, func(tx *pg.Tx) error {
+	return indexer.db.DB().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		return indexer.inChainOperationProcess(tx, operations)
 	})
 }
@@ -84,7 +84,7 @@ func (indexer *Indexer) inChainOperationProcess(tx pg.DBI, operations tzkt.Opera
 			return false
 		}
 		if err := models.SetInChain(tx, indexer.network, apiOperation.Hash, apiOperation.Kind, operations.Level); err != nil {
-			indexer.log().Error(err)
+			indexer.error().Err(err).Msg("models.SetInChain")
 			return false
 		}
 
@@ -109,7 +109,7 @@ func (indexer *Indexer) inChainOperationProcess(tx pg.DBI, operations tzkt.Opera
 				gasStats.TotalFee = *apiOperation.BakerFee
 			}
 			if err := gasStats.Save(tx); err != nil {
-				indexer.log().Error(err)
+				indexer.error().Err(err).Msg("gasStats.Save")
 				return false
 			}
 		}
@@ -120,7 +120,7 @@ func (indexer *Indexer) inChainOperationProcess(tx pg.DBI, operations tzkt.Opera
 }
 
 func (indexer *Indexer) handleFailedOperation(ctx context.Context, operation node.FailedMonitor, status, protocol string) error {
-	return indexer.db.RunInTransaction(ctx, func(tx *pg.Tx) error {
+	return indexer.db.DB().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		return indexer.failedOperationProcess(tx, operation, status, protocol)
 	})
 }
@@ -148,7 +148,7 @@ func (indexer *Indexer) failedOperationProcess(tx pg.DBI, operation node.FailedM
 }
 
 func (indexer *Indexer) handleAppliedOperation(ctx context.Context, operation node.Applied, protocol string) error {
-	return indexer.db.RunInTransaction(ctx, func(tx *pg.Tx) error {
+	return indexer.db.DB().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		return indexer.appliedOperationProcess(tx, operation, protocol)
 	})
 }

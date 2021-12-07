@@ -2,44 +2,30 @@ package models
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"time"
 
 	"github.com/dipdup-net/go-lib/config"
+	"github.com/dipdup-net/go-lib/database"
 	pg "github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 // OpenDatabaseConnection -
-func OpenDatabaseConnection(ctx context.Context, cfg config.Database, kinds ...string) (db *pg.DB, err error) {
-	if cfg.Kind != config.DBKindPostgres {
-		return nil, errors.New("unsupported database type")
-	}
-	if cfg.Path != "" {
-		opt, err := pg.ParseURL(cfg.Path)
-		if err != nil {
-			return nil, err
-		}
-		db = pg.Connect(opt)
-	} else {
-		db = pg.Connect(&pg.Options{
-			Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-			User:     cfg.User,
-			Password: cfg.Password,
-			Database: cfg.Database,
-		})
-	}
+func OpenDatabaseConnection(ctx context.Context, cfg config.Database, kinds ...string) (db *database.PgGo, err error) {
+	db = database.NewPgGo()
 
-	if err = db.Ping(ctx); err != nil {
+	if err := db.Connect(ctx, cfg); err != nil {
 		return nil, err
 	}
+
+	database.Wait(ctx, db, 5*time.Second)
 
 	data := GetModelsBy(kinds...)
 	data = append(data, &State{})
 
 	for i := range data {
-		if err := db.WithContext(ctx).Model(data[i]).CreateTable(&orm.CreateTableOptions{
+		if err := db.DB().WithContext(ctx).Model(data[i]).CreateTable(&orm.CreateTableOptions{
 			IfNotExists: true,
 		}); err != nil {
 			if err := db.Close(); err != nil {
@@ -48,7 +34,7 @@ func OpenDatabaseConnection(ctx context.Context, cfg config.Database, kinds ...s
 			return nil, err
 		}
 	}
-	db.AddQueryHook(dbLogger{})
+	db.DB().AddQueryHook(dbLogger{})
 
 	return db, nil
 }
@@ -65,7 +51,7 @@ func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) error {
 		return err
 	}
 	sql := string(raw)
-	log.Debugf("%+v", sql)
+	log.Debug().Msgf("%+v", sql)
 
 	return nil
 }
