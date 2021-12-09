@@ -1,23 +1,24 @@
 package models
 
-import (
-	"gorm.io/gorm"
-)
+import pg "github.com/go-pg/pg/v10"
 
 // Endorsement -
 type Endorsement struct {
+	//nolint
+	tableName struct{} `pg:"endorsements"`
 	MempoolOperation
 	Level uint64 `json:"level"`
-	Baker string `json:"-" gorm:"transaction_baker_idx"`
-}
-
-// TableName -
-func (Endorsement) TableName() string {
-	return "endorsements"
+	Baker string `json:"-" index:"transaction_baker_idx"`
 }
 
 // EndorsementsWithoutBaker -
-func EndorsementsWithoutBaker(tx *gorm.DB) (endorsements []Endorsement, err error) {
-	err = tx.Model(&Endorsement{}).Where("baker = ''").Order("level asc").Find(&endorsements).Error
+func EndorsementsWithoutBaker(db pg.DBI, network string, limit, offset int) (endorsements []Endorsement, err error) {
+	err = db.Model(&endorsements).
+		Where("baker IS NULL").
+		Where("network = ?", network).
+		Order("level asc").
+		Limit(limit).
+		Offset(offset).
+		Select()
 	return
 }

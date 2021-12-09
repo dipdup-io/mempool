@@ -11,13 +11,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+
 	"github.com/dipdup-net/go-lib/cmdline"
 	libCfg "github.com/dipdup-net/go-lib/config"
 	"github.com/dipdup-net/go-lib/hasura"
 	"github.com/dipdup-net/go-lib/prometheus"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
-	log "github.com/sirupsen/logrus"
 )
 
 type startResult struct {
@@ -26,9 +28,10 @@ type startResult struct {
 }
 
 func main() {
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp: true,
-	})
+	log.Logger = log.Output(zerolog.ConsoleWriter{
+		Out:        os.Stderr,
+		TimeFormat: "2006-01-02 15:04:05",
+	}).Level(zerolog.InfoLevel)
 
 	args := cmdline.Parse()
 	if args.Help {
@@ -37,7 +40,7 @@ func main() {
 
 	cfg, err := config.Load(args.Config)
 	if err != nil {
-		log.Error(err)
+		log.Err(err).Msg("")
 		return
 	}
 
@@ -80,10 +83,11 @@ func main() {
 		go func(network string, mempool *config.Indexer) {
 			defer wg.Done()
 
-			if err := startFunc(network, mempool); err == nil {
+			err := startFunc(network, mempool)
+			if err == nil {
 				return
 			}
-			log.Error(err)
+			log.Err(err).Msg("")
 
 			ticker := time.NewTicker(time.Minute)
 			defer ticker.Stop()
@@ -93,10 +97,11 @@ func main() {
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					if err := startFunc(network, mempool); err == nil {
+					err := startFunc(network, mempool)
+					if err == nil {
 						return
 					}
-					log.Error(err)
+					log.Err(err).Msg("")
 				}
 			}
 		}(network, mempool)
@@ -106,7 +111,7 @@ func main() {
 
 	views, err := createViews(ctx, cfg.Database)
 	if err != nil {
-		log.Error(err)
+		log.Err(err).Msg("")
 		cancel()
 		return
 	}
@@ -118,14 +123,14 @@ func main() {
 		}
 		tables := models.GetModelsBy(t...)
 		if err := hasura.Create(ctx, cfg.Hasura, cfg.Database, views, tables...); err != nil {
-			log.Error(err)
+			log.Err(err).Msg("")
 			cancel()
 			return
 		}
 	}
 
 	<-signals
-	log.Warn("Trying carefully stopping....")
+	log.Warn().Msg("Trying carefully stopping....")
 
 	for _, indexerCancel := range indexerCancels {
 		indexerCancel()
@@ -139,7 +144,7 @@ func main() {
 
 	if prometheusService != nil {
 		if err := prometheusService.Close(); err != nil {
-			log.Error(err)
+			log.Err(err).Msg("")
 		}
 	}
 
@@ -159,11 +164,7 @@ func createViews(ctx context.Context, database libCfg.Database) ([]string, error
 	if err != nil {
 		return nil, err
 	}
-	sql, err := db.DB()
-	if err != nil {
-		return nil, err
-	}
-	defer sql.Close()
+	defer db.Close()
 
 	views := make([]string, 0)
 	for i := range files {
@@ -177,7 +178,7 @@ func createViews(ctx context.Context, database libCfg.Database) ([]string, error
 			return nil, err
 		}
 
-		if err := db.Exec(string(raw)).Error; err != nil {
+		if _, err := db.DB().Exec(string(raw)); err != nil {
 			return nil, err
 		}
 		views = append(views, strings.Split(files[i].Name(), ".")[0])

@@ -2,36 +2,56 @@ package models
 
 import (
 	"context"
+	"time"
 
 	"github.com/dipdup-net/go-lib/config"
-	"github.com/dipdup-net/go-lib/state"
-	"gorm.io/gorm"
+	"github.com/dipdup-net/go-lib/database"
+	pg "github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
+	"github.com/rs/zerolog/log"
 )
 
 // OpenDatabaseConnection -
-func OpenDatabaseConnection(ctx context.Context, cfg config.Database, kinds ...string) (*gorm.DB, error) {
-	db, err := state.OpenConnection(ctx, cfg)
-	if err != nil {
+func OpenDatabaseConnection(ctx context.Context, cfg config.Database, kinds ...string) (db *database.PgGo, err error) {
+	db = database.NewPgGo()
+
+	if err := db.Connect(ctx, cfg); err != nil {
 		return nil, err
 	}
 
-	sql, err := db.DB()
-	if err != nil {
-		return nil, err
-	}
-
-	if cfg.Kind == config.DBKindSqlite {
-		sql.SetMaxOpenConns(1)
-	}
+	database.Wait(ctx, db, 5*time.Second)
 
 	data := GetModelsBy(kinds...)
-	data = append(data, &state.State{})
+	data = append(data, &State{})
 
-	if err := db.AutoMigrate(data...); err != nil {
-		if err := sql.Close(); err != nil {
+	for i := range data {
+		if err := db.DB().WithContext(ctx).Model(data[i]).CreateTable(&orm.CreateTableOptions{
+			IfNotExists: true,
+		}); err != nil {
+			if err := db.Close(); err != nil {
+				return nil, err
+			}
 			return nil, err
 		}
-		return nil, err
 	}
+	db.DB().AddQueryHook(dbLogger{})
+
 	return db, nil
+}
+
+type dbLogger struct{}
+
+func (d dbLogger) BeforeQuery(c context.Context, q *pg.QueryEvent) (context.Context, error) {
+	return c, nil
+}
+
+func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) error {
+	raw, err := q.FormattedQuery()
+	if err != nil {
+		return err
+	}
+	sql := string(raw)
+	log.Debug().Msgf("%+v", sql)
+
+	return nil
 }

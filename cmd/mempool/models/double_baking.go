@@ -2,26 +2,24 @@ package models
 
 // DoubleBaking -
 type DoubleBaking struct {
+	//nolint
+	tableName struct{} `pg:"double_bakings"`
+
 	MempoolOperation
-	Bh1 DoubleBakingInfo `json:"bh1" gorm:"-"`
-	Bh2 DoubleBakingInfo `json:"bh2" gorm:"-"`
+	Bh1 DoubleBakingInfo `json:"bh1" pg:"-"`
+	Bh2 DoubleBakingInfo `json:"bh2" pg:"-"`
 
-	Bh1Level            uint64 `json:"-" gorm:"column:bh_1_level"`
-	Bh1Proto            int64  `json:"-" gorm:"column:bh_1_proto"`
-	Bh1ValidationPass   int64  `json:"-" gorm:"column:bh_1_validation_pass"`
-	Bh1Priority         int64  `json:"-" gorm:"column:bh_1_priority"`
-	Bh1ProofOfWorkNonce string `json:"-" gorm:"column:bh_1_proof_of_work_nonce"`
+	Bh1Level            uint64 `json:"-" pg:"bh_1_level"`
+	Bh1Proto            int64  `json:"-" pg:"bh_1_proto"`
+	Bh1ValidationPass   int64  `json:"-" pg:"bh_1_validation_pass"`
+	Bh1Priority         int64  `json:"-" pg:"bh_1_priority"`
+	Bh1ProofOfWorkNonce string `json:"-" pg:"bh_1_proof_of_work_nonce"`
 
-	Bh2Level            uint64 `json:"-" gorm:"column:bh_2_level"`
-	Bh2Proto            int64  `json:"-" gorm:"column:bh_2_proto"`
-	Bh2ValidationPass   int64  `json:"-" gorm:"column:bh_2_validation_pass"`
-	Bh2Priority         int64  `json:"-" gorm:"column:bh_2_priority"`
-	Bh2ProofOfWorkNonce string `json:"-" gorm:"column:bh_2_proof_of_work_nonce"`
-}
-
-// TableName -
-func (DoubleBaking) TableName() string {
-	return "double_bakings"
+	Bh2Level            uint64 `json:"-" pg:"bh_2_level"`
+	Bh2Proto            int64  `json:"-" pg:"bh_2_proto"`
+	Bh2ValidationPass   int64  `json:"-" pg:"bh_2_validation_pass"`
+	Bh2Priority         int64  `json:"-" pg:"bh_2_priority"`
+	Bh2ProofOfWorkNonce string `json:"-" pg:"bh_2_proof_of_work_nonce"`
 }
 
 // DoubleBakingInfo -

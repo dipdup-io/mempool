@@ -2,12 +2,9 @@ package models
 
 // ActivateAccount -
 type ActivateAccount struct {
+	//nolint
+	tableName struct{} `pg:"activate_account"`
 	MempoolOperation
 	Pkh    string `json:"pkh"`
 	Secret string `json:"secret"`
-}
-
-// TableName -
-func (ActivateAccount) TableName() string {
-	return "activate_account"
 }
