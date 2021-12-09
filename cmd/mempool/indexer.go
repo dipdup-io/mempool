@@ -68,8 +68,9 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 	}
 
 	memInd, err := receiver.New(indexerCfg.DataSource.RPC, network,
-		receiver.WithStorage(db, constants.TimeBetweenBlocks[0]),
+		receiver.WithStorage(db),
 		receiver.WithPrometheus(prom),
+		receiver.WithBlockTime(constants.TimeBetweenBlocks[0]),
 	)
 	if err != nil {
 		return nil, err

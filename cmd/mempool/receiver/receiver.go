@@ -55,6 +55,10 @@ func New(urls []string, network string, opts ...ReceiverOption) (*Receiver, erro
 		opts[i](&indexer)
 	}
 
+	if indexer.blockTime == 0 {
+		indexer.blockTime = 30
+	}
+
 	return &indexer, nil
 }
 
