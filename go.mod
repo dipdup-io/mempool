@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/dipdup-net/go-lib v0.1.45
+	github.com/dipdup-net/go-lib v0.1.46
 	github.com/go-pg/pg/v10 v10.10.6
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/karlseguin/ccache v2.0.3+incompatible
