@@ -41,6 +41,7 @@ func (indexer *Indexer) handleBlock(ctx context.Context, block tzkt.BlockMessage
 	case events.MessageTypeData:
 		if block.Level > indexer.state.Level {
 			indexer.state.Level = block.Level
+			indexer.state.Hash = block.Hash
 			indexer.info().Msg("indexer state was updated")
 			if err := indexer.db.UpdateState(indexer.state); err != nil {
 				return err

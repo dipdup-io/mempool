@@ -37,7 +37,7 @@ func (s *GasStats) BeforeUpdate(ctx context.Context) (context.Context, error) {
 // Append -
 func (s *GasStats) Save(db pg.DBI) error {
 	if s.TotalGasUsed == 0 && s.LevelInChain == 0 && s.LevelInMempool == 0 {
-		_, err := db.Model(&s).Insert()
+		_, err := db.Model(s).Insert()
 		return err
 	}
 

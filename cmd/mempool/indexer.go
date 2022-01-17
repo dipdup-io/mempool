@@ -196,7 +196,12 @@ func (indexer *Indexer) initState() error {
 	case err == nil:
 		indexer.state = current
 	case errors.Is(err, pg.ErrNoRows):
-		return nil
+		indexer.state = database.State{
+			IndexType: models.IndexTypeMempool,
+			IndexName: indexer.indexName,
+		}
+
+		return indexer.db.CreateState(indexer.state)
 	default:
 		return err
 	}
