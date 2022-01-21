@@ -32,5 +32,6 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/bin/dipdup-mempool /go/bin/dipdup-mempool
 COPY ./build/dipdup.*.yml ./
 COPY ./cmd/mempool/views/*.sql ./views/
+COPY ./cmd/mempool/graphql ./graphql
 
 ENTRYPOINT ["/go/bin/dipdup-mempool"]
