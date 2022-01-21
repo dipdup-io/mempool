@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/dipdup-net/go-lib/tzkt/events"
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
@@ -9,16 +10,18 @@ import (
 
 // Block -
 type Block struct {
-	Branch string
-	Level  uint64
-	Type   events.MessageType
+	Branch    string
+	Level     uint64
+	Type      events.MessageType
+	Timestamp time.Time
 }
 
 func fromMessage(block tzkt.BlockMessage) Block {
 	return Block{
-		Branch: block.Hash,
-		Level:  block.Level,
-		Type:   block.Type,
+		Branch:    block.Hash,
+		Level:     block.Level,
+		Type:      block.Type,
+		Timestamp: block.Timestamp.UTC(),
 	}
 }
 

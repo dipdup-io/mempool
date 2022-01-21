@@ -22,7 +22,7 @@ func OpenDatabaseConnection(ctx context.Context, cfg config.Database, kinds ...s
 	database.Wait(ctx, db, 5*time.Second)
 
 	data := GetModelsBy(kinds...)
-	data = append(data, &State{})
+	data = append(data, &database.State{})
 
 	for i := range data {
 		if err := db.DB().WithContext(ctx).Model(data[i]).CreateTable(&orm.CreateTableOptions{

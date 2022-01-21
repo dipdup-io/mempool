@@ -121,9 +121,10 @@ func (tzkt *TzKT) handleBlockMessage(msg events.Message) error {
 		blocks := msg.Body.([]events.Block)
 		for i := range blocks {
 			tzkt.blocks <- BlockMessage{
-				Hash:  blocks[i].Hash,
-				Level: blocks[i].Level,
-				Type:  msg.Type,
+				Hash:      blocks[i].Hash,
+				Level:     blocks[i].Level,
+				Type:      msg.Type,
+				Timestamp: blocks[i].Timestamp.UTC(),
 			}
 		}
 	case events.MessageTypeState, events.MessageTypeReorg, events.MessageTypeSubscribed:
@@ -454,9 +455,10 @@ func (tzkt *TzKT) processSync(ctx context.Context, state syncState, msg *Operati
 				msg.Block = operation.Block
 			case msg.Level != operation.Level:
 				tzkt.blocks <- BlockMessage{
-					Type:  events.MessageTypeData,
-					Level: msg.Level,
-					Hash:  msg.Block,
+					Type:      events.MessageTypeData,
+					Level:     msg.Level,
+					Hash:      msg.Block,
+					Timestamp: msg.Timestamp.UTC(),
 				}
 				tzkt.operations <- msg.copy()
 				msg.clear()

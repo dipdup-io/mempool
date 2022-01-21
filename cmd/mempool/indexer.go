@@ -303,6 +303,7 @@ func (indexer *Indexer) onPopBlockQueue(block Block) error {
 func (indexer *Indexer) onRollbackBlockQueue(ctx context.Context, block Block) error {
 	log.Warn().Msgf("Rollback to %d level", block.Level)
 	indexer.state.Level = block.Level
+	indexer.state.Timestamp = block.Timestamp
 
 	return indexer.db.DB().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		if err := models.Rollback(tx, indexer.network, block.Branch, block.Level, indexer.filters.Kinds...); err != nil {

@@ -2,6 +2,7 @@ package tzkt
 
 import (
 	"sync"
+	"time"
 
 	"github.com/dipdup-net/go-lib/node"
 	"github.com/dipdup-net/go-lib/tzkt/api"
@@ -40,9 +41,10 @@ var toTzKTKinds = map[string]string{
 
 // OperationMessage -
 type OperationMessage struct {
-	Level uint64
-	Block string
-	Hash  *sync.Map
+	Level     uint64
+	Block     string
+	Timestamp time.Time
+	Hash      *sync.Map
 }
 
 func newOperationMessage() OperationMessage {
@@ -58,12 +60,14 @@ func (msg *OperationMessage) clear() {
 	})
 	msg.Level = 0
 	msg.Block = ""
+	msg.Timestamp = time.Now().UTC()
 }
 
 func (msg *OperationMessage) copy() OperationMessage {
 	message := newOperationMessage()
 	message.Level = msg.Level
 	message.Block = msg.Block
+	message.Timestamp = msg.Timestamp
 	msg.Hash.Range(func(key, value interface{}) bool {
 		message.Hash.Store(key, value)
 		return true
@@ -73,7 +77,8 @@ func (msg *OperationMessage) copy() OperationMessage {
 
 // BlockMessage -
 type BlockMessage struct {
-	Hash  string             `json:"hash"`
-	Level uint64             `json:"level"`
-	Type  events.MessageType `json:"type"`
+	Hash      string             `json:"hash"`
+	Level     uint64             `json:"level"`
+	Type      events.MessageType `json:"type"`
+	Timestamp time.Time
 }
