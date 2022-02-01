@@ -21,7 +21,7 @@ type Receiver struct {
 	monitors  []*node.Monitor
 	db        *database.PgGo
 	prom      *prometheus.Service
-	state     database.State
+	state     *database.State
 	indexName string
 	protocol  string
 	network   string
@@ -170,10 +170,10 @@ func (indexer *Receiver) updateState(ctx context.Context, url string) {
 	defer ticker.Stop()
 
 	// init
-	if err := indexer.checkHead(ctx, rpc); err != nil {
+	if err := indexer.setState(); err != nil {
 		log.Err(err).Msg("")
 	}
-	if err := indexer.setState(); err != nil {
+	if err := indexer.checkHead(ctx, rpc); err != nil {
 		log.Err(err).Msg("")
 	}
 
@@ -198,6 +198,7 @@ func (indexer *Receiver) setState() error {
 	state, err := indexer.db.State(indexer.indexName)
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRows) {
+			indexer.state = &database.State{}
 			return nil
 		}
 		return err

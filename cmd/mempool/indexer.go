@@ -32,7 +32,7 @@ type Indexer struct {
 	cache            *Cache
 	rights           *ccache.Cache
 	delegates        *CachedDelegates
-	state            database.State
+	state            *database.State
 	filters          config.Filters
 	endorsements     chan *models.Endorsement
 	network          string
@@ -107,7 +107,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		rights:           ccache.New(ccache.Configure().MaxSize(60)),
 	}
 
-	indexer.state = database.State{
+	indexer.state = &database.State{
 		IndexType: models.IndexTypeMempool,
 		IndexName: indexer.indexName,
 		Level:     head.Level,
@@ -196,7 +196,7 @@ func (indexer *Indexer) initState() error {
 	case err == nil:
 		indexer.state = current
 	case errors.Is(err, pg.ErrNoRows):
-		indexer.state = database.State{
+		indexer.state = &database.State{
 			IndexType: models.IndexTypeMempool,
 			IndexName: indexer.indexName,
 		}
