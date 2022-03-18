@@ -141,12 +141,12 @@ func (indexer *Receiver) run(ctx context.Context, monitor *node.Monitor) {
 	}
 }
 
-func (indexer *Receiver) checkHead(ctx context.Context, rpc *node.NodeRPC) error {
+func (indexer *Receiver) checkHead(ctx context.Context, rpc node.API) error {
 	if indexer.db == nil {
 		return nil
 	}
 
-	head, err := rpc.Header("head", node.WithContext(ctx))
+	head, err := rpc.Header(ctx, "head")
 	if err != nil {
 		indexer.incrementMetric(rpc.URL(), indexer.network, err)
 		return err
@@ -164,8 +164,6 @@ func (indexer *Receiver) checkHead(ctx context.Context, rpc *node.NodeRPC) error
 func (indexer *Receiver) updateState(ctx context.Context, url string) {
 	defer indexer.wg.Done()
 
-	rpc := node.NewNodeRPC(url)
-
 	ticker := time.NewTicker(time.Second * time.Duration(indexer.blockTime))
 	defer ticker.Stop()
 
@@ -173,6 +171,8 @@ func (indexer *Receiver) updateState(ctx context.Context, url string) {
 	if err := indexer.setState(); err != nil {
 		log.Err(err).Msg("")
 	}
+
+	rpc := node.NewMainRPC(url)
 	if err := indexer.checkHead(ctx, rpc); err != nil {
 		log.Err(err).Msg("")
 	}

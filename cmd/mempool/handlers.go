@@ -232,6 +232,13 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 		return handleTransaction(tx, content, operation, indexer.filters.Accounts...)
 	case node.KindRegisterGlobalConstant:
 		return handleRegisterGloabalConstant(tx, content, operation)
+	case node.KindDoublePreendorsement:
+		return handleDoublePreendorsement(tx, content, operation)
+	case node.KindPreendorsement:
+		return handlePreendorsement(tx, content, operation)
+	case node.KindSetDepositsLimit:
+		return handleSetDepositsLimit(tx, content, operation, indexer.filters.Accounts...)
+
 	default:
 		return errors.Wrap(node.ErrUnknownKind, content.Kind)
 	}
@@ -421,6 +428,44 @@ func handleRegisterGloabalConstant(tx pg.DBI, content node.Content, operation mo
 	}
 	registerGlobalConstant.MempoolOperation = operation
 	return createModel(tx, &registerGlobalConstant)
+}
+
+func handlePreendorsement(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var preendorsement models.Preendorsement
+	if err := json.Unmarshal(content.Body, &preendorsement); err != nil {
+		return err
+	}
+	preendorsement.MempoolOperation = operation
+	return createModel(tx, &preendorsement)
+}
+
+func handleDoublePreendorsement(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var doublePreendorsement models.DoublePreendorsing
+	if err := json.Unmarshal(content.Body, &doublePreendorsement); err != nil {
+		return err
+	}
+	doublePreendorsement.MempoolOperation = operation
+	return createModel(tx, &doublePreendorsement)
+}
+
+func handleSetDepositsLimit(tx pg.DBI, content node.Content, operation models.MempoolOperation, accounts ...string) error {
+	var setDepositsLimit models.SetDepositsLimit
+	if err := json.Unmarshal(content.Body, &setDepositsLimit); err != nil {
+		return err
+	}
+
+	if len(accounts) > 0 {
+		for _, account := range accounts {
+			if account == setDepositsLimit.Source {
+				setDepositsLimit.MempoolOperation = operation
+				return createModel(tx, &setDepositsLimit)
+			}
+		}
+		return nil
+	}
+
+	setDepositsLimit.MempoolOperation = operation
+	return createModel(tx, &setDepositsLimit)
 }
 
 func (indexer *Indexer) isKindAvailiable(kind string) bool {

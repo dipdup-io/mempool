@@ -53,24 +53,29 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		return nil, err
 	}
 
-	rpc := node.NewNodeRPC(indexerCfg.DataSource.RPC[0])
-	constants, err := rpc.Constants(node.WithContext(ctx))
+	rpc := node.NewMainRPC(indexerCfg.DataSource.RPC[0])
+	constants, err := rpc.Constants(ctx, "head")
 	if err != nil {
 		return nil, err
 	}
-	if len(constants.TimeBetweenBlocks) == 0 {
+	if len(constants.TimeBetweenBlocks) == 0 && constants.MinimalBlockDelay == 0 {
 		return nil, errors.Errorf("Empty time_between_blocks in node response: %s", network)
 	}
 
-	head, err := rpc.Header("head", node.WithContext(ctx))
+	head, err := rpc.Header(ctx, "head")
 	if err != nil {
 		return nil, err
+	}
+
+	blockTime := constants.MinimalBlockDelay
+	if blockTime == 0 {
+		blockTime = constants.TimeBetweenBlocks[0]
 	}
 
 	memInd, err := receiver.New(indexerCfg.DataSource.RPC, network,
 		receiver.WithStorage(db),
 		receiver.WithPrometheus(prom),
-		receiver.WithBlockTime(constants.TimeBetweenBlocks[0]),
+		receiver.WithBlockTime(blockTime),
 	)
 	if err != nil {
 		return nil, err
@@ -78,7 +83,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 
 	expiredAfter := settings.ExpiredAfter
 	if expiredAfter == 0 {
-		metadata, err := rpc.HeadMetadata("head", node.WithContext(ctx))
+		metadata, err := rpc.Metadata(ctx, "head")
 		if err != nil {
 			return nil, err
 		}
@@ -100,8 +105,8 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		mempool:          memInd,
 		prom:             prom,
 		cache:            NewCache(2 * time.Hour),
-		keepInChain:      uint64(constants.TimeBetweenBlocks[0]) * settings.KeepInChainBlocks,
-		keepOperations:   uint64(constants.TimeBetweenBlocks[0]) * settings.ExpiredAfter,
+		keepInChain:      uint64(blockTime) * settings.KeepInChainBlocks,
+		keepOperations:   uint64(blockTime) * settings.ExpiredAfter,
 		gasStatsLifetime: gasStatsLifetime,
 		endorsements:     make(chan *models.Endorsement, 1024*32),
 		rights:           ccache.New(ccache.Configure().MaxSize(60)),
