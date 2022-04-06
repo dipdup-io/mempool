@@ -71,11 +71,6 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		return nil, err
 	}
 
-	blockTime := constants.MinimalBlockDelay
-	if blockTime == 0 {
-		blockTime = constants.TimeBetweenBlocks[0]
-	}
-
 	memInd, err := receiver.New(indexerCfg.DataSource.RPC, network,
 		receiver.WithStorage(db),
 		receiver.WithPrometheus(prom),
