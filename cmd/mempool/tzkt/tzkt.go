@@ -500,7 +500,7 @@ func (tzkt *TzKT) getTableData(ctx context.Context, table *tableState, indexerSt
 	case api.KindBallot:
 		return getOperations(ctx, table, filters, tzkt.api.GetBallots)
 	case api.KindDelegation:
-		return getOperations(ctx, table, filters, tzkt.api.GetDelegations)
+		return getDelegations(ctx, table, filters, tzkt.api)
 	case api.KindDoubleBaking:
 		return getOperations(ctx, table, filters, tzkt.api.GetDoubleBakings)
 	case api.KindDoubleEndorsing:
@@ -510,13 +510,13 @@ func (tzkt *TzKT) getTableData(ctx context.Context, table *tableState, indexerSt
 	case api.KindNonceRevelation:
 		return getOperations(ctx, table, filters, tzkt.api.GetNonceRevelations)
 	case api.KindOrigination:
-		return getOperations(ctx, table, filters, tzkt.api.GetOriginations)
+		return getOriginations(ctx, table, filters, tzkt.api)
 	case api.KindProposal:
 		return getOperations(ctx, table, filters, tzkt.api.GetProposals)
 	case api.KindReveal:
-		return getOperations(ctx, table, filters, tzkt.api.GetReveals)
+		return getReveals(ctx, table, filters, tzkt.api)
 	case api.KindTransaction:
-		return getOperations(ctx, table, filters, tzkt.api.GetTransactions)
+		return getTransactions(ctx, table, filters, tzkt.api)
 	case api.KindRegisterGlobalConstant:
 		return getOperations(ctx, table, filters, tzkt.api.GetRegisterConstants)
 	default:
@@ -535,6 +535,96 @@ func getOperations(ctx context.Context, table *tableState, filters map[string]st
 	for i := range operations {
 		operations[i].Kind = table.Table
 		table.Items = append(table.Items, operations[i])
+	}
+	return nil
+}
+
+func getTransactions(ctx context.Context, table *tableState, filters map[string]string, tzkt *api.API) error {
+	transactions, err := tzkt.GetTransactions(ctx, filters)
+	if err != nil {
+		return err
+	}
+	if len(transactions) != pageSize {
+		table.Finished = true
+	}
+	for i := range transactions {
+		table.Items = append(table.Items, api.Operation{
+			Kind:       table.Table,
+			Level:      transactions[i].Level,
+			ID:         transactions[i].ID,
+			Hash:       transactions[i].Hash,
+			Block:      transactions[i].Block,
+			GasUsed:    &transactions[i].GasUsed,
+			BakerFee:   &transactions[i].BakerFee,
+			Parameters: transactions[i].Parameter,
+		})
+	}
+	return nil
+}
+
+func getReveals(ctx context.Context, table *tableState, filters map[string]string, tzkt *api.API) error {
+	reveals, err := tzkt.GetReveals(ctx, filters)
+	if err != nil {
+		return err
+	}
+	if len(reveals) != pageSize {
+		table.Finished = true
+	}
+	for i := range reveals {
+		table.Items = append(table.Items, api.Operation{
+			Kind:     table.Table,
+			Level:    reveals[i].Level,
+			ID:       reveals[i].ID,
+			Hash:     reveals[i].Hash,
+			Block:    reveals[i].Block,
+			GasUsed:  &reveals[i].GasUsed,
+			BakerFee: &reveals[i].BakerFee,
+		})
+	}
+	return nil
+}
+
+func getOriginations(ctx context.Context, table *tableState, filters map[string]string, tzkt *api.API) error {
+	origination, err := tzkt.GetOriginations(ctx, filters)
+	if err != nil {
+		return err
+	}
+	if len(origination) != pageSize {
+		table.Finished = true
+	}
+	for i := range origination {
+		table.Items = append(table.Items, api.Operation{
+			Kind:     table.Table,
+			Level:    origination[i].Level,
+			ID:       origination[i].ID,
+			Hash:     origination[i].Hash,
+			Block:    origination[i].Block,
+			GasUsed:  &origination[i].GasUsed,
+			BakerFee: &origination[i].BakerFee,
+		})
+	}
+	return nil
+}
+
+func getDelegations(ctx context.Context, table *tableState, filters map[string]string, tzkt *api.API) error {
+	delegations, err := tzkt.GetDelegations(ctx, filters)
+	if err != nil {
+		return err
+	}
+	if len(delegations) != pageSize {
+		table.Finished = true
+	}
+	for i := range delegations {
+		table.Items = append(table.Items, api.Operation{
+			Kind:     table.Table,
+			Level:    delegations[i].Level,
+			ID:       delegations[i].ID,
+			Hash:     delegations[i].Hash,
+			Block:    delegations[i].Block,
+			GasUsed:  &delegations[i].GasUsed,
+			BakerFee: &delegations[i].BakerFee,
+			Delegate: &delegations[i].NewDelegate,
+		})
 	}
 	return nil
 }

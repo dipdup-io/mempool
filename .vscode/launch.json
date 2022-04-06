@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/cmd/mempool",
             "args": [
                 "-c",
-                "../../build/dipdup.testnet.yml"
+                "../../build/dipdup.mainnet.yml"
             ],
             "envFile": "${workspaceFolder}/.env"
         }
