@@ -207,6 +207,12 @@ func getModelByKind(kind string) (interface{}, error) {
 		return &Transaction{}, nil
 	case node.KindRegisterGlobalConstant:
 		return &RegisterGlobalConstant{}, nil
+	case node.KindDoublePreendorsement:
+		return &DoublePreendorsing{}, nil
+	case node.KindPreendorsement:
+		return &Preendorsement{}, nil
+	case node.KindSetDepositsLimit:
+		return &SetDepositsLimit{}, nil
 	default:
 		return nil, errors.Wrap(node.ErrUnknownKind, kind)
 	}
