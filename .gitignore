@@ -16,3 +16,5 @@
 vendor/
 .env*
 script.py
+dist/
+node_modules/
