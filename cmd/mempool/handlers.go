@@ -240,7 +240,8 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 		return handleSetDepositsLimit(tx, content, operation, indexer.filters.Accounts...)
 
 	default:
-		return errors.Wrap(node.ErrUnknownKind, content.Kind)
+		indexer.warn().Str("kind", content.Kind).Msg("unknown operation kind")
+		return nil
 	}
 }
 

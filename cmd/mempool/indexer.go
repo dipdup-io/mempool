@@ -325,3 +325,7 @@ func (indexer *Indexer) error() *zerolog.Event {
 func (indexer *Indexer) info() *zerolog.Event {
 	return log.Info().Uint64("state", indexer.state.Level).Str("name", indexer.indexName)
 }
+
+func (indexer *Indexer) warn() *zerolog.Event {
+	return log.Warn().Uint64("state", indexer.state.Level).Str("name", indexer.indexName)
+}
