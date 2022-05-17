@@ -13,3 +13,11 @@ Fully compatible with DipDup YAML configuration file format.
 Mempool indexer reuses `datasources`, `contracts`, `database`, `hasura` sections, and reads its own settings from `mempool` top-level section.  
 
 Read more [in the docs](https://docs.dipdup.net/config-file-reference/plugins/mempool).
+
+## GQL Client
+
+```
+npm i @dipdup/mempool
+```
+
+Read [how to use](./build/client/README.md) the GraphQL client for the Mempool service.
