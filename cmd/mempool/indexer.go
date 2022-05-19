@@ -270,7 +270,7 @@ func (indexer *Indexer) listen(ctx context.Context) {
 					log.Err(err).Msg("handleAppliedOperation")
 					continue
 				}
-			case receiver.StatusBranchDelayed, receiver.StatusBranchRefused, receiver.StatusRefused, receiver.StatusUnprocessed:
+			case receiver.StatusBranchDelayed, receiver.StatusBranchRefused, receiver.StatusRefused, receiver.StatusUnprocessed, receiver.StatusOutdated:
 				failed, ok := msg.Body.(node.FailedMonitor)
 				if !ok {
 					indexer.error().Msgf("invalid %s operation %v", msg.Status, failed)
