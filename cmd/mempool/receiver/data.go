@@ -16,5 +16,6 @@ const (
 	StatusBranchDelayed Status = "branch_delayed"
 	StatusBranchRefused Status = "branch_refused"
 	StatusRefused       Status = "refused"
+	StatusOutdated      Status = "outdated"
 	StatusUnprocessed   Status = "unprocessed"
 )

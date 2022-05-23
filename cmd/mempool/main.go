@@ -121,8 +121,12 @@ func main() {
 		for kind := range kinds {
 			t = append(t, kind)
 		}
-		tables := models.GetModelsBy(t...)
-		if err := hasura.Create(ctx, cfg.Hasura, cfg.Database, views, tables...); err != nil {
+		if err := hasura.Create(ctx, hasura.GenerateArgs{
+			Config:         cfg.Hasura,
+			DatabaseConfig: cfg.Database,
+			Views:          views,
+			Models:         models.GetModelsBy(t...),
+		}); err != nil {
 			log.Err(err).Msg("")
 			cancel()
 			return

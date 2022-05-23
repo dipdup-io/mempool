@@ -38,8 +38,8 @@ github.com/davecgh/go-spew v0.0.0-20171005155431-ecdeabc65495/go.mod h1:J7Y8YcW2
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dipdup-net/go-lib v0.2.5 h1:9CAcLmbD+0gcJ1S3g5ZPHulnV8x/GAIP1f0RMZ/VZNQ=
-github.com/dipdup-net/go-lib v0.2.5/go.mod h1:RjVhNv63RE3pOAeHLwnspa2UjJi80k/Kelwv7aN1ETE=
+github.com/dipdup-net/go-lib v0.2.11 h1:ZzPMOOa4y03UyC/7BbXKII5Ue/i76QvVavG4TArMSlg=
+github.com/dipdup-net/go-lib v0.2.11/go.mod h1:RjVhNv63RE3pOAeHLwnspa2UjJi80k/Kelwv7aN1ETE=
 github.com/ebellocchia/go-base58 v0.1.0 h1:0w/ODEfZnOPW5KW0QY/Xpb1fxba/BxQJMUa5iYzpljk=
 github.com/ebellocchia/go-base58 v0.1.0/go.mod h1:RHE/6C6Ru6YAH9Tc+A9eHQ6ZKEooLC0jw+YLnpt3CAU=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=

@@ -77,6 +77,7 @@ func (indexer *Receiver) Start(ctx context.Context) {
 		indexer.monitors[i].SubscribeOnMempoolBranchDelayed(ctx)
 		indexer.monitors[i].SubscribeOnMempoolBranchRefused(ctx)
 		indexer.monitors[i].SubscribeOnMempoolRefused(ctx)
+		indexer.monitors[i].SubscribeOnMempoolOutdated(ctx)
 	}
 }
 
@@ -134,6 +135,14 @@ func (indexer *Receiver) run(ctx context.Context, monitor *node.Monitor) {
 				indexer.operations <- Message{
 					Status:   StatusRefused,
 					Body:     *refused[i],
+					Protocol: indexer.protocol,
+				}
+			}
+		case outdated := <-monitor.Outdated():
+			for i := range outdated {
+				indexer.operations <- Message{
+					Status:   StatusOutdated,
+					Body:     *outdated[i],
 					Protocol: indexer.protocol,
 				}
 			}
