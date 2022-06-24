@@ -7,7 +7,7 @@ mempool:
     gas_stats_lifetime: 3600
     expired_after_blocks: 120
   indexers:
-    hangzhou2net:
+    jakartanet:
       filters:
         kinds:
           - endorsement
@@ -22,10 +22,13 @@ mempool:
           - reveal
           - seed_nonce_revelation
           - register_global_constant
+          - set_deposits_limit
+          - preendorsement
+          - double_preendorsement_evidence
       datasources:
-          tzkt: https://api.hangzhou2net.tzkt.io
+          tzkt: https://api.jakartanet.tzkt.io
           rpc: 
-            - https://rpc.tzkt.io/hangzhou2net
+            - https://rpc.tzkt.io/jakartanet
     ithacanet:
       filters:
         kinds:
