@@ -9,7 +9,7 @@ import (
 
 	"github.com/dipdup-net/go-lib/node"
 	"github.com/dipdup-net/go-lib/tools/forge"
-	"github.com/dipdup-net/go-lib/tzkt/api"
+	"github.com/dipdup-net/go-lib/tzkt/data"
 	"github.com/dipdup-net/mempool/cmd/mempool/endorsement"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	pg "github.com/go-pg/pg/v10"
@@ -35,7 +35,7 @@ func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 	}
 }
 
-func (indexer *Indexer) getEndorsingRights(ctx context.Context, level uint64) ([]api.Right, error) {
+func (indexer *Indexer) getEndorsingRights(ctx context.Context, level uint64) ([]data.Right, error) {
 	rights, err := indexer.rights.Fetch(fmt.Sprintf("rights/%s/%d", indexer.network, level), 15*time.Minute, func() (interface{}, error) {
 		rights, err := indexer.tzkt.Rights(ctx, level)
 		if err != nil {
@@ -48,7 +48,7 @@ func (indexer *Indexer) getEndorsingRights(ctx context.Context, level uint64) ([
 	if err != nil {
 		return nil, err
 	}
-	if result, ok := rights.Value().([]api.Right); !ok {
+	if result, ok := rights.Value().([]data.Right); !ok {
 		return nil, errors.New("invalid rights type")
 	} else {
 		return result, nil
@@ -101,7 +101,7 @@ func (indexer *Indexer) findBaker(ctx context.Context, tx pg.DBI, e *models.Endo
 }
 
 // BySlots -
-type BySlots []api.Right
+type BySlots []data.Right
 
 // Len -
 func (rights BySlots) Len() int { return len(rights) }

@@ -9,8 +9,8 @@ import (
 	"sync"
 
 	"github.com/dipdup-net/go-lib/tzkt/api"
+	"github.com/dipdup-net/go-lib/tzkt/data"
 	"github.com/dipdup-net/go-lib/tzkt/events"
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -65,18 +65,18 @@ func (tzkt *TzKT) Connect(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				if err := tzkt.close(); err != nil {
-					log.Err(err).Msg("")
+					log.Err(err).Msg("tzkt.close")
 				}
 				return
 			case msg := <-tzkt.client.Listen():
 				switch msg.Channel {
 				case events.ChannelOperations:
 					if err := tzkt.handleOperationMessage(msg); err != nil {
-						log.Err(err).Msg("")
+						log.Err(err).Msg("handleOperationMessage")
 					}
 				case events.ChannelBlocks:
 					if err := tzkt.handleBlockMessage(msg); err != nil {
-						log.Err(err).Msg("")
+						log.Err(err).Msg("handleBlockMessage")
 					}
 				}
 			}
@@ -118,7 +118,7 @@ func (tzkt *TzKT) handleBlockMessage(msg events.Message) error {
 		if msg.Body == nil {
 			return nil
 		}
-		blocks := msg.Body.([]events.Block)
+		blocks := msg.Body.([]data.Block)
 		for i := range blocks {
 			tzkt.blocks <- BlockMessage{
 				Hash:      blocks[i].Hash,
@@ -145,7 +145,10 @@ func (tzkt *TzKT) handleOperationMessage(msg events.Message) error {
 		if msg.Body == nil {
 			return nil
 		}
-		operations := msg.Body.([]interface{})
+		operations, ok := msg.Body.([]any)
+		if !ok {
+			return nil
+		}
 		return tzkt.handleUpdateMessage(operations)
 	case events.MessageTypeState, events.MessageTypeReorg:
 	default:
@@ -155,7 +158,7 @@ func (tzkt *TzKT) handleOperationMessage(msg events.Message) error {
 	return nil
 }
 
-func (tzkt *TzKT) handleUpdateMessage(operations []interface{}) error {
+func (tzkt *TzKT) handleUpdateMessage(operations []any) error {
 	message := newOperationMessage()
 
 	for i := range operations {
@@ -169,86 +172,91 @@ func (tzkt *TzKT) handleUpdateMessage(operations []interface{}) error {
 	return nil
 }
 
-func (tzkt *TzKT) getAPIOperation(data interface{}) (api.Operation, error) {
-	switch operation := data.(type) {
+func (tzkt *TzKT) getAPIOperation(model interface{}) (data.Operation, error) {
+	switch operation := model.(type) {
 
-	case *events.Delegation:
-		tx := api.Operation{
-			ID:       operation.ID,
-			Level:    operation.Level,
-			Hash:     operation.Hash,
-			Kind:     toNodeKinds[operation.Type],
-			Block:    operation.Block,
-			GasUsed:  &operation.GasUsed,
-			BakerFee: &operation.BakerFee,
-		}
-		if operation.NewDelegate != nil {
-			tx.Delegate = &api.Address{
-				Alias:   operation.NewDelegate.Alias,
-				Address: operation.NewDelegate.Address,
-			}
-		}
-		return tx, nil
+	case *data.Delegation:
+		return operationFromDelegation(*operation), nil
 
-	case *events.Origination:
-		tx := api.Operation{
-			ID:       operation.ID,
-			Level:    operation.Level,
-			Hash:     operation.Hash,
-			Kind:     toNodeKinds[operation.Type],
-			Block:    operation.Block,
-			GasUsed:  &operation.GasUsed,
-			BakerFee: &operation.BakerFee,
-		}
-		return tx, nil
+	case *data.Origination:
+		return operationFromOrigination(*operation), nil
 
-	case *events.Reveal:
-		tx := api.Operation{
-			ID:       operation.ID,
-			Level:    operation.Level,
-			Hash:     operation.Hash,
-			Kind:     toNodeKinds[operation.Type],
-			Block:    operation.Block,
-			GasUsed:  &operation.GasUsed,
-			BakerFee: &operation.BakerFee,
-		}
-		return tx, nil
+	case *data.Reveal:
+		return operationFromReveal(*operation), nil
 
-	case *events.Transaction:
-		tx := api.Operation{
-			ID:       operation.ID,
-			Level:    operation.Level,
-			Hash:     operation.Hash,
-			Kind:     toNodeKinds[operation.Type],
-			Block:    operation.Block,
-			GasUsed:  &operation.GasUsed,
-			BakerFee: &operation.BakerFee,
-		}
-		if operation.Parameter != nil {
-			tx.Parameters = &api.Parameters{
-				Entrypoint: operation.Parameter.Entrypoint,
-				Value:      operation.Parameter.Value,
-			}
-		}
-		return tx, nil
+	case *data.Transaction:
+		return operationFromTransaction(*operation), nil
 
-	case map[string]interface{}:
-		var general api.Operation
-		err := mapstructure.Decode(data, &general)
-		return general, err
+	case *data.Activation:
+		return operationFromActivation(*operation), nil
+
+	case *data.Ballot:
+		return operationFromBallot(*operation), nil
+
+	case *data.DoubleBaking:
+		return operationFromDoubleBaking(*operation), nil
+
+	case *data.DoubleEndorsing:
+		return operationFromDoubleEndorsing(*operation), nil
+
+	case *data.Endorsement:
+		return operationFromEndorsement(*operation), nil
+
+	case *data.NonceRevelation:
+		return operationFromNonceRevelation(*operation), nil
+
+	case *data.RegisterConstant:
+		return operationFromRegisterConstant(*operation), nil
+
+	case *data.Proposal:
+		return operationFromProposal(*operation), nil
+
+	case *data.SetDepositsLimit:
+		return operationFromSetDepositsLimit(*operation), nil
+
+	case *data.Preendorsement:
+		return operationFromPreendorsement(*operation), nil
+
+	case *data.TransferTicket:
+		return operationFromTransferTicket(*operation), nil
+
+	case *data.TxRollupCommit:
+		return operationFromTxRollupCommit(*operation), nil
+
+	case *data.TxRollupDispatchTicket:
+		return operationFromTxRollupDispatchTicket(*operation), nil
+
+	case *data.TxRollupFinalizeCommitment:
+		return operationFromTxRollupFinalizeCommitment(*operation), nil
+
+	case *data.TxRollupOrigination:
+		return operationFromTxRollupOrigination(*operation), nil
+
+	case *data.TxRollupRejection:
+		return operationFromTxRollupRejection(*operation), nil
+
+	case *data.TxRollupRemoveCommitment:
+		return operationFromTxRollupRemoveCommitment(*operation), nil
+
+	case *data.TxRollupReturnBond:
+		return operationFromTxRollupReturnBond(*operation), nil
+
+	case *data.TxRollupSubmitBatch:
+		return operationFromTxRollupSubmitBatch(*operation), nil
+
 	default:
-		return api.Operation{}, errors.Wrapf(ErrInvalidOperationType, "%T", data)
+		return data.Operation{}, errors.Wrapf(ErrInvalidOperationType, "%T", model)
 	}
 }
 
-func (tzkt *TzKT) processOperation(data interface{}, message *OperationMessage) error {
-	operation, err := tzkt.getAPIOperation(data)
+func (tzkt *TzKT) processOperation(model interface{}, message *OperationMessage) error {
+	operation, err := tzkt.getAPIOperation(model)
 	if err != nil {
 		return err
 	}
-	operation.Kind = toNodeKinds[operation.Kind]
+	operation.Type = toNodeKinds[operation.Type]
 	if value, ok := message.Hash.LoadOrStore(operation.Hash, operation); ok {
-		if stored, ok := value.(api.Operation); ok {
+		if stored, ok := value.(data.Operation); ok {
 			if operation.BakerFee != nil {
 				if stored.BakerFee != nil {
 					*stored.BakerFee += *operation.BakerFee
@@ -288,13 +296,13 @@ type tableState struct {
 	Table    string
 	LastID   uint64
 	Finished bool
-	Items    []api.Operation
+	Items    []data.Operation
 }
 
 func emptyTableState(table string) *tableState {
 	return &tableState{
 		Table: table,
-		Items: make([]api.Operation, 0),
+		Items: make([]data.Operation, 0),
 	}
 }
 
@@ -322,7 +330,7 @@ func (a syncState) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func newSyncState(kind ...string) syncState {
 	ss := make(syncState, 0)
 	if len(kind) == 0 {
-		ss = append(ss, emptyTableState(api.KindTransaction))
+		ss = append(ss, emptyTableState(data.KindTransaction))
 	} else {
 		for i := range kind {
 			ss = append(ss, emptyTableState(kind[i]))
@@ -495,37 +503,59 @@ func (tzkt *TzKT) getTableData(ctx context.Context, table *tableState, indexerSt
 	}
 
 	switch table.Table {
-	case api.KindActivation:
-		return getOperations(ctx, table, filters, tzkt.api.GetActivations)
-	case api.KindBallot:
-		return getOperations(ctx, table, filters, tzkt.api.GetBallots)
-	case api.KindDelegation:
-		return getDelegations(ctx, table, filters, tzkt.api)
-	case api.KindDoubleBaking:
-		return getOperations(ctx, table, filters, tzkt.api.GetDoubleBakings)
-	case api.KindDoubleEndorsing:
-		return getOperations(ctx, table, filters, tzkt.api.GetDoubleEndorsings)
-	case api.KindEndorsement:
-		return getOperations(ctx, table, filters, tzkt.api.GetEndorsements)
-	case api.KindNonceRevelation:
-		return getOperations(ctx, table, filters, tzkt.api.GetNonceRevelations)
-	case api.KindOrigination:
-		return getOriginations(ctx, table, filters, tzkt.api)
-	case api.KindProposal:
-		return getOperations(ctx, table, filters, tzkt.api.GetProposals)
-	case api.KindReveal:
-		return getReveals(ctx, table, filters, tzkt.api)
-	case api.KindTransaction:
-		return getTransactions(ctx, table, filters, tzkt.api)
-	case api.KindRegisterGlobalConstant:
-		return getOperations(ctx, table, filters, tzkt.api.GetRegisterConstants)
+	case data.KindActivation:
+		return getOperations(ctx, table, filters, tzkt.api.GetActivations, operationFromActivation)
+	case data.KindBallot:
+		return getOperations(ctx, table, filters, tzkt.api.GetBallots, operationFromBallot)
+	case data.KindDelegation:
+		return getOperations(ctx, table, filters, tzkt.api.GetDelegations, operationFromDelegation)
+	case data.KindDoubleBaking:
+		return getOperations(ctx, table, filters, tzkt.api.GetDoubleBakings, operationFromDoubleBaking)
+	case data.KindDoubleEndorsing:
+		return getOperations(ctx, table, filters, tzkt.api.GetDoubleEndorsings, operationFromDoubleEndorsing)
+	case data.KindEndorsement:
+		return getOperations(ctx, table, filters, tzkt.api.GetEndorsements, operationFromEndorsement)
+	case data.KindNonceRevelation:
+		return getOperations(ctx, table, filters, tzkt.api.GetNonceRevelations, operationFromNonceRevelation)
+	case data.KindOrigination:
+		return getOperations(ctx, table, filters, tzkt.api.GetOriginations, operationFromOrigination)
+	case data.KindProposal:
+		return getOperations(ctx, table, filters, tzkt.api.GetProposals, operationFromProposal)
+	case data.KindReveal:
+		return getOperations(ctx, table, filters, tzkt.api.GetReveals, operationFromReveal)
+	case data.KindTransaction:
+		return getOperations(ctx, table, filters, tzkt.api.GetTransactions, operationFromTransaction)
+	case data.KindRegisterGlobalConstant:
+		return getOperations(ctx, table, filters, tzkt.api.GetRegisterConstants, operationFromRegisterConstant)
+	case data.KindSetDepositsLimit:
+		return getOperations(ctx, table, filters, tzkt.api.GetSetDepositsLimit, operationFromSetDepositsLimit)
+	case data.KindPreendorsement:
+		return getOperations(ctx, table, filters, tzkt.api.GetPreendorsement, operationFromPreendorsement)
+	case data.KindRollupDispatchTickets:
+		return getOperations(ctx, table, filters, tzkt.api.GetTxRollupDispatchTicket, operationFromTxRollupDispatchTicket)
+	case data.KindRollupFinalizeCommitment:
+		return getOperations(ctx, table, filters, tzkt.api.GetTxRollupFinalizeCommitment, operationFromTxRollupFinalizeCommitment)
+	case data.KindRollupReturnBond:
+		return getOperations(ctx, table, filters, tzkt.api.GetTxRollupReturnBond, operationFromTxRollupReturnBond)
+	case data.KindRollupSubmitBatch:
+		return getOperations(ctx, table, filters, tzkt.api.GetTxRollupSubmitBatch, operationFromTxRollupSubmitBatch)
+	case data.KindTransferTicket:
+		return getOperations(ctx, table, filters, tzkt.api.GetTransferTicket, operationFromTransferTicket)
+	case data.KindTxRollupCommit:
+		return getOperations(ctx, table, filters, tzkt.api.GetTxRollupCommit, operationFromTxRollupCommit)
+	case data.KindTxRollupOrigination:
+		return getOperations(ctx, table, filters, tzkt.api.GetTxRollupOrigination, operationFromTxRollupOrigination)
+	case data.KindTxRollupRejection:
+		return getOperations(ctx, table, filters, tzkt.api.GetTxRollupRejection, operationFromTxRollupRejection)
+	case data.KindTxRollupRemoveCommitment:
+		return getOperations(ctx, table, filters, tzkt.api.GetTxRollupRemoveCommitment, operationFromTxRollupRemoveCommitment)
 	default:
 		return errors.Wrap(ErrUnknownOperationKind, table.Table)
 	}
 }
 
-func getOperations(ctx context.Context, table *tableState, filters map[string]string, requestFunc func(context.Context, map[string]string) ([]api.Operation, error)) error {
-	operations, err := requestFunc(ctx, filters)
+func getOperations[M data.OperationConstraint](ctx context.Context, table *tableState, filters map[string]string, receiver receiver[M], processor processor[M]) error {
+	operations, err := receiver(ctx, filters)
 	if err != nil {
 		return err
 	}
@@ -533,98 +563,7 @@ func getOperations(ctx context.Context, table *tableState, filters map[string]st
 		table.Finished = true
 	}
 	for i := range operations {
-		operations[i].Kind = table.Table
-		table.Items = append(table.Items, operations[i])
-	}
-	return nil
-}
-
-func getTransactions(ctx context.Context, table *tableState, filters map[string]string, tzkt *api.API) error {
-	transactions, err := tzkt.GetTransactions(ctx, filters)
-	if err != nil {
-		return err
-	}
-	if len(transactions) != pageSize {
-		table.Finished = true
-	}
-	for i := range transactions {
-		table.Items = append(table.Items, api.Operation{
-			Kind:       table.Table,
-			Level:      transactions[i].Level,
-			ID:         transactions[i].ID,
-			Hash:       transactions[i].Hash,
-			Block:      transactions[i].Block,
-			GasUsed:    &transactions[i].GasUsed,
-			BakerFee:   &transactions[i].BakerFee,
-			Parameters: transactions[i].Parameter,
-		})
-	}
-	return nil
-}
-
-func getReveals(ctx context.Context, table *tableState, filters map[string]string, tzkt *api.API) error {
-	reveals, err := tzkt.GetReveals(ctx, filters)
-	if err != nil {
-		return err
-	}
-	if len(reveals) != pageSize {
-		table.Finished = true
-	}
-	for i := range reveals {
-		table.Items = append(table.Items, api.Operation{
-			Kind:     table.Table,
-			Level:    reveals[i].Level,
-			ID:       reveals[i].ID,
-			Hash:     reveals[i].Hash,
-			Block:    reveals[i].Block,
-			GasUsed:  &reveals[i].GasUsed,
-			BakerFee: &reveals[i].BakerFee,
-		})
-	}
-	return nil
-}
-
-func getOriginations(ctx context.Context, table *tableState, filters map[string]string, tzkt *api.API) error {
-	origination, err := tzkt.GetOriginations(ctx, filters)
-	if err != nil {
-		return err
-	}
-	if len(origination) != pageSize {
-		table.Finished = true
-	}
-	for i := range origination {
-		table.Items = append(table.Items, api.Operation{
-			Kind:     table.Table,
-			Level:    origination[i].Level,
-			ID:       origination[i].ID,
-			Hash:     origination[i].Hash,
-			Block:    origination[i].Block,
-			GasUsed:  &origination[i].GasUsed,
-			BakerFee: &origination[i].BakerFee,
-		})
-	}
-	return nil
-}
-
-func getDelegations(ctx context.Context, table *tableState, filters map[string]string, tzkt *api.API) error {
-	delegations, err := tzkt.GetDelegations(ctx, filters)
-	if err != nil {
-		return err
-	}
-	if len(delegations) != pageSize {
-		table.Finished = true
-	}
-	for i := range delegations {
-		table.Items = append(table.Items, api.Operation{
-			Kind:     table.Table,
-			Level:    delegations[i].Level,
-			ID:       delegations[i].ID,
-			Hash:     delegations[i].Hash,
-			Block:    delegations[i].Block,
-			GasUsed:  &delegations[i].GasUsed,
-			BakerFee: &delegations[i].BakerFee,
-			Delegate: &delegations[i].NewDelegate,
-		})
+		table.Items = append(table.Items, processor(operations[i]))
 	}
 	return nil
 }
@@ -653,7 +592,7 @@ func (tzkt *TzKT) GetBlocks(ctx context.Context, limit, state uint64) ([]BlockMe
 }
 
 // Delegates -
-func (tzkt *TzKT) Delegates(ctx context.Context, limit, offset int64) ([]api.Delegate, error) {
+func (tzkt *TzKT) Delegates(ctx context.Context, limit, offset int64) ([]data.Delegate, error) {
 	return tzkt.api.GetDelegates(ctx, map[string]string{
 		"active": "true",
 		"select": "publicKey,address",
@@ -663,7 +602,7 @@ func (tzkt *TzKT) Delegates(ctx context.Context, limit, offset int64) ([]api.Del
 }
 
 // Rights -
-func (tzkt *TzKT) Rights(ctx context.Context, level uint64) ([]api.Right, error) {
+func (tzkt *TzKT) Rights(ctx context.Context, level uint64) ([]data.Right, error) {
 	return tzkt.api.GetRights(ctx, map[string]string{
 		"type":   "endorsing",
 		"level":  strconv.FormatUint(level, 10),

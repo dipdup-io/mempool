@@ -8,7 +8,7 @@ test:
 	go test ./...
 
 mempool:
-	cd cmd/mempool && go run . -c ../../build/dipdup.mainnet.yml
+	cd cmd/mempool && go run . -c ../../build/dipdup.testnet.yml
 
 local:
 	docker-compose -f docker-compose.yml up -d --build

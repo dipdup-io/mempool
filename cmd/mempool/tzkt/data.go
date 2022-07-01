@@ -5,38 +5,58 @@ import (
 	"time"
 
 	"github.com/dipdup-net/go-lib/node"
-	"github.com/dipdup-net/go-lib/tzkt/api"
+	"github.com/dipdup-net/go-lib/tzkt/data"
 	"github.com/dipdup-net/go-lib/tzkt/events"
 )
 
 var toNodeKinds = map[string]string{
-	api.KindActivation:             node.KindActivation,
-	api.KindBallot:                 node.KindBallot,
-	api.KindDelegation:             node.KindDelegation,
-	api.KindDoubleBaking:           node.KindDoubleBaking,
-	api.KindDoubleEndorsing:        node.KindDoubleEndorsing,
-	api.KindEndorsement:            node.KindEndorsement,
-	api.KindNonceRevelation:        node.KindNonceRevelation,
-	api.KindOrigination:            node.KindOrigination,
-	api.KindProposal:               node.KindProposal,
-	api.KindReveal:                 node.KindReveal,
-	api.KindTransaction:            node.KindTransaction,
-	api.KindRegisterGlobalConstant: node.KindRegisterGlobalConstant,
+	data.KindActivation:               node.KindActivation,
+	data.KindBallot:                   node.KindBallot,
+	data.KindDelegation:               node.KindDelegation,
+	data.KindDoubleBaking:             node.KindDoubleBaking,
+	data.KindDoubleEndorsing:          node.KindDoubleEndorsing,
+	data.KindEndorsement:              node.KindEndorsement,
+	data.KindNonceRevelation:          node.KindNonceRevelation,
+	data.KindOrigination:              node.KindOrigination,
+	data.KindProposal:                 node.KindProposal,
+	data.KindReveal:                   node.KindReveal,
+	data.KindTransaction:              node.KindTransaction,
+	data.KindRegisterGlobalConstant:   node.KindRegisterGlobalConstant,
+	data.KindRollupDispatchTickets:    node.KindTxRollupDispatchTickets,
+	data.KindRollupFinalizeCommitment: node.KindTxRollupFinalizeCommitment,
+	data.KindRollupReturnBond:         node.KindTxRollupReturnBond,
+	data.KindRollupSubmitBatch:        node.KindTxRollupSubmitBatch,
+	data.KindTransferTicket:           node.KindTransferTicket,
+	data.KindTxRollupCommit:           node.KindTxRollupCommit,
+	data.KindTxRollupOrigination:      node.KindTxRollupOrigination,
+	data.KindTxRollupRejection:        node.KindTxRollupRejection,
+	data.KindTxRollupRemoveCommitment: node.KindTxRollupRemoveCommitment,
+	data.KindSetDepositsLimit:         node.KindSetDepositsLimit,
 }
 
 var toTzKTKinds = map[string]string{
-	node.KindActivation:             api.KindActivation,
-	node.KindBallot:                 api.KindBallot,
-	node.KindDelegation:             api.KindDelegation,
-	node.KindDoubleBaking:           api.KindDoubleBaking,
-	node.KindDoubleEndorsing:        api.KindDoubleEndorsing,
-	node.KindEndorsement:            api.KindEndorsement,
-	node.KindNonceRevelation:        api.KindNonceRevelation,
-	node.KindOrigination:            api.KindOrigination,
-	node.KindProposal:               api.KindProposal,
-	node.KindReveal:                 api.KindReveal,
-	node.KindTransaction:            api.KindTransaction,
-	node.KindRegisterGlobalConstant: api.KindRegisterGlobalConstant,
+	node.KindActivation:                 data.KindActivation,
+	node.KindBallot:                     data.KindBallot,
+	node.KindDelegation:                 data.KindDelegation,
+	node.KindDoubleBaking:               data.KindDoubleBaking,
+	node.KindDoubleEndorsing:            data.KindDoubleEndorsing,
+	node.KindEndorsement:                data.KindEndorsement,
+	node.KindNonceRevelation:            data.KindNonceRevelation,
+	node.KindOrigination:                data.KindOrigination,
+	node.KindProposal:                   data.KindProposal,
+	node.KindReveal:                     data.KindReveal,
+	node.KindTransaction:                data.KindTransaction,
+	node.KindRegisterGlobalConstant:     data.KindRegisterGlobalConstant,
+	node.KindTxRollupDispatchTickets:    data.KindRollupDispatchTickets,
+	node.KindTxRollupFinalizeCommitment: data.KindRollupFinalizeCommitment,
+	node.KindTxRollupReturnBond:         data.KindRollupReturnBond,
+	node.KindTxRollupSubmitBatch:        data.KindRollupSubmitBatch,
+	node.KindTransferTicket:             data.KindTransferTicket,
+	node.KindTxRollupCommit:             data.KindTxRollupCommit,
+	node.KindTxRollupOrigination:        data.KindTxRollupOrigination,
+	node.KindTxRollupRejection:          data.KindTxRollupRejection,
+	node.KindTxRollupRemoveCommitment:   data.KindTxRollupRemoveCommitment,
+	node.KindSetDepositsLimit:           data.KindSetDepositsLimit,
 }
 
 // OperationMessage -

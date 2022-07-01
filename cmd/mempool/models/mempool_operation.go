@@ -19,6 +19,12 @@ const (
 	StatusExpired       = "expired"
 )
 
+// DefaultConstraint -
+type DefaultConstraint interface {
+	TransferTicket | TxRollupCommit | TxRollupDispatchTickets | TxRollupFinalizeCommitment | TxRollupOrigination |
+		TxRollupRejection | TxRollupRemoveCommitment | TxRollupReturnBond | TxRollupSubmitBatch
+}
+
 // MempoolOperation -
 type MempoolOperation struct {
 	CreatedAt       int64   `json:"-"`
@@ -128,7 +134,8 @@ func Rollback(db pg.DBI, network, branch string, level uint64, kinds ...string) 
 
 		if _, err := db.Model(model).
 			Set("status = ?", StatusApplied).
-			Apply(networkAndBranch(network, branch)).Apply(isInChain).
+			Apply(networkAndBranch(network, branch)).
+			Apply(isInChain).
 			Where("level < ?", level).
 			Update(); err != nil {
 			return err
@@ -213,6 +220,25 @@ func getModelByKind(kind string) (interface{}, error) {
 		return &Preendorsement{}, nil
 	case node.KindSetDepositsLimit:
 		return &SetDepositsLimit{}, nil
+	case node.KindTransferTicket:
+		return &TransferTicket{}, nil
+	case node.KindTxRollupCommit:
+		return &TxRollupCommit{}, nil
+	case node.KindTxRollupDispatchTickets:
+		return &TxRollupDispatchTickets{}, nil
+	case node.KindTxRollupFinalizeCommitment:
+		return &TxRollupFinalizeCommitment{}, nil
+	case node.KindTxRollupOrigination:
+		return &TxRollupOrigination{}, nil
+	case node.KindTxRollupRejection:
+		return &TxRollupRejection{}, nil
+	case node.KindTxRollupRemoveCommitment:
+		return &TxRollupRemoveCommitment{}, nil
+	case node.KindTxRollupReturnBond:
+		return &TxRollupReturnBond{}, nil
+	case node.KindTxRollupSubmitBatch:
+		return &TxRollupSubmitBatch{}, nil
+
 	default:
 		return nil, errors.Wrap(node.ErrUnknownKind, kind)
 	}

@@ -2,18 +2,20 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/dipdup-net/go-lib/node"
-	"github.com/dipdup-net/go-lib/tzkt/api"
+	"github.com/dipdup-net/go-lib/tzkt/data"
 	"github.com/dipdup-net/go-lib/tzkt/events"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
 	"github.com/dipdup-net/mempool/cmd/mempool/tzkt"
 	"github.com/go-pg/pg/v10"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func (indexer *Indexer) handleBlock(ctx context.Context, block tzkt.BlockMessage) error {
 	if err := indexer.handleOldOperations(ctx); err != nil {
@@ -81,18 +83,18 @@ func (indexer *Indexer) handleInChain(ctx context.Context, operations tzkt.Opera
 
 func (indexer *Indexer) inChainOperationProcess(tx pg.DBI, operations tzkt.OperationMessage) error {
 	operations.Hash.Range(func(_, operation interface{}) bool {
-		apiOperation, ok := operation.(api.Operation)
+		apiOperation, ok := operation.(data.Operation)
 		if !ok {
 			return false
 		}
-		if err := models.SetInChain(tx, indexer.network, apiOperation.Hash, apiOperation.Kind, operations.Level); err != nil {
+		if err := models.SetInChain(tx, indexer.network, apiOperation.Hash, apiOperation.Type, operations.Level); err != nil {
 			indexer.error().Err(err).Msg("models.SetInChain")
 			return false
 		}
 
 		if indexer.prom != nil {
 			indexer.prom.IncrementCounter(operationCountMetricName, map[string]string{
-				"kind":    apiOperation.Kind,
+				"kind":    apiOperation.Type,
 				"status":  models.StatusInChain,
 				"network": indexer.network,
 			})
@@ -238,6 +240,24 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 		return handlePreendorsement(tx, content, operation)
 	case node.KindSetDepositsLimit:
 		return handleSetDepositsLimit(tx, content, operation, indexer.filters.Accounts...)
+	case node.KindTransferTicket:
+		return handleTransferTicket(tx, content, operation)
+	case node.KindTxRollupCommit:
+		return handleTxRollupCommit(tx, content, operation)
+	case node.KindTxRollupDispatchTickets:
+		return handleTxRollupDispatchTickets(tx, content, operation)
+	case node.KindTxRollupFinalizeCommitment:
+		return handleTxRollupFinalizeCommitment(tx, content, operation)
+	case node.KindTxRollupOrigination:
+		return handleTxRollupOrigination(tx, content, operation)
+	case node.KindTxRollupRejection:
+		return handleTxRollupRejection(tx, content, operation)
+	case node.KindTxRollupRemoveCommitment:
+		return handleTxRollupRemoveCommitment(tx, content, operation)
+	case node.KindTxRollupReturnBond:
+		return handleTxRollupReturnBond(tx, content, operation)
+	case node.KindTxRollupSubmitBatch:
+		return handleTxRollupSubmitBatch(tx, content, operation)
 
 	default:
 		indexer.warn().Str("kind", content.Kind).Msg("unknown operation kind")
@@ -467,6 +487,87 @@ func handleSetDepositsLimit(tx pg.DBI, content node.Content, operation models.Me
 
 	setDepositsLimit.MempoolOperation = operation
 	return createModel(tx, &setDepositsLimit)
+}
+
+func handleTransferTicket(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var transferTicket models.TransferTicket
+	if err := json.Unmarshal(content.Body, &transferTicket); err != nil {
+		return err
+	}
+	transferTicket.MempoolOperation = operation
+	return createModel(tx, &transferTicket)
+}
+
+func handleTxRollupCommit(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var t models.TxRollupCommit
+	if err := json.Unmarshal(content.Body, &t); err != nil {
+		return err
+	}
+	t.MempoolOperation = operation
+	return createModel(tx, &t)
+}
+
+func handleTxRollupDispatchTickets(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var t models.TxRollupDispatchTickets
+	if err := json.Unmarshal(content.Body, &t); err != nil {
+		return err
+	}
+	t.MempoolOperation = operation
+	return createModel(tx, &t)
+}
+
+func handleTxRollupFinalizeCommitment(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var t models.TxRollupFinalizeCommitment
+	if err := json.Unmarshal(content.Body, &t); err != nil {
+		return err
+	}
+	t.MempoolOperation = operation
+	return createModel(tx, &t)
+}
+
+func handleTxRollupOrigination(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var t models.TxRollupOrigination
+	if err := json.Unmarshal(content.Body, &t); err != nil {
+		return err
+	}
+	t.MempoolOperation = operation
+	return createModel(tx, &t)
+}
+
+func handleTxRollupRejection(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var t models.TxRollupRejection
+	if err := json.Unmarshal(content.Body, &t); err != nil {
+		return err
+	}
+	t.MempoolOperation = operation
+	return createModel(tx, &t)
+}
+
+func handleTxRollupRemoveCommitment(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var t models.TxRollupRemoveCommitment
+	if err := json.Unmarshal(content.Body, &t); err != nil {
+		return err
+	}
+	t.MempoolOperation = operation
+	return createModel(tx, &t)
+}
+
+func handleTxRollupReturnBond(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var t models.TxRollupReturnBond
+	if err := json.Unmarshal(content.Body, &t); err != nil {
+		return err
+	}
+	t.MempoolOperation = operation
+	return createModel(tx, &t)
+}
+
+func handleTxRollupSubmitBatch(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
+	var t models.TxRollupSubmitBatch
+	if err := json.Unmarshal(content.Body, &t); err != nil {
+		return err
+	}
+	t.MempoolOperation = operation
+	return createModel(tx, &t)
 }
 
 func (indexer *Indexer) isKindAvailiable(kind string) bool {
