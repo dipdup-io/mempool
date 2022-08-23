@@ -13,3 +13,8 @@ type TxRollupRemoveCommitment struct {
 	Source       string `json:"source,omitempty" index:"tx_rollup_remove_commitment_source_idx"`
 	Rollup       string `json:"rollup,omitempty" index:"tx_rollup_remove_commitment_rollup_idx"`
 }
+
+// SetMempoolOperation -
+func (i *TxRollupRemoveCommitment) SetMempoolOperation(operaiton MempoolOperation) {
+	i.MempoolOperation = operaiton
+}

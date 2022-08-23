@@ -21,8 +21,15 @@ const (
 
 // DefaultConstraint -
 type DefaultConstraint interface {
-	TransferTicket | TxRollupCommit | TxRollupDispatchTickets | TxRollupFinalizeCommitment | TxRollupOrigination |
-		TxRollupRejection | TxRollupRemoveCommitment | TxRollupReturnBond | TxRollupSubmitBatch
+	Ballot | ActivateAccount | Delegation | DoubleBaking | DoubleEndorsing | DoublePreendorsing | Endorsement |
+		NonceRevelation | Origination | Preendorsement | Proposal | RegisterGlobalConstant | Reveal | SetDepositsLimit |
+		Transaction | TransferTicket | TxRollupCommit | TxRollupDispatchTickets | TxRollupFinalizeCommitment | TxRollupOrigination |
+		TxRollupRejection | TxRollupRemoveCommitment | TxRollupReturnBond | TxRollupSubmitBatch | VdfRevelation | IncreasePaidStorage
+}
+
+// ChangableMempoolOperation -
+type ChangableMempoolOperation interface {
+	SetMempoolOperation(operation MempoolOperation)
 }
 
 // MempoolOperation -
@@ -238,6 +245,10 @@ func getModelByKind(kind string) (interface{}, error) {
 		return &TxRollupReturnBond{}, nil
 	case node.KindTxRollupSubmitBatch:
 		return &TxRollupSubmitBatch{}, nil
+	case node.KindIncreasePaidStorage:
+		return &IncreasePaidStorage{}, nil
+	case node.KindVdfRevelation:
+		return &VdfRevelation{}, nil
 
 	default:
 		return nil, errors.Wrap(node.ErrUnknownKind, kind)

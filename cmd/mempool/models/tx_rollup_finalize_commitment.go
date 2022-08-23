@@ -13,3 +13,8 @@ type TxRollupFinalizeCommitment struct {
 	Source       string `json:"source,omitempty" index:"tx_rollup_finalize_commitment_source_idx"`
 	Rollup       string `json:"rollup,omitempty" index:"tx_rollup_finalize_commitment_rollup_idx"`
 }
+
+// SetMempoolOperation -
+func (i *TxRollupFinalizeCommitment) SetMempoolOperation(operaiton MempoolOperation) {
+	i.MempoolOperation = operaiton
+}

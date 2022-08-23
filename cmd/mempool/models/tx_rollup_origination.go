@@ -12,3 +12,8 @@ type TxRollupOrigination struct {
 	StorageLimit int64  `json:"storage_limit,string"`
 	Source       string `json:"source,omitempty" index:"ttx_rollup_origination_source_idx"`
 }
+
+// SetMempoolOperation -
+func (i *TxRollupOrigination) SetMempoolOperation(operaiton MempoolOperation) {
+	i.MempoolOperation = operaiton
+}

@@ -12,3 +12,8 @@ type TxRollupRejection struct {
 	StorageLimit int64  `json:"storage_limit,string"`
 	Source       string `json:"source,omitempty" index:"ttx_rollup_rejection_source_idx"`
 }
+
+// SetMempoolOperation -
+func (i *TxRollupRejection) SetMempoolOperation(operaiton MempoolOperation) {
+	i.MempoolOperation = operaiton
+}

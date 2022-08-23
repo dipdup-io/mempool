@@ -12,3 +12,8 @@ type RegisterGlobalConstant struct {
 	StorageLimit string `json:"storage_limit"`
 	Value        JSONB  `json:"value"  pg:"value,type:jsonb"`
 }
+
+// SetMempoolOperation -
+func (i *RegisterGlobalConstant) SetMempoolOperation(operaiton MempoolOperation) {
+	i.MempoolOperation = operaiton
+}

@@ -32,3 +32,8 @@ func (mde *DoublePreendorsing) Fill() {
 	mde.Op2Kind = mde.Op2.Operations.Kind
 	mde.Op2Level = mde.Op2.Operations.Level
 }
+
+// SetMempoolOperation -
+func (mde *DoublePreendorsing) SetMempoolOperation(operaiton MempoolOperation) {
+	mde.MempoolOperation = operaiton
+}

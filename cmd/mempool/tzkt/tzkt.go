@@ -52,7 +52,7 @@ func NewTzKT(url string, accounts []string, kinds []string) *TzKT {
 
 // Connect -
 func (tzkt *TzKT) Connect(ctx context.Context) error {
-	if err := tzkt.client.Connect(); err != nil {
+	if err := tzkt.client.Connect(ctx); err != nil {
 		return err
 	}
 

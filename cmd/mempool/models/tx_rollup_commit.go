@@ -13,3 +13,8 @@ type TxRollupCommit struct {
 	Source       string `json:"source,omitempty" index:"tx_rollup_commit_source_idx"`
 	Rollup       string `json:"rollup,omitempty" index:"tx_rollup_commit_rollup_idx"`
 }
+
+// SetMempoolOperation -
+func (i *TxRollupCommit) SetMempoolOperation(operaiton MempoolOperation) {
+	i.MempoolOperation = operaiton
+}
