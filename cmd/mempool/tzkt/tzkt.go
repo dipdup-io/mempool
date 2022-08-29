@@ -52,7 +52,7 @@ func NewTzKT(url string, accounts []string, kinds []string) *TzKT {
 
 // Connect -
 func (tzkt *TzKT) Connect(ctx context.Context) error {
-	if err := tzkt.client.Connect(); err != nil {
+	if err := tzkt.client.Connect(ctx); err != nil {
 		return err
 	}
 
@@ -243,6 +243,12 @@ func (tzkt *TzKT) getAPIOperation(model interface{}) (data.Operation, error) {
 
 	case *data.TxRollupSubmitBatch:
 		return operationFromTxRollupSubmitBatch(*operation), nil
+
+	case *data.VdfRevelation:
+		return operationFromVdfRevelation(*operation), nil
+
+	case *data.IncreasePaidStorage:
+		return operationFromIncreasePaidStorage(*operation), nil
 
 	default:
 		return data.Operation{}, errors.Wrapf(ErrInvalidOperationType, "%T", model)
@@ -549,6 +555,10 @@ func (tzkt *TzKT) getTableData(ctx context.Context, table *tableState, indexerSt
 		return getOperations(ctx, table, filters, tzkt.api.GetTxRollupRejection, operationFromTxRollupRejection)
 	case data.KindTxRollupRemoveCommitment:
 		return getOperations(ctx, table, filters, tzkt.api.GetTxRollupRemoveCommitment, operationFromTxRollupRemoveCommitment)
+	case data.KindVdfRevelation:
+		return getOperations(ctx, table, filters, tzkt.api.GetVdfRevelations, operationFromVdfRevelation)
+	case data.KindIncreasePaidStorage:
+		return getOperations(ctx, table, filters, tzkt.api.GetIncreasePaidStorage, operationFromIncreasePaidStorage)
 	default:
 		return errors.Wrap(ErrUnknownOperationKind, table.Table)
 	}

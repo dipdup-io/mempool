@@ -92,3 +92,9 @@ func (bq *BlockQueue) ExpirationLevel(hash string) uint64 {
 	}
 	return 0
 }
+
+// Contains -
+func (bq *BlockQueue) Contains(hash string) bool {
+	_, ok := bq.levels[hash]
+	return ok
+}

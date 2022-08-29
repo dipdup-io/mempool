@@ -13,3 +13,8 @@ type TxRollupSubmitBatch struct {
 	Source       string `json:"source,omitempty" index:"tx_rollup_submit_batch_source_idx"`
 	Rollup       string `json:"rollup,omitempty" index:"tx_rollup_submit_batch_rollup_idx"`
 }
+
+// SetMempoolOperation -
+func (i *TxRollupSubmitBatch) SetMempoolOperation(operaiton MempoolOperation) {
+	i.MempoolOperation = operaiton
+}

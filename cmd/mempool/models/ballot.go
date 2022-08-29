@@ -8,3 +8,8 @@ type Ballot struct {
 	Period int64  `json:"period"`
 	Ballot string `json:"ballot"`
 }
+
+// SetMempoolOperation -
+func (i *Ballot) SetMempoolOperation(operaiton MempoolOperation) {
+	i.MempoolOperation = operaiton
+}

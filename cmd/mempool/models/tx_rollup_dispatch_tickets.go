@@ -13,3 +13,8 @@ type TxRollupDispatchTickets struct {
 	Source       string `json:"source,omitempty" index:"tx_rollup_dispatch_tickets_source_idx"`
 	TxRollup     string `json:"tx_rollup,omitempty" index:"tx_rollup_dispatch_tickets_rollup_idx"`
 }
+
+// SetMempoolOperation -
+func (i *TxRollupDispatchTickets) SetMempoolOperation(operaiton MempoolOperation) {
+	i.MempoolOperation = operaiton
+}

@@ -211,9 +211,11 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 	case node.KindActivation:
 		return handleActivateAccount(tx, content, operation, indexer.filters.Accounts...)
 	case node.KindBallot:
-		return handleBallot(tx, content, operation)
+		var model models.Ballot
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindDelegation:
-		return handleDelegation(tx, content, operation)
+		var model models.Delegation
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindDoubleBaking:
 		return handleDoubleBaking(tx, content, operation)
 	case node.KindDoubleEndorsing:
@@ -223,7 +225,8 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 	case node.KindEndorsementWithSlot:
 		return indexer.handleEndorsementWithSlot(tx, content, operation)
 	case node.KindNonceRevelation:
-		return handleNonceRevelation(tx, content, operation)
+		var model models.NonceRevelation
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindOrigination:
 		return handleOrigination(tx, content, operation)
 	case node.KindProposal:
@@ -233,39 +236,57 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 	case node.KindTransaction:
 		return handleTransaction(tx, content, operation, indexer.filters.Accounts...)
 	case node.KindRegisterGlobalConstant:
-		return handleRegisterGloabalConstant(tx, content, operation)
+		var model models.RegisterGlobalConstant
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindDoublePreendorsement:
-		return handleDoublePreendorsement(tx, content, operation)
+		var model models.DoublePreendorsing
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindPreendorsement:
-		return handlePreendorsement(tx, content, operation)
+		var model models.Preendorsement
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindSetDepositsLimit:
 		return handleSetDepositsLimit(tx, content, operation, indexer.filters.Accounts...)
 	case node.KindTransferTicket:
-		return handleTransferTicket(tx, content, operation)
+		var model models.TransferTicket
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindTxRollupCommit:
-		return handleTxRollupCommit(tx, content, operation)
+		var model models.TxRollupCommit
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindTxRollupDispatchTickets:
-		return handleTxRollupDispatchTickets(tx, content, operation)
+		var model models.TxRollupDispatchTickets
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindTxRollupFinalizeCommitment:
-		return handleTxRollupFinalizeCommitment(tx, content, operation)
+		var model models.TxRollupFinalizeCommitment
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindTxRollupOrigination:
-		return handleTxRollupOrigination(tx, content, operation)
+		var model models.TxRollupOrigination
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindTxRollupRejection:
-		return handleTxRollupRejection(tx, content, operation)
+		var model models.TxRollupRejection
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindTxRollupRemoveCommitment:
-		return handleTxRollupRemoveCommitment(tx, content, operation)
+		var model models.TxRollupRemoveCommitment
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindTxRollupReturnBond:
-		return handleTxRollupReturnBond(tx, content, operation)
+		var model models.TxRollupReturnBond
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindTxRollupSubmitBatch:
-		return handleTxRollupSubmitBatch(tx, content, operation)
-
+		var model models.TxRollupSubmitBatch
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindIncreasePaidStorage:
+		var model models.IncreasePaidStorage
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindVdfRevelation:
+		var model models.VdfRevelation
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindEvent:
 	default:
 		indexer.warn().Str("kind", content.Kind).Msg("unknown operation kind")
-		return nil
 	}
+	return nil
 }
 
-func createModel(db pg.DBI, model interface{}) error {
+func createModel(db pg.DBI, model any) error {
 	_, err := db.Model(model).OnConflict("DO NOTHING").Insert()
 	return err
 }
@@ -363,24 +384,6 @@ func handleReveal(tx pg.DBI, content node.Content, operation models.MempoolOpera
 	return createModel(tx, &reveal)
 }
 
-func handleBallot(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var ballot models.Ballot
-	if err := json.Unmarshal(content.Body, &ballot); err != nil {
-		return err
-	}
-	ballot.MempoolOperation = operation
-	return createModel(tx, &ballot)
-}
-
-func handleDelegation(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var delegation models.Delegation
-	if err := json.Unmarshal(content.Body, &delegation); err != nil {
-		return err
-	}
-	delegation.MempoolOperation = operation
-	return createModel(tx, &delegation)
-}
-
 func handleDoubleBaking(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
 	var doubleBaking models.DoubleBaking
 	if err := json.Unmarshal(content.Body, &doubleBaking); err != nil {
@@ -399,15 +402,6 @@ func handleDoubleEndorsing(tx pg.DBI, content node.Content, operation models.Mem
 	doubleEndorsing.Fill()
 	doubleEndorsing.MempoolOperation = operation
 	return createModel(tx, &doubleEndorsing)
-}
-
-func handleNonceRevelation(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var nonceRevelation models.NonceRevelation
-	if err := json.Unmarshal(content.Body, &nonceRevelation); err != nil {
-		return err
-	}
-	nonceRevelation.MempoolOperation = operation
-	return createModel(tx, &nonceRevelation)
 }
 
 func handleOrigination(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
@@ -442,33 +436,6 @@ func handleProposal(tx pg.DBI, content node.Content, operation models.MempoolOpe
 	return nil
 }
 
-func handleRegisterGloabalConstant(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var registerGlobalConstant models.RegisterGlobalConstant
-	if err := json.Unmarshal(content.Body, &registerGlobalConstant); err != nil {
-		return err
-	}
-	registerGlobalConstant.MempoolOperation = operation
-	return createModel(tx, &registerGlobalConstant)
-}
-
-func handlePreendorsement(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var preendorsement models.Preendorsement
-	if err := json.Unmarshal(content.Body, &preendorsement); err != nil {
-		return err
-	}
-	preendorsement.MempoolOperation = operation
-	return createModel(tx, &preendorsement)
-}
-
-func handleDoublePreendorsement(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var doublePreendorsement models.DoublePreendorsing
-	if err := json.Unmarshal(content.Body, &doublePreendorsement); err != nil {
-		return err
-	}
-	doublePreendorsement.MempoolOperation = operation
-	return createModel(tx, &doublePreendorsement)
-}
-
 func handleSetDepositsLimit(tx pg.DBI, content node.Content, operation models.MempoolOperation, accounts ...string) error {
 	var setDepositsLimit models.SetDepositsLimit
 	if err := json.Unmarshal(content.Body, &setDepositsLimit); err != nil {
@@ -489,85 +456,12 @@ func handleSetDepositsLimit(tx pg.DBI, content node.Content, operation models.Me
 	return createModel(tx, &setDepositsLimit)
 }
 
-func handleTransferTicket(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var transferTicket models.TransferTicket
-	if err := json.Unmarshal(content.Body, &transferTicket); err != nil {
+func defaultHandler[M models.ChangableMempoolOperation](tx pg.DBI, content node.Content, operation models.MempoolOperation, model M) error {
+	if err := json.Unmarshal(content.Body, model); err != nil {
 		return err
 	}
-	transferTicket.MempoolOperation = operation
-	return createModel(tx, &transferTicket)
-}
-
-func handleTxRollupCommit(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var t models.TxRollupCommit
-	if err := json.Unmarshal(content.Body, &t); err != nil {
-		return err
-	}
-	t.MempoolOperation = operation
-	return createModel(tx, &t)
-}
-
-func handleTxRollupDispatchTickets(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var t models.TxRollupDispatchTickets
-	if err := json.Unmarshal(content.Body, &t); err != nil {
-		return err
-	}
-	t.MempoolOperation = operation
-	return createModel(tx, &t)
-}
-
-func handleTxRollupFinalizeCommitment(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var t models.TxRollupFinalizeCommitment
-	if err := json.Unmarshal(content.Body, &t); err != nil {
-		return err
-	}
-	t.MempoolOperation = operation
-	return createModel(tx, &t)
-}
-
-func handleTxRollupOrigination(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var t models.TxRollupOrigination
-	if err := json.Unmarshal(content.Body, &t); err != nil {
-		return err
-	}
-	t.MempoolOperation = operation
-	return createModel(tx, &t)
-}
-
-func handleTxRollupRejection(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var t models.TxRollupRejection
-	if err := json.Unmarshal(content.Body, &t); err != nil {
-		return err
-	}
-	t.MempoolOperation = operation
-	return createModel(tx, &t)
-}
-
-func handleTxRollupRemoveCommitment(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var t models.TxRollupRemoveCommitment
-	if err := json.Unmarshal(content.Body, &t); err != nil {
-		return err
-	}
-	t.MempoolOperation = operation
-	return createModel(tx, &t)
-}
-
-func handleTxRollupReturnBond(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var t models.TxRollupReturnBond
-	if err := json.Unmarshal(content.Body, &t); err != nil {
-		return err
-	}
-	t.MempoolOperation = operation
-	return createModel(tx, &t)
-}
-
-func handleTxRollupSubmitBatch(tx pg.DBI, content node.Content, operation models.MempoolOperation) error {
-	var t models.TxRollupSubmitBatch
-	if err := json.Unmarshal(content.Body, &t); err != nil {
-		return err
-	}
-	t.MempoolOperation = operation
-	return createModel(tx, &t)
+	model.SetMempoolOperation(operation)
+	return createModel(tx, model)
 }
 
 func (indexer *Indexer) isKindAvailiable(kind string) bool {
