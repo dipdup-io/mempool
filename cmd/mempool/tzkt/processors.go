@@ -253,3 +253,25 @@ func operationFromTransferTicket(model data.TransferTicket) data.Operation {
 		Block: model.Block,
 	}
 }
+
+func operationFromIncreasePaidStorage(model data.IncreasePaidStorage) data.Operation {
+	return data.Operation{
+		Type:     node.KindIncreasePaidStorage,
+		Level:    model.Level,
+		ID:       model.ID,
+		Hash:     model.Hash,
+		Block:    model.Block,
+		GasUsed:  &model.GasUsed,
+		BakerFee: &model.BakerFee,
+	}
+}
+
+func operationFromVdfRevelation(model data.VdfRevelation) data.Operation {
+	return data.Operation{
+		Type:  node.KindVdfRevelation,
+		Level: model.Level,
+		ID:    model.ID,
+		Hash:  model.Hash,
+		Block: model.Block,
+	}
+}

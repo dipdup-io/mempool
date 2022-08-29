@@ -32,6 +32,8 @@ var toNodeKinds = map[string]string{
 	data.KindTxRollupRejection:        node.KindTxRollupRejection,
 	data.KindTxRollupRemoveCommitment: node.KindTxRollupRemoveCommitment,
 	data.KindSetDepositsLimit:         node.KindSetDepositsLimit,
+	data.KindIncreasePaidStorage:      node.KindIncreasePaidStorage,
+	data.KindVdfRevelation:            node.KindVdfRevelation,
 }
 
 var toTzKTKinds = map[string]string{
@@ -57,6 +59,8 @@ var toTzKTKinds = map[string]string{
 	node.KindTxRollupRejection:          data.KindTxRollupRejection,
 	node.KindTxRollupRemoveCommitment:   data.KindTxRollupRemoveCommitment,
 	node.KindSetDepositsLimit:           data.KindSetDepositsLimit,
+	node.KindIncreasePaidStorage:        data.KindIncreasePaidStorage,
+	node.KindVdfRevelation:              data.KindVdfRevelation,
 }
 
 // OperationMessage -
