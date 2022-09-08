@@ -84,3 +84,23 @@ func TestCheckKey(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkCheckKey(b *testing.B) {
+	key := "edpkuEhzJqdFBCWMw6TU3deADRK2fq3GuwWFUphwyH7ero1Na4oGFP"
+	signature := "siggEYDRoz7tiECt2fc1M75ieJNeVAP6MGHLhpyPpPue8EU3QYjYSJLnDoDPgxkmrjr6R33qGrAxLASwkyQqa1r3tc5mGPwT"
+	chainID := "NetXdQprcVkpaWU"
+	endorsement := models.Endorsement{
+		Level: 751292,
+		MempoolOperation: models.MempoolOperation{
+			Branch:    "BMbpxQAU7Jat7g9ZnKrP3brgqFX6r2VX8PPXCxNbFZeURA6DbEF",
+			Signature: "siggEYDRoz7tiECt2fc1M75ieJNeVAP6MGHLhpyPpPue8EU3QYjYSJLnDoDPgxkmrjr6R33qGrAxLASwkyQqa1r3tc5mGPwT",
+		},
+	}
+	data, err := forge.Endorsement(node.Endorsement{Level: endorsement.Level}, endorsement.Branch)
+	if err != nil {
+		return
+	}
+	for i := 0; i < b.N; i++ {
+		CheckKey(key[:4], DecodePublicKey(key), DecodeSignature(signature), Hash(chainID, data))
+	}
+}

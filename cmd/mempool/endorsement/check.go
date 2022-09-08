@@ -66,30 +66,22 @@ func getCoordinates(data []byte) (*big.Int, *big.Int, error) {
 	signByte := uint(data[0])
 	xBytes := data[1:]
 
-	// Convert to big Int.
-	x := new(big.Int).SetBytes(xBytes)
-
-	// We use 3 a couple of times
-	three := big.NewInt(3)
-
 	// The params for P256
 	c := elliptic.P256().Params()
 
-	// The equation is y^2 = x^3 - 3x + b
-	// x^3, mod P
-	xCubed := new(big.Int).Exp(x, three, nil)
-	// 3x, mod P
-	threeX := new(big.Int).Mul(x, three)
-	// x^3 - 3x
-	ySquared := new(big.Int).Sub(xCubed, threeX)
+	// Convert to big Int.
+	x := new(big.Int).SetBytes(xBytes)
+	x3 := new(big.Int).Mul(x, x)
+	x3 = x3.Mul(x3, x)
 
-	// ... + b mod P
-	ySquared.Add(ySquared, c.B)
-	ySquared.Mod(ySquared, c.P)
+	threeX := new(big.Int).Lsh(x, 1)
+	threeX.Add(threeX, x)
 
-	// Now we need to find the square root mod P.
-	// This is where Go's big int library redeems itself.
-	y := new(big.Int).ModSqrt(ySquared, c.P)
+	y2 := x3.Sub(x3, threeX)
+	y2 = y2.Add(y2, c.B)
+	y2 = y2.Mod(y2, c.P)
+
+	y := y2.ModSqrt(y2, c.P)
 	if y == nil {
 		// If this happens then you're dealing with an invalid point.
 		// Panic, return an error, whatever you want.
