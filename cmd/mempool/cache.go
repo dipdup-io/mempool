@@ -61,9 +61,11 @@ func (c *Cache) checkExpiration(ctx context.Context) {
 				if time.Now().UnixNano() <= expiration {
 					continue
 				}
+				c.mux.RUnlock()
 				c.mux.Lock()
 				delete(c.lookup, key)
 				c.mux.Unlock()
+				c.mux.RLock()
 			}
 			c.mux.RUnlock()
 		}
