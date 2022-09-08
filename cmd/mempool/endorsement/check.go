@@ -77,12 +77,9 @@ func getCoordinates(data []byte) (*big.Int, *big.Int, error) {
 
 	// The equation is y^2 = x^3 - 3x + b
 	// x^3, mod P
-	xCubed := new(big.Int).Exp(x, three, c.P)
-
+	xCubed := new(big.Int).Exp(x, three, nil)
 	// 3x, mod P
 	threeX := new(big.Int).Mul(x, three)
-	threeX.Mod(threeX, c.P)
-
 	// x^3 - 3x
 	ySquared := new(big.Int).Sub(xCubed, threeX)
 

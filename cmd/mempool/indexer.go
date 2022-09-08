@@ -110,6 +110,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		endorsements:     make(chan *models.Endorsement, 1024*32),
 		rights:           ccache.New(ccache.Configure().MaxSize(60)),
 	}
+	indexer.cache.Start(ctx)
 
 	indexer.state = &database.State{
 		IndexType: models.IndexTypeMempool,
@@ -263,6 +264,9 @@ func (indexer *Indexer) listen(ctx context.Context) {
 					indexer.error().Msgf("invalid applied operation %v", applied)
 					continue
 				}
+				if !indexer.branches.Contains(applied.Branch) {
+					continue
+				}
 				if indexer.isHashProcessed(applied.Hash) {
 					continue
 				}
@@ -274,6 +278,10 @@ func (indexer *Indexer) listen(ctx context.Context) {
 				failed, ok := msg.Body.(node.FailedMonitor)
 				if !ok {
 					indexer.error().Msgf("invalid %s operation %v", msg.Status, failed)
+					continue
+				}
+
+				if !indexer.branches.Contains(failed.Branch) {
 					continue
 				}
 				if indexer.isHashProcessed(failed.Hash) {
