@@ -3,6 +3,7 @@ package endorsement
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"encoding/hex"
 	"math/big"
 
 	"golang.org/x/crypto/blake2b"
@@ -42,22 +43,38 @@ func getWatermark(chainID string) []byte {
 	return watermark
 }
 
+var ecdsaKeysCache map[string]ecdsa.PublicKey
+
 func verifyP256(key, message, signature []byte) bool {
-	x, y, err := getCoordinates(key)
+	pubKey, err := ecdsaKeyWithCache(key)
 	if err != nil {
 		return false
 	}
-
-	pubKey := ecdsa.PublicKey{
-		Curve: elliptic.P256(),
-		X:     x,
-		Y:     y,
-	}
-
 	sign1 := new(big.Int).SetBytes(signature[:32])
 	sign2 := new(big.Int).SetBytes(signature[32:])
 
 	return ecdsa.Verify(&pubKey, message, sign1, sign2)
+}
+
+func ecdsaKeyWithCache(key []byte) (ecdsa.PublicKey, error) {
+	if ecdsaKeysCache == nil {
+		ecdsaKeysCache = make(map[string]ecdsa.PublicKey)
+	}
+
+	keyString := hex.EncodeToString(key)
+	if result, ok := ecdsaKeysCache[keyString]; ok {
+		return result, nil
+	}
+	x, y, err := getCoordinates(key)
+	if err != nil {
+		return ecdsa.PublicKey{}, err
+	}
+
+	return ecdsa.PublicKey{
+		Curve: elliptic.P256(),
+		X:     x,
+		Y:     y,
+	}, nil
 }
 
 // https://stackoverflow.com/a/46289709
