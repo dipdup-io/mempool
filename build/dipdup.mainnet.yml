@@ -22,10 +22,24 @@ mempool:
           - reveal
           - seed_nonce_revelation
           - register_global_constant
+          - set_deposits_limit
+          - preendorsement
+          - double_preendorsement_evidence
+          - tx_rollup_commit
+          - tx_rollup_dispatch_tickets
+          - tx_rollup_finalize_commitment
+          - tx_rollup_origination
+          - tx_rollup_rejection
+          - tx_rollup_remove_commitment
+          - tx_rollup_return_bond
+          - tx_rollup_submit_batch
+          - transfer_ticket
+          - vdf_revelation
+          - Increase_paid_storage
       datasources:
-          tzkt: https://api.tzkt.io
+          tzkt: mainnet_tzkt
           rpc: 
-            - https://rpc.tzkt.io/mainnet
+            - mainnet_rpc
 
 database:
   kind: postgres
@@ -46,3 +60,11 @@ hasura:
 
 prometheus:
   url: ${PROMETHEUS_BIND:-0.0.0.0:2112}
+
+datasources:
+  mainnet_tzkt:
+    kind: tzkt
+    url: https://api.tzkt.io
+  mainnet_rpc:
+    kind: tezos-node
+    url: https://rpc.tzkt.io/mainnet

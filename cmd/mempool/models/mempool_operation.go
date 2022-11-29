@@ -24,7 +24,8 @@ type DefaultConstraint interface {
 	Ballot | ActivateAccount | Delegation | DoubleBaking | DoubleEndorsing | DoublePreendorsing | Endorsement |
 		NonceRevelation | Origination | Preendorsement | Proposal | RegisterGlobalConstant | Reveal | SetDepositsLimit |
 		Transaction | TransferTicket | TxRollupCommit | TxRollupDispatchTickets | TxRollupFinalizeCommitment | TxRollupOrigination |
-		TxRollupRejection | TxRollupRemoveCommitment | TxRollupReturnBond | TxRollupSubmitBatch | VdfRevelation | IncreasePaidStorage
+		TxRollupRejection | TxRollupRemoveCommitment | TxRollupReturnBond | TxRollupSubmitBatch | VdfRevelation | IncreasePaidStorage |
+		UpdateConsensusKey | DelegateDrain
 }
 
 // ChangableMempoolOperation -
@@ -249,6 +250,10 @@ func getModelByKind(kind string) (interface{}, error) {
 		return &IncreasePaidStorage{}, nil
 	case node.KindVdfRevelation:
 		return &VdfRevelation{}, nil
+	case node.KindDrainDelegate:
+		return &DelegateDrain{}, nil
+	case node.KindUpdateConsensusKey:
+		return &UpdateConsensusKey{}, nil
 
 	default:
 		return nil, errors.Wrap(node.ErrUnknownKind, kind)

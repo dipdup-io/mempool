@@ -24,14 +24,32 @@ type Indexer struct {
 
 // Filters -
 type Filters struct {
-	Accounts []string `yaml:"accounts" validate:"max=50"`
-	Kinds    []string `yaml:"kinds" validate:"required,min=1,dive,oneof=activate_account ballot delegation double_baking_evidence double_endorsement_evidence endorsement endorsement_with_slot origination proposals reveal seed_nonce_revelation transaction register_global_constant"`
+	Accounts []*config.Alias[config.Contract] `yaml:"accounts" validate:"max=50"`
+	Kinds    []string                         `yaml:"kinds" validate:"required,min=1,dive,oneof=activate_account ballot delegation double_baking_evidence double_endorsement_evidence endorsement endorsement_with_slot origination proposals reveal seed_nonce_revelation transaction register_global_constant"`
+}
+
+// Addresses -
+func (f Filters) Addresses() []string {
+	addresses := make([]string, 0)
+	for i := range f.Accounts {
+		addresses = append(addresses, f.Accounts[i].Struct().Address)
+	}
+	return addresses
 }
 
 // MempoolDataSource -
 type MempoolDataSource struct {
-	Tzkt string   `yaml:"tzkt" validate:"required,url"`
-	RPC  []string `yaml:"rpc" validate:"required,min=1,dive,url"`
+	Tzkt *config.Alias[config.DataSource]   `yaml:"tzkt" validate:"required,url"`
+	RPC  []*config.Alias[config.DataSource] `yaml:"rpc" validate:"required,min=1,dive,url"`
+}
+
+// URLs -
+func (ds MempoolDataSource) URLs() []string {
+	urls := make([]string, 0)
+	for i := range ds.RPC {
+		urls = append(urls, ds.RPC[i].Struct().URL)
+	}
+	return urls
 }
 
 // Settings -
@@ -40,10 +58,4 @@ type Settings struct {
 	ExpiredAfter      uint64 `yaml:"expired_after_blocks" validate:"required,min=1"`
 	KeepInChainBlocks uint64 `yaml:"keep_in_chain_blocks" validate:"required,min=1"`
 	GasStatsLifetime  uint64 `yaml:"gas_stats_lifetime" validate:"required,min=1"`
-}
-
-// Load -
-func Load(filename string) (cfg Config, err error) {
-	err = config.Parse(filename, &cfg)
-	return
 }

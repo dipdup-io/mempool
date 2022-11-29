@@ -53,7 +53,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		return nil, err
 	}
 
-	rpc := node.NewMainRPC(indexerCfg.DataSource.RPC[0])
+	rpc := node.NewMainRPC(indexerCfg.DataSource.RPC[0].Struct().URL)
 	constants, err := rpc.Constants(ctx, "head")
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		return nil, err
 	}
 
-	memInd, err := receiver.New(indexerCfg.DataSource.RPC, network,
+	memInd, err := receiver.New(indexerCfg.DataSource.URLs(), network,
 		receiver.WithStorage(db),
 		receiver.WithPrometheus(prom),
 		receiver.WithBlockTime(delay),
@@ -100,7 +100,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		chainID:          head.ChainID,
 		indexName:        models.MempoolIndexName(network),
 		filters:          indexerCfg.Filters,
-		tzkt:             tzkt.NewTzKT(indexerCfg.DataSource.Tzkt, indexerCfg.Filters.Accounts, indexerCfg.Filters.Kinds),
+		tzkt:             tzkt.NewTzKT(indexerCfg.DataSource.Tzkt.Struct().URL, indexerCfg.Filters.Addresses(), indexerCfg.Filters.Kinds),
 		mempool:          memInd,
 		prom:             prom,
 		cache:            NewCache(2 * time.Hour),

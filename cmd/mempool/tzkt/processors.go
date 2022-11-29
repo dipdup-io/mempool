@@ -275,3 +275,25 @@ func operationFromVdfRevelation(model data.VdfRevelation) data.Operation {
 		Block: model.Block,
 	}
 }
+
+func operationFromUpdateConsensusKey(model data.UpdateConsensusKey) data.Operation {
+	return data.Operation{
+		Type:     node.KindIncreasePaidStorage,
+		Level:    model.Level,
+		ID:       model.ID,
+		Hash:     model.Hash,
+		Block:    model.Block,
+		GasUsed:  &model.GasUsed,
+		BakerFee: &model.BakerFee,
+	}
+}
+
+func operationFromDrainDelegate(model data.DrainDelegate) data.Operation {
+	return data.Operation{
+		Type:  node.KindIncreasePaidStorage,
+		Level: model.Level,
+		ID:    model.ID,
+		Hash:  model.Hash,
+		Block: model.Block,
+	}
+}

@@ -250,6 +250,12 @@ func (tzkt *TzKT) getAPIOperation(model interface{}) (data.Operation, error) {
 	case *data.IncreasePaidStorage:
 		return operationFromIncreasePaidStorage(*operation), nil
 
+	case *data.UpdateConsensusKey:
+		return operationFromUpdateConsensusKey(*operation), nil
+
+	case *data.DrainDelegate:
+		return operationFromDrainDelegate(*operation), nil
+
 	default:
 		return data.Operation{}, errors.Wrapf(ErrInvalidOperationType, "%T", model)
 	}
@@ -559,6 +565,10 @@ func (tzkt *TzKT) getTableData(ctx context.Context, table *tableState, indexerSt
 		return getOperations(ctx, table, filters, tzkt.api.GetVdfRevelations, operationFromVdfRevelation)
 	case data.KindIncreasePaidStorage:
 		return getOperations(ctx, table, filters, tzkt.api.GetIncreasePaidStorage, operationFromIncreasePaidStorage)
+	case data.KindUpdateConsensusKey:
+		return getOperations(ctx, table, filters, tzkt.api.GetUpdateConsensusKey, operationFromUpdateConsensusKey)
+	case data.KindDrainDelegate:
+		return getOperations(ctx, table, filters, tzkt.api.GetDrainDelegates, operationFromDrainDelegate)
 	default:
 		return errors.Wrap(ErrUnknownOperationKind, table.Table)
 	}

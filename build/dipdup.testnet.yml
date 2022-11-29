@@ -35,9 +35,9 @@ mempool:
           - tx_rollup_submit_batch
           - transfer_ticket
       datasources:
-          tzkt: https://api.ghostnet.tzkt.io
+          tzkt: ghostnet_tzkt
           rpc: 
-            - https://rpc.tzkt.io/ghostnet
+            - ghostnet_rpc
 
     kathmandunet:
       filters:
@@ -69,9 +69,9 @@ mempool:
           - vdf_revelation
           - Increase_paid_storage
       datasources:
-          tzkt: https://api.kathmandunet.tzkt.io
+          tzkt: kathmandunet_tzkt
           rpc: 
-            - https://rpc.tzkt.io/kathmandunet
+            - kathmandunet_rpc
 
     limanet:
       filters:
@@ -102,10 +102,12 @@ mempool:
           - transfer_ticket
           - vdf_revelation
           - Increase_paid_storage
+          - drain_delegate
+          - update_consensus_key
       datasources:
-          tzkt: https://api.limanet.tzkt.io
+          tzkt: limanet_tzkt
           rpc: 
-            - https://rpc.tzkt.io/limanet
+            - limanet_rpc
 
 database:
   kind: postgres
@@ -120,9 +122,30 @@ hasura:
   admin_secret: ${ADMIN_SECRET:-changeme}
   select_limit: 100
   allow_aggregation: false
-  source: default
   add_source: true
   rest: true
 
 prometheus:
   url: ${PROMETHEUS_BIND:-0.0.0.0:2112}
+
+datasources:
+  limanet_tzkt:
+    kind: tzkt
+    url: https://api.limanet.tzkt.io
+  limanet_rpc:
+    kind: tezos-node
+    url: https://rpc.tzkt.io/limanet
+
+  ghostnet_tzkt:
+    kind: tzkt
+    url: https://api.ghostnet.tzkt.io
+  ghostnet_rpc:
+    kind: tezos-node
+    url: https://rpc.tzkt.io/ghostnet
+
+  kathmandunet_tzkt:
+    kind: tzkt
+    url: https://api.kathmandunet.tzkt.io
+  kathmandunet_rpc:
+    kind: tezos-node
+    url: https://rpc.tzkt.io/kathmandunet

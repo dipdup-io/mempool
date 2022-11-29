@@ -207,9 +207,11 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 		})
 	}
 
+	addresses := indexer.filters.Addresses()
+
 	switch content.Kind {
 	case node.KindActivation:
-		return handleActivateAccount(tx, content, operation, indexer.filters.Accounts...)
+		return handleActivateAccount(tx, content, operation, addresses...)
 	case node.KindBallot:
 		var model models.Ballot
 		return defaultHandler(tx, content, operation, &model)
@@ -232,9 +234,9 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 	case node.KindProposal:
 		return handleProposal(tx, content, operation)
 	case node.KindReveal:
-		return handleReveal(tx, content, operation, indexer.filters.Accounts...)
+		return handleReveal(tx, content, operation, addresses...)
 	case node.KindTransaction:
-		return handleTransaction(tx, content, operation, indexer.filters.Accounts...)
+		return handleTransaction(tx, content, operation, addresses...)
 	case node.KindRegisterGlobalConstant:
 		var model models.RegisterGlobalConstant
 		return defaultHandler(tx, content, operation, &model)
@@ -245,7 +247,7 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 		var model models.Preendorsement
 		return defaultHandler(tx, content, operation, &model)
 	case node.KindSetDepositsLimit:
-		return handleSetDepositsLimit(tx, content, operation, indexer.filters.Accounts...)
+		return handleSetDepositsLimit(tx, content, operation, addresses...)
 	case node.KindTransferTicket:
 		var model models.TransferTicket
 		return defaultHandler(tx, content, operation, &model)
@@ -278,6 +280,12 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 		return defaultHandler(tx, content, operation, &model)
 	case node.KindVdfRevelation:
 		var model models.VdfRevelation
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindUpdateConsensusKey:
+		var model models.UpdateConsensusKey
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindDrainDelegate:
+		var model models.DelegateDrain
 		return defaultHandler(tx, content, operation, &model)
 	case node.KindEvent:
 	default:

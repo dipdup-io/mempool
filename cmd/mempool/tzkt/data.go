@@ -34,6 +34,8 @@ var toNodeKinds = map[string]string{
 	data.KindSetDepositsLimit:         node.KindSetDepositsLimit,
 	data.KindIncreasePaidStorage:      node.KindIncreasePaidStorage,
 	data.KindVdfRevelation:            node.KindVdfRevelation,
+	data.KindUpdateConsensusKey:       node.KindUpdateConsensusKey,
+	data.KindDrainDelegate:            node.KindDrainDelegate,
 }
 
 var toTzKTKinds = map[string]string{
@@ -61,6 +63,8 @@ var toTzKTKinds = map[string]string{
 	node.KindSetDepositsLimit:           data.KindSetDepositsLimit,
 	node.KindIncreasePaidStorage:        data.KindIncreasePaidStorage,
 	node.KindVdfRevelation:              data.KindVdfRevelation,
+	node.KindDrainDelegate:              data.KindDrainDelegate,
+	node.KindUpdateConsensusKey:         data.KindUpdateConsensusKey,
 }
 
 // OperationMessage -
