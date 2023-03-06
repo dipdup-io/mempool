@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	libCfg "github.com/dipdup-net/go-lib/config"
+	"github.com/dipdup-net/go-lib/database"
 	"github.com/dipdup-net/go-lib/hasura"
 	"github.com/dipdup-net/go-lib/prometheus"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
@@ -67,19 +68,30 @@ func main() {
 		prometheusService.Start()
 	}
 
+	kinds := make(map[string]struct{})
+	filters := make([]string, 0)
+	for _, mempool := range cfg.Mempool.Indexers {
+		for _, kind := range mempool.Filters.Kinds {
+			if _, ok := kinds[kind]; !ok {
+				kinds[kind] = struct{}{}
+				filters = append(filters, kind)
+			}
+		}
+	}
+
+	db, err := models.OpenDatabaseConnection(ctx, cfg.Database, filters...)
+	if err != nil {
+		log.Err(err).Msg("open database connection")
+	}
+
 	var wg sync.WaitGroup
 	started := make(chan struct{}, len(cfg.Mempool.Indexers))
 	indexerCancels := make(map[string]context.CancelFunc)
-	kinds := make(map[string]struct{})
 	indexers := make(map[string]*Indexer)
 
 	for network, mempool := range cfg.Mempool.Indexers {
-		for _, kind := range mempool.Filters.Kinds {
-			kinds[kind] = struct{}{}
-		}
-
 		startFunc := func(network string, mempool *config.Indexer) error {
-			result, err := startIndexer(ctx, network, cfg, mempool, prometheusService)
+			result, err := startIndexer(ctx, network, cfg, mempool, db, prometheusService)
 			if err != nil {
 				return err
 			}
@@ -202,11 +214,11 @@ func createViews(ctx context.Context, database libCfg.Database) ([]string, error
 	return views, nil
 }
 
-func startIndexer(ctx context.Context, network string, cfg config.Config, mempool *config.Indexer, prometheusService *prometheus.Service) (startResult, error) {
+func startIndexer(ctx context.Context, network string, cfg config.Config, mempool *config.Indexer, db *database.PgGo, prometheusService *prometheus.Service) (startResult, error) {
 	var result startResult
 
 	indexerCtx, cancel := context.WithCancel(ctx)
-	indexer, err := NewIndexer(indexerCtx, network, *mempool, cfg.Database, cfg.Mempool.Settings, prometheusService)
+	indexer, err := NewIndexer(indexerCtx, network, *mempool, db, cfg.Mempool.Settings, prometheusService)
 	if err != nil {
 		cancel()
 		return result, err

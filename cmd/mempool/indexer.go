@@ -12,7 +12,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	generalConfig "github.com/dipdup-net/go-lib/config"
 	"github.com/dipdup-net/go-lib/database"
 	"github.com/dipdup-net/go-lib/node"
 	"github.com/dipdup-net/go-lib/prometheus"
@@ -47,12 +46,7 @@ type Indexer struct {
 }
 
 // NewIndexer -
-func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, dbCfg generalConfig.Database, settings config.Settings, prom *prometheus.Service) (*Indexer, error) {
-	db, err := models.OpenDatabaseConnection(ctx, dbCfg, indexerCfg.Filters.Kinds...)
-	if err != nil {
-		return nil, err
-	}
-
+func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, db *database.PgGo, settings config.Settings, prom *prometheus.Service) (*Indexer, error) {
 	rpc := node.NewMainRPC(indexerCfg.DataSource.RPC[0].Struct().URL)
 	constants, err := rpc.Constants(ctx, "head")
 	if err != nil {

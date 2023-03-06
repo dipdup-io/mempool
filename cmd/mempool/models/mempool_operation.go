@@ -130,7 +130,7 @@ func Rollback(db pg.DBI, network, branch string, level uint64, kinds ...string) 
 
 		query := db.Model(model).Apply(networkAndBranch(network, branch))
 
-		if _, err := query.Set("status", StatusBranchRefused).
+		if _, err := query.Set("status = ?", StatusBranchRefused).
 			WhereGroup(func(q *pg.Query) (*pg.Query, error) {
 				return q.Where("status = ?", StatusApplied).WhereOrGroup(func(q1 *pg.Query) (*pg.Query, error) {
 					return q1.Where("status = ?", StatusInChain).Where("level = ?", level), nil
