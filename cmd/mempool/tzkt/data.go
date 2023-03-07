@@ -36,6 +36,13 @@ var toNodeKinds = map[string]string{
 	data.KindVdfRevelation:            node.KindVdfRevelation,
 	data.KindUpdateConsensusKey:       node.KindUpdateConsensusKey,
 	data.KindDrainDelegate:            node.KindDrainDelegate,
+	data.KindSrAddMessages:            node.KindSrAddMessages,
+	data.KindSrCement:                 node.KindSrCement,
+	data.KindSrExecute:                node.KindSrExecute,
+	data.KindSrOriginate:              node.KindSrOriginate,
+	data.KindSrPublish:                node.KindSrPublish,
+	data.KindSrRecoverBond:            node.KindSrRecoverBond,
+	data.KindSrRefute:                 node.KindSrRefute,
 }
 
 var toTzKTKinds = map[string]string{
@@ -65,6 +72,14 @@ var toTzKTKinds = map[string]string{
 	node.KindVdfRevelation:              data.KindVdfRevelation,
 	node.KindDrainDelegate:              data.KindDrainDelegate,
 	node.KindUpdateConsensusKey:         data.KindUpdateConsensusKey,
+	node.KindSrAddMessages:              data.KindSrAddMessages,
+	node.KindSrCement:                   data.KindSrCement,
+	node.KindSrExecute:                  data.KindSrExecute,
+	node.KindSrOriginate:                data.KindSrOriginate,
+	node.KindSrPublish:                  data.KindSrPublish,
+	node.KindSrRecoverBond:              data.KindSrRecoverBond,
+	node.KindSrRefute:                   data.KindSrRefute,
+	node.KindSrTimeout:                  data.KindSrRefute,
 }
 
 // OperationMessage -

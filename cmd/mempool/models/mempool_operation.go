@@ -25,7 +25,8 @@ type DefaultConstraint interface {
 		NonceRevelation | Origination | Preendorsement | Proposal | RegisterGlobalConstant | Reveal | SetDepositsLimit |
 		Transaction | TransferTicket | TxRollupCommit | TxRollupDispatchTickets | TxRollupFinalizeCommitment | TxRollupOrigination |
 		TxRollupRejection | TxRollupRemoveCommitment | TxRollupReturnBond | TxRollupSubmitBatch | VdfRevelation | IncreasePaidStorage |
-		UpdateConsensusKey | DelegateDrain
+		UpdateConsensusKey | DelegateDrain | SmartRollupAddMessage | SmartRollupCement | SmartRollupExecute |
+		SmartRollupOriginate | SmartRollupPublish | SmartRollupRecoverBond | SmartRollupRefute | SmartRollupTimeout
 }
 
 // ChangableMempoolOperation -
@@ -254,6 +255,22 @@ func getModelByKind(kind string) (interface{}, error) {
 		return &DelegateDrain{}, nil
 	case node.KindUpdateConsensusKey:
 		return &UpdateConsensusKey{}, nil
+	case node.KindSrAddMessages:
+		return &SmartRollupAddMessage{}, nil
+	case node.KindSrCement:
+		return &SmartRollupCement{}, nil
+	case node.KindSrExecute:
+		return &SmartRollupExecute{}, nil
+	case node.KindSrOriginate:
+		return &SmartRollupOriginate{}, nil
+	case node.KindSrPublish:
+		return &SmartRollupPublish{}, nil
+	case node.KindSrRecoverBond:
+		return &SmartRollupRecoverBond{}, nil
+	case node.KindSrRefute:
+		return &SmartRollupRefute{}, nil
+	case node.KindSrTimeout:
+		return &SmartRollupTimeout{}, nil
 
 	default:
 		return nil, errors.Wrap(node.ErrUnknownKind, kind)

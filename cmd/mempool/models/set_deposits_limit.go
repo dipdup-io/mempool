@@ -13,3 +13,8 @@ type SetDepositsLimit struct {
 	Source       string  `json:"source,omitempty" index:"set_deposits_limit_source_idx"`
 	Limit        *string `json:"limit,omitempty"`
 }
+
+// SetMempoolOperation -
+func (i *SetDepositsLimit) SetMempoolOperation(operaiton MempoolOperation) {
+	i.MempoolOperation = operaiton
+}

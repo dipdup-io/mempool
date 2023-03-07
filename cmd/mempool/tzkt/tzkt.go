@@ -256,6 +256,27 @@ func (tzkt *TzKT) getAPIOperation(model interface{}) (data.Operation, error) {
 	case *data.DrainDelegate:
 		return operationFromDrainDelegate(*operation), nil
 
+	case *data.SmartRollupAddMessage:
+		return operationFromSrAddMessage(*operation), nil
+
+	case *data.SmartRollupCement:
+		return operationFromSrCement(*operation), nil
+
+	case *data.SmartRollupExecute:
+		return operationFromSrExecute(*operation), nil
+
+	case *data.SmartRollupOriginate:
+		return operationFromSrOriginate(*operation), nil
+
+	case *data.SmartRollupPublish:
+		return operationFromSrPublish(*operation), nil
+
+	case *data.SmartRollupRecoverBond:
+		return operationFromSrRecoverBond(*operation), nil
+
+	case *data.SmartRollupRefute:
+		return operationFromSrRefute(*operation), nil
+
 	default:
 		return data.Operation{}, errors.Wrapf(ErrInvalidOperationType, "%T", model)
 	}
@@ -569,6 +590,20 @@ func (tzkt *TzKT) getTableData(ctx context.Context, table *tableState, indexerSt
 		return getOperations(ctx, table, filters, tzkt.api.GetUpdateConsensusKey, operationFromUpdateConsensusKey)
 	case data.KindDrainDelegate:
 		return getOperations(ctx, table, filters, tzkt.api.GetDrainDelegates, operationFromDrainDelegate)
+	case data.KindSrAddMessages:
+		return getOperations(ctx, table, filters, tzkt.api.GetSmartRollupAddMessages, operationFromSrAddMessage)
+	case data.KindSrCement:
+		return getOperations(ctx, table, filters, tzkt.api.GetSmartRollupCement, operationFromSrCement)
+	case data.KindSrExecute:
+		return getOperations(ctx, table, filters, tzkt.api.GetSmartRollupExecute, operationFromSrExecute)
+	case data.KindSrOriginate:
+		return getOperations(ctx, table, filters, tzkt.api.GetSmartRollupOriginate, operationFromSrOriginate)
+	case data.KindSrPublish:
+		return getOperations(ctx, table, filters, tzkt.api.GetSmartRollupPublish, operationFromSrPublish)
+	case data.KindSrRecoverBond:
+		return getOperations(ctx, table, filters, tzkt.api.GetSmartRollupRecoverBond, operationFromSrRecoverBond)
+	case data.KindSrRefute:
+		return getOperations(ctx, table, filters, tzkt.api.GetSmartRollupRefute, operationFromSrRefute)
 	default:
 		return errors.Wrap(ErrUnknownOperationKind, table.Table)
 	}

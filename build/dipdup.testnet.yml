@@ -75,6 +75,50 @@ mempool:
           rpc: 
             - limanet_rpc
 
+    mumbainet:
+      filters:
+        kinds:
+          - endorsement
+          - transaction
+          - activate_account
+          - ballot
+          - delegation
+          - double_baking_evidence
+          - double_endorsement_evidence
+          - origination
+          - proposals
+          - reveal
+          - seed_nonce_revelation
+          - register_global_constant
+          - set_deposits_limit
+          - preendorsement
+          - double_preendorsement_evidence
+          - tx_rollup_commit
+          - tx_rollup_dispatch_tickets
+          - tx_rollup_finalize_commitment
+          - tx_rollup_origination
+          - tx_rollup_rejection
+          - tx_rollup_remove_commitment
+          - tx_rollup_return_bond
+          - tx_rollup_submit_batch
+          - transfer_ticket
+          - vdf_revelation
+          - Increase_paid_storage
+          - drain_delegate
+          - update_consensus_key
+          - smart_rollup_add_messages
+          - smart_rollup_originate
+          - smart_rollup_execute_outbox_message
+          - smart_rollup_refute
+          - smart_rollup_publish
+          - smart_rollup_recover_bond
+          - smart_rollup_timeout
+          - smart_rollup_cement
+      datasources:
+          tzkt: mumbainet_tzkt
+          rpc: 
+            - mumbainet_rpc
+
 database:
   kind: postgres
   host: ${POSTGRES_HOST:-db}
@@ -83,13 +127,13 @@ database:
   password: ${POSTGRES_PASSWORD:-changeme}
   database: ${POSTGRES_DB:-dipdup}
 
-hasura:
-  url: http://${HASURA_HOST:-hasura}:${HASURA_PORT:-8080}
-  admin_secret: ${ADMIN_SECRET:-changeme}
-  select_limit: 100
-  allow_aggregation: false
-  add_source: true
-  rest: true
+# hasura:
+#   url: http://${HASURA_HOST:-hasura}:${HASURA_PORT:-8080}
+#   admin_secret: ${ADMIN_SECRET:-changeme}
+#   select_limit: 100
+#   allow_aggregation: false
+#   add_source: true
+#   rest: true
 
 prometheus:
   url: ${PROMETHEUS_BIND:-0.0.0.0:2112}
@@ -108,3 +152,10 @@ datasources:
   ghostnet_rpc:
     kind: tezos-node
     url: https://rpc.tzkt.io/ghostnet
+
+  mumbainet_tzkt:
+    kind: tzkt
+    url: https://api.mumbainet.tzkt.io
+  mumbainet_rpc:
+    kind: tezos-node
+    url: https://rpc.tzkt.io/mumbainet

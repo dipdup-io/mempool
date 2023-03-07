@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/dipdup-net/go-lib v0.2.25
+	github.com/dipdup-net/go-lib v0.2.29
 	github.com/go-pg/pg/v10 v10.10.6
 	github.com/json-iterator/go v1.1.12
 	github.com/karlseguin/ccache v2.0.3+incompatible
@@ -12,7 +12,7 @@ require (
 	github.com/rs/zerolog v1.26.0
 	github.com/spf13/cobra v1.6.1
 	github.com/ubiq/go-ubiq v3.0.1+incompatible
-	golang.org/x/crypto v0.0.0-20220314234659-1baeb1ce4c0b
+	golang.org/x/crypto v0.5.0
 )
 
 require (
@@ -60,8 +60,8 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
 	github.com/vmihailenco/tagparser v0.1.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/text v0.6.0 // indirect
 	google.golang.org/protobuf v1.26.0-rc.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

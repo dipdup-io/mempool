@@ -16,7 +16,6 @@ func operationFromTransaction(model data.Transaction) data.Operation {
 		Level:      model.Level,
 		ID:         model.ID,
 		Hash:       model.Hash,
-		Block:      model.Block,
 		GasUsed:    &model.GasUsed,
 		BakerFee:   &model.BakerFee,
 		Parameters: model.Parameter,
@@ -29,7 +28,6 @@ func operationFromOrigination(model data.Origination) data.Operation {
 		Level:    model.Level,
 		ID:       model.ID,
 		Hash:     model.Hash,
-		Block:    model.Block,
 		GasUsed:  &model.GasUsed,
 		BakerFee: &model.BakerFee,
 	}
@@ -41,7 +39,6 @@ func operationFromDelegation(model data.Delegation) data.Operation {
 		Level:    model.Level,
 		ID:       model.ID,
 		Hash:     model.Hash,
-		Block:    model.Block,
 		GasUsed:  &model.GasUsed,
 		BakerFee: &model.BakerFee,
 		Delegate: model.NewDelegate,
@@ -66,7 +63,6 @@ func operationFromRegisterConstant(model data.RegisterConstant) data.Operation {
 		Level:    model.Level,
 		ID:       model.ID,
 		Hash:     model.Hash,
-		Block:    model.Block,
 		GasUsed:  &model.GasUsed,
 		BakerFee: &model.BakerFee,
 	}
@@ -108,7 +104,6 @@ func operationFromEndorsement(model data.Endorsement) data.Operation {
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -118,7 +113,6 @@ func operationFromDoubleBaking(model data.DoubleBaking) data.Operation {
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -128,7 +122,6 @@ func operationFromDoubleEndorsing(model data.DoubleEndorsing) data.Operation {
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -148,7 +141,6 @@ func operationFromSetDepositsLimit(model data.SetDepositsLimit) data.Operation {
 		Level:    model.Level,
 		ID:       model.ID,
 		Hash:     model.Hash,
-		Block:    model.Block,
 		GasUsed:  &model.GasUsed,
 		BakerFee: &model.BakerFee,
 	}
@@ -160,7 +152,6 @@ func operationFromPreendorsement(model data.Preendorsement) data.Operation {
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -170,7 +161,6 @@ func operationFromTxRollupCommit(model data.TxRollupCommit) data.Operation {
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -180,7 +170,6 @@ func operationFromTxRollupDispatchTicket(model data.TxRollupDispatchTicket) data
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -190,7 +179,6 @@ func operationFromTxRollupFinalizeCommitment(model data.TxRollupFinalizeCommitme
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -220,7 +208,6 @@ func operationFromTxRollupRemoveCommitment(model data.TxRollupRemoveCommitment) 
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -230,7 +217,6 @@ func operationFromTxRollupReturnBond(model data.TxRollupReturnBond) data.Operati
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -240,7 +226,6 @@ func operationFromTxRollupSubmitBatch(model data.TxRollupSubmitBatch) data.Opera
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -250,7 +235,6 @@ func operationFromTransferTicket(model data.TransferTicket) data.Operation {
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -272,7 +256,6 @@ func operationFromVdfRevelation(model data.VdfRevelation) data.Operation {
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
 	}
 }
 
@@ -282,7 +265,6 @@ func operationFromUpdateConsensusKey(model data.UpdateConsensusKey) data.Operati
 		Level:    model.Level,
 		ID:       model.ID,
 		Hash:     model.Hash,
-		Block:    model.Block,
 		GasUsed:  &model.GasUsed,
 		BakerFee: &model.BakerFee,
 	}
@@ -294,6 +276,68 @@ func operationFromDrainDelegate(model data.DrainDelegate) data.Operation {
 		Level: model.Level,
 		ID:    model.ID,
 		Hash:  model.Hash,
-		Block: model.Block,
+	}
+}
+
+func operationFromSrAddMessage(model data.SmartRollupAddMessage) data.Operation {
+	return data.Operation{
+		Type:  node.KindSrAddMessages,
+		Level: model.Level,
+		ID:    model.ID,
+		Hash:  model.Hash,
+	}
+}
+
+func operationFromSrCement(model data.SmartRollupCement) data.Operation {
+	return data.Operation{
+		Type:  node.KindSrCement,
+		Level: model.Level,
+		ID:    model.ID,
+		Hash:  model.Hash,
+	}
+}
+
+func operationFromSrOriginate(model data.SmartRollupOriginate) data.Operation {
+	return data.Operation{
+		Type:  node.KindSrOriginate,
+		Level: model.Level,
+		ID:    model.ID,
+		Hash:  model.Hash,
+	}
+}
+
+func operationFromSrExecute(model data.SmartRollupExecute) data.Operation {
+	return data.Operation{
+		Type:  node.KindSrExecute,
+		Level: model.Level,
+		ID:    model.ID,
+		Hash:  model.Hash,
+	}
+}
+
+func operationFromSrPublish(model data.SmartRollupPublish) data.Operation {
+	return data.Operation{
+		Type:  node.KindSrPublish,
+		Level: model.Level,
+		ID:    model.ID,
+		Hash:  model.Hash,
+	}
+}
+
+func operationFromSrRecoverBond(model data.SmartRollupRecoverBond) data.Operation {
+	return data.Operation{
+		Type:  node.KindSrRecoverBond,
+		Level: model.Level,
+		ID:    model.ID,
+		Hash:  model.Hash,
+	}
+}
+
+func operationFromSrRefute(model data.SmartRollupRefute) data.Operation {
+	return data.Operation{
+		Type:  node.KindSrRefute,
+		Level: model.Level,
+		ID:    model.ID,
+		Hash:  model.Hash,
 	}
 }

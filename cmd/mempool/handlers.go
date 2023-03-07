@@ -287,6 +287,30 @@ func (indexer *Indexer) handleContent(tx pg.DBI, content node.Content, operation
 	case node.KindDrainDelegate:
 		var model models.DelegateDrain
 		return defaultHandler(tx, content, operation, &model)
+	case node.KindSrAddMessages:
+		var model models.SmartRollupAddMessage
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindSrCement:
+		var model models.SmartRollupCement
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindSrExecute:
+		var model models.SmartRollupExecute
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindSrOriginate:
+		var model models.SmartRollupOriginate
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindSrPublish:
+		var model models.SmartRollupPublish
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindSrRecoverBond:
+		var model models.SmartRollupRecoverBond
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindSrRefute:
+		var model models.SmartRollupRefute
+		return defaultHandler(tx, content, operation, &model)
+	case node.KindSrTimeout:
+		var model models.SmartRollupTimeout
+		return defaultHandler(tx, content, operation, &model)
 	case node.KindEvent:
 	default:
 		indexer.warn().Str("kind", content.Kind).Msg("unknown operation kind")
