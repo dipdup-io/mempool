@@ -17,6 +17,7 @@ tables:
       - raw
       - pkh
       - secret
+
   -
     name: ballots
     columns:
@@ -35,6 +36,7 @@ tables:
       - raw
       - period
       - ballot
+
   -
     name: delegations
     columns:
@@ -57,6 +59,7 @@ tables:
       - storage_limit
       - delegate
       - source
+
   -
     name: double_bakings
     columns:
@@ -83,6 +86,7 @@ tables:
       - bh_2_validation_pass
       - bh_2_priority
       - bh_2_proof_of_work_nonce
+
   -
     name: double_endorsings
     columns:
@@ -103,6 +107,7 @@ tables:
       - op_1_level
       - op_2_kind
       - op_2_level
+
   -
     name: double_preendorsings
     columns:
@@ -123,6 +128,7 @@ tables:
       - op_1_level
       - op_2_kind
       - op_2_level
+
   -
     name: drain_delegate
     columns:
@@ -142,6 +148,7 @@ tables:
       - consensus_key
       - delegate
       - destination
+
   -
     name: endorsements
     columns:
@@ -160,6 +167,7 @@ tables:
       - raw
       - level
       - baker
+
   -
     name: gas_stats
     columns:
@@ -170,3 +178,169 @@ tables:
       - updated_at
       - level_in_mempool
       - level_in_chain
+
+  -
+    name: increase_paid_storage
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+
+  -
+    name: nonce_revelations
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - level
+      - nonce
+
+  -
+    name: originations
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - balance
+      - delegate
+      - source
+      - storage
+
+  -
+    name: preendorsements
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+
+  -
+    name: proposals
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - period
+      - proposals
+
+  -
+    name: register_global_constant
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - source
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - value
+
+  -
+    name: reveals
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - source
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - public_key
+
+  -
+    name: set_deposits_limit
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - limit
