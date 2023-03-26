@@ -536,3 +536,270 @@ tables:
 #      - source
 #      - rollup
 
+  -
+    name: transactions
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - source
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - amount
+      - destination
+      - parameters
+
+  -
+    name: transfer_ticket
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+
+  -
+    name: tx_rollup_commit
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - rollup
+
+  -
+    name: tx_rollup_dispatch_tickets
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - tx_rollup
+
+  -
+    name: tx_rollup_finalize_commitment
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - rollup
+
+  -
+    name: tx_rollup_origination
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+
+  -
+    name: tx_rollup_rejection
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+
+  -
+    name: tx_rollup_remove_commitment
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - rollup
+
+  -
+    name: tx_rollup_return_bond
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+
+  -
+    name: tx_rollup_submit_batch
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - rollup
+
+  -
+    name: update_consensus_key
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - pk
+
+  -
+    name: vdf_revelation
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
