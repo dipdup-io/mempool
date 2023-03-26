@@ -36,6 +36,27 @@ tables:
       - period
       - ballot
   -
+    name: delegations
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - delegate
+      - source
 
 
 # Mempool Operation
