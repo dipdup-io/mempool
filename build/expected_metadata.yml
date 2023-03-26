@@ -1,0 +1,55 @@
+tables:
+  -
+    name: activate_account
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - pkh
+      - secret
+  -
+    name: ballots
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - period
+      - ballot
+  -
+
+
+# Mempool Operation
+
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
