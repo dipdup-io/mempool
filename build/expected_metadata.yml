@@ -344,3 +344,195 @@ tables:
       - storage_limit
       - source
       - limit
+
+#  -
+#    name: sr_add_messages
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - message
+
+#  -
+#    name: sr_cement
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - rollup
+#      - commitment
+
+#  -
+#    name: sr_execute
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - rollup
+#      - cemented_commitment
+#      - output_proof
+
+#  -
+#    name: sr_originate
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - pvm_kind
+#      - kernel
+#      - origination_proof
+#      - parameters_ty
+
+#  -
+#    name: sr_publish
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - rollup
+
+#  -
+#    name: sr_recover_bond
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - rollup
+
+#  -
+#    name: sr_refute
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - opponent
+#      - rollup
+
+#  -
+#    name: sr_timeout
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - rollup
+
