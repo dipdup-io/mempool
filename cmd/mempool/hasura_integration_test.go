@@ -37,13 +37,18 @@ func TestIntegration_HasuraMetadata(t *testing.T) {
 	// Go through `expectedMetadata` and assert that each object
 	// in that array is in `metadata` with corresponding columns.
 	for _, expectedTable := range expectedMetadata.Tables {
-		metadataTable, err := getTableColumns(metadata, expectedTable.Name, "user") // todo: read role from config
+		metadataTableColumns, err := getTableColumns(metadata, expectedTable.Name, "user") // todo: read role from config
 		if err != nil {
-			t.Fatalf("Erro with searching expectedTable in metadata: %e", err)
+			t.Fatalf("Error with searching expectedTable in metadata: %s\n%e", expectedTable.Name, err)
 		}
 
-		if !elementsMatch(expectedTable, metadataTable) {
-			t.Errorf("Table columns do not match: %s", expectedTable.Name)
+		if !elementsMatch(expectedTable, metadataTableColumns) {
+			t.Errorf(
+				"Table columns do not match: %s\nexpected: %s\nactual: %s",
+				expectedTable.Name,
+				expectedTable.Columns,
+				metadataTableColumns,
+			)
 		}
 	}
 }

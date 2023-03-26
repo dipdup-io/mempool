@@ -4,6 +4,7 @@ package models
 type Transaction struct {
 	//nolint
 	tableName struct{} `pg:"transactions"`
+
 	MempoolOperation
 	Source       string `json:"source" index:"transaction_source_idx"`
 	Fee          int64  `json:"fee,string"`
