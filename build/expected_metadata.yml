@@ -57,20 +57,116 @@ tables:
       - storage_limit
       - delegate
       - source
-
-
-# Mempool Operation
-
-#      - created_at
-#      - updated_at
-#      - network
-#      - hash
-#      - branch
-#      - status
-#      - kind
-#      - signature
-#      - protocol
-#      - level
-#      - errors
-#      - expiration_level
-#      - raw
+  -
+    name: double_bakings
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - bh_1_level
+      - bh_1_proto
+      - bh_1_validation_pass
+      - bh_1_priority
+      - bh_1_proof_of_work_nonce
+      - bh_2_level
+      - bh_2_proto
+      - bh_2_validation_pass
+      - bh_2_priority
+      - bh_2_proof_of_work_nonce
+  -
+    name: double_endorsings
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - op_1_kind
+      - op_1_level
+      - op_2_kind
+      - op_2_level
+  -
+    name: double_preendorsings
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - op_1_kind
+      - op_1_level
+      - op_2_kind
+      - op_2_level
+  -
+    name: drain_delegate
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - consensus_key
+      - delegate
+      - destination
+  -
+    name: endorsements
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - level
+      - baker
+  -
+    name: gas_stats
+    columns:
+      - network
+      - hash
+      - total_gas_used
+      - total_fee
+      - updated_at
+      - level_in_mempool
+      - level_in_chain
