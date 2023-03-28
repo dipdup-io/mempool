@@ -8,8 +8,8 @@ test:
 	go test ./...
 
 integration-test:
-	docker compose up -d
-	until </dev/tcp/localhost/22000; do sleep 10; done
+	docker-compose -f docker-compose.test.yml up -d
+	until </dev/tcp/localhost/22000; do sleep 15; done
 	cd cmd/mempool && INTEGRATION=true HASURA_HOST=127.0.0.1 HASURA_PORT=22000 bash -c 'go test -v -timeout=15s -run TestIntegration_HasuraMetadata' || true
 	docker compose down
 

@@ -71,3 +71,5 @@ require (
 	gorm.io/gorm v1.22.4 // indirect
 	mellium.im/sasl v0.3.1 // indirect
 )
+
+replace github.com/dipdup-net/go-lib => /Users/lavysh/Source/BakingBad/DipDup/go-lib

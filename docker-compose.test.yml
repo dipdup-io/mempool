@@ -3,7 +3,8 @@ version: "3.6"
 services:
   indexer:
     image: dipdup/mempool:latest
-    command: "-c dipdup.mainnet.yml"
+    command: "-c dipdup.testnet.yml"
+#    command: "-c dipdup.mainnet.yml"
     build:
         dockerfile: build/Dockerfile
         context: .
