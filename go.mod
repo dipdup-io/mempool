@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/dipdup-net/go-lib v0.2.30
+	github.com/dipdup-net/go-lib v0.2.32
 	github.com/go-pg/pg/v10 v10.10.6
 	github.com/json-iterator/go v1.1.12
 	github.com/karlseguin/ccache v2.0.3+incompatible
@@ -27,7 +27,6 @@ require (
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.10.1 // indirect
@@ -71,3 +70,5 @@ require (
 	gorm.io/gorm v1.22.4 // indirect
 	mellium.im/sasl v0.3.1 // indirect
 )
+
+replace github.com/dipdup-net/go-lib => /Users/lavysh/Source/BakingBad/DipDup/go-lib
