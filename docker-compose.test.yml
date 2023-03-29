@@ -48,13 +48,5 @@ services:
       - HASURA_GRAPHQL_ADMIN_SECRET=${ADMIN_SECRET:-changeme}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
 
-  prometheus:
-    image: prom/prometheus:latest
-    restart: always
-    ports:
-      - 127.0.0.1:9090:9090
-    volumes:
-      - ./build/prometheus.yml:/etc/prometheus/prometheus.yml
-  
 volumes:
   db:
