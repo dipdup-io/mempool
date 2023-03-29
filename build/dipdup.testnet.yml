@@ -34,6 +34,18 @@ mempool:
           - tx_rollup_return_bond
           - tx_rollup_submit_batch
           - transfer_ticket
+          - vdf_revelation
+          - Increase_paid_storage
+          - drain_delegate
+          - update_consensus_key
+          - smart_rollup_add_messages
+          - smart_rollup_originate
+          - smart_rollup_execute_outbox_message
+          - smart_rollup_refute
+          - smart_rollup_publish
+          - smart_rollup_recover_bond
+          - smart_rollup_timeout
+          - smart_rollup_cement
       datasources:
           tzkt: ghostnet_tzkt
           rpc: 
