@@ -51,42 +51,6 @@ mempool:
           rpc: 
             - ghostnet_rpc
 
-    limanet:
-      filters:
-        kinds:
-          - endorsement
-          - transaction
-          - activate_account
-          - ballot
-          - delegation
-          - double_baking_evidence
-          - double_endorsement_evidence
-          - origination
-          - proposals
-          - reveal
-          - seed_nonce_revelation
-          - register_global_constant
-          - set_deposits_limit
-          - preendorsement
-          - double_preendorsement_evidence
-          - tx_rollup_commit
-          - tx_rollup_dispatch_tickets
-          - tx_rollup_finalize_commitment
-          - tx_rollup_origination
-          - tx_rollup_rejection
-          - tx_rollup_remove_commitment
-          - tx_rollup_return_bond
-          - tx_rollup_submit_batch
-          - transfer_ticket
-          - vdf_revelation
-          - Increase_paid_storage
-          - drain_delegate
-          - update_consensus_key
-      datasources:
-          tzkt: limanet_tzkt
-          rpc: 
-            - limanet_rpc
-
     mumbainet:
       filters:
         kinds:
@@ -155,13 +119,6 @@ prometheus:
   url: ${PROMETHEUS_BIND:-0.0.0.0:2112}
 
 datasources:
-  limanet_tzkt:
-    kind: tzkt
-    url: https://api.limanet.tzkt.io
-  limanet_rpc:
-    kind: tezos-node
-    url: https://rpc.tzkt.io/limanet
-
   ghostnet_tzkt:
     kind: tzkt
     url: https://api.ghostnet.tzkt.io
