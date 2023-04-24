@@ -76,16 +76,16 @@ tables:
       - errors
       - expiration_level
       - raw
-      - bh_1_level
-      - bh_1_proto
-      - bh_1_validation_pass
-      - bh_1_priority
-      - bh_1_proof_of_work_nonce
-      - bh_2_level
-      - bh_2_proto
-      - bh_2_validation_pass
-      - bh_2_priority
-      - bh_2_proof_of_work_nonce
+      - bh1_level
+      - bh1_proto
+      - bh1_validation_pass
+      - bh1_priority
+      - bh1_proof_of_work_nonce
+      - bh2_level
+      - bh2_proto
+      - bh2_validation_pass
+      - bh2_priority
+      - bh2_proof_of_work_nonce
 
   -
     name: double_endorsings
@@ -103,10 +103,10 @@ tables:
       - errors
       - expiration_level
       - raw
-      - op_1_kind
-      - op_1_level
-      - op_2_kind
-      - op_2_level
+      - op1_kind
+      - op1_level
+      - op2_kind
+      - op2_level
 
   -
     name: double_preendorsings
@@ -124,10 +124,10 @@ tables:
       - errors
       - expiration_level
       - raw
-      - op_1_kind
-      - op_1_level
-      - op_2_kind
-      - op_2_level
+      - op1_kind
+      - op1_level
+      - op2_kind
+      - op2_level
 
   -
     name: drain_delegate
