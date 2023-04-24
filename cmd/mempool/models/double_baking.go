@@ -9,17 +9,17 @@ type DoubleBaking struct {
 	Bh1 DoubleBakingInfo `json:"bh1" pg:"-"`
 	Bh2 DoubleBakingInfo `json:"bh2" pg:"-"`
 
-	Bh1Level            uint64 `json:"-" pg:"bh_1_level"`
-	Bh1Proto            int64  `json:"-" pg:"bh_1_proto"`
-	Bh1ValidationPass   int64  `json:"-" pg:"bh_1_validation_pass"`
-	Bh1Priority         int64  `json:"-" pg:"bh_1_priority"`
-	Bh1ProofOfWorkNonce string `json:"-" pg:"bh_1_proof_of_work_nonce"`
+	Bh1Level            uint64 `json:"-" pg:"bh1_level"`
+	Bh1Proto            int64  `json:"-" pg:"bh1_proto"`
+	Bh1ValidationPass   int64  `json:"-" pg:"bh1_validation_pass"`
+	Bh1Priority         int64  `json:"-" pg:"bh1_priority"`
+	Bh1ProofOfWorkNonce string `json:"-" pg:"bh1_proof_of_work_nonce"`
 
-	Bh2Level            uint64 `json:"-" pg:"bh_2_level"`
-	Bh2Proto            int64  `json:"-" pg:"bh_2_proto"`
-	Bh2ValidationPass   int64  `json:"-" pg:"bh_2_validation_pass"`
-	Bh2Priority         int64  `json:"-" pg:"bh_2_priority"`
-	Bh2ProofOfWorkNonce string `json:"-" pg:"bh_2_proof_of_work_nonce"`
+	Bh2Level            uint64 `json:"-" pg:"bh2_level"`
+	Bh2Proto            int64  `json:"-" pg:"bh2_proto"`
+	Bh2ValidationPass   int64  `json:"-" pg:"bh2_validation_pass"`
+	Bh2Priority         int64  `json:"-" pg:"bh2_priority"`
+	Bh2ProofOfWorkNonce string `json:"-" pg:"bh2_proof_of_work_nonce"`
 }
 
 // DoubleBakingInfo -
