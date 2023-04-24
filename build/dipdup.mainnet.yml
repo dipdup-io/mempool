@@ -54,8 +54,11 @@ hasura:
   admin_secret: ${ADMIN_SECRET:-changeme}
   select_limit: 100
   allow_aggregation: false
-  source: default
-  add_source: true
+  source:
+    name: default
+    db_host: ${HASURA_POSTGRES_HOST:-none}
+    use_prepared_statements: true
+    isolation_level: read-committed
   rest: true
 
 prometheus:

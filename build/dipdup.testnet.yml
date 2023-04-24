@@ -127,21 +127,11 @@ database:
   password: ${POSTGRES_PASSWORD:-changeme}
   database: ${POSTGRES_DB:-dipdup}
 
-# hasura:
-#   url: http://${HASURA_HOST:-hasura}:${HASURA_PORT:-8080}
-#   admin_secret: ${ADMIN_SECRET:-changeme}
-#   select_limit: 100
-#   allow_aggregation: false
-#   add_source: true
-#   rest: true
-
 hasura:
   url: http://${HASURA_HOST:-hasura}:${HASURA_PORT:-8080}
   admin_secret: ${ADMIN_SECRET:-changeme}
   select_limit: 100
   allow_aggregation: false
-  #  source: default
-  add_source: true
   source:
     name: default
     db_host: ${HASURA_POSTGRES_HOST:-none}
