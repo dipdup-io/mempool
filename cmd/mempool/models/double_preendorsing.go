@@ -6,10 +6,10 @@ type DoublePreendorsing struct {
 	tableName struct{} `pg:"double_preendorsings"`
 
 	MempoolOperation
-	Op1Kind  string `json:"-" pg:"op_1_kind"`
-	Op1Level uint64 `json:"-" pg:"op_1_level"`
-	Op2Kind  string `json:"-" pg:"op_2_kind"`
-	Op2Level uint64 `json:"-" pg:"op_2_level"`
+	Op1Kind  string `json:"-" pg:"op1_kind"`
+	Op1Level uint64 `json:"-" pg:"op1_level"`
+	Op2Kind  string `json:"-" pg:"op2_kind"`
+	Op2Level uint64 `json:"-" pg:"op2_level"`
 
 	Op1 struct {
 		Operations DoublePreendorsingOperations `json:"operations"`

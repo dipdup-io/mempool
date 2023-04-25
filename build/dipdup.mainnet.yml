@@ -64,6 +64,7 @@ hasura:
   allow_aggregation: false
   source:
     name: default
+    db_host: ${HASURA_POSTGRES_HOST}
     use_prepared_statements: true
     isolation_level: read-committed
   rest: true

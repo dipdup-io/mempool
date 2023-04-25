@@ -6,5 +6,5 @@ type Proposal struct {
 	tableName struct{} `pg:"proposals"`
 	MempoolOperation
 	Period    int64  `json:"period"`
-	Proposals string `json:"proposal"`
+	Proposals string `json:"proposal" pg:"proposals"`
 }

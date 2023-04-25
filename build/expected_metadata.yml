@@ -1,0 +1,805 @@
+tables:
+  -
+    name: activate_account
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - pkh
+      - secret
+
+  -
+    name: ballots
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - period
+      - ballot
+
+  -
+    name: delegations
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - delegate
+      - source
+
+  -
+    name: double_bakings
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - bh1_level
+      - bh1_proto
+      - bh1_validation_pass
+      - bh1_priority
+      - bh1_proof_of_work_nonce
+      - bh2_level
+      - bh2_proto
+      - bh2_validation_pass
+      - bh2_priority
+      - bh2_proof_of_work_nonce
+
+  -
+    name: double_endorsings
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - op1_kind
+      - op1_level
+      - op2_kind
+      - op2_level
+
+  -
+    name: double_preendorsings
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - op1_kind
+      - op1_level
+      - op2_kind
+      - op2_level
+
+  -
+    name: drain_delegate
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - consensus_key
+      - delegate
+      - destination
+
+  -
+    name: endorsements
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - level
+      - baker
+
+  -
+    name: gas_stats
+    columns:
+      - network
+      - hash
+      - total_gas_used
+      - total_fee
+      - updated_at
+      - level_in_mempool
+      - level_in_chain
+
+  -
+    name: increase_paid_storage
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+
+  -
+    name: nonce_revelations
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - level
+      - nonce
+
+  -
+    name: originations
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - balance
+      - delegate
+      - source
+      - storage
+
+  -
+    name: preendorsements
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+
+  -
+    name: proposals
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - period
+      - proposals
+
+  -
+    name: register_global_constant
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - source
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - value
+
+  -
+    name: reveals
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - source
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - public_key
+
+  -
+    name: set_deposits_limit
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - limit
+
+#  -
+#    name: sr_add_messages
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - message
+
+#  -
+#    name: sr_cement
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - rollup
+#      - commitment
+
+#  -
+#    name: sr_execute
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - rollup
+#      - cemented_commitment
+#      - output_proof
+
+#  -
+#    name: sr_originate
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - pvm_kind
+#      - kernel
+#      - origination_proof
+#      - parameters_ty
+
+#  -
+#    name: sr_publish
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - rollup
+
+#  -
+#    name: sr_recover_bond
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - rollup
+
+#  -
+#    name: sr_refute
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - opponent
+#      - rollup
+
+#  -
+#    name: sr_timeout
+#    columns:
+#      - created_at
+#      - updated_at
+#      - network
+#      - hash
+#      - branch
+#      - status
+#      - kind
+#      - signature
+#      - protocol
+#      - level
+#      - errors
+#      - expiration_level
+#      - raw
+#      - fee
+#      - counter
+#      - gas_limit
+#      - storage_limit
+#      - source
+#      - rollup
+
+  -
+    name: transactions
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - source
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - amount
+      - destination
+      - parameters
+
+  -
+    name: transfer_ticket
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+
+  -
+    name: tx_rollup_commit
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - rollup
+
+  -
+    name: tx_rollup_dispatch_tickets
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - tx_rollup
+
+  -
+    name: tx_rollup_finalize_commitment
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - rollup
+
+  -
+    name: tx_rollup_origination
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+
+  -
+    name: tx_rollup_rejection
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+
+  -
+    name: tx_rollup_remove_commitment
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - rollup
+
+  -
+    name: tx_rollup_return_bond
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+
+  -
+    name: tx_rollup_submit_batch
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - rollup
+
+  -
+    name: update_consensus_key
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
+      - fee
+      - counter
+      - gas_limit
+      - storage_limit
+      - source
+      - pk
+
+  -
+    name: vdf_revelation
+    columns:
+      - created_at
+      - updated_at
+      - network
+      - hash
+      - branch
+      - status
+      - kind
+      - signature
+      - protocol
+      - level
+      - errors
+      - expiration_level
+      - raw
