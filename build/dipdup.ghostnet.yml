@@ -1,0 +1,83 @@
+version: 0.0.1
+
+mempool:
+  settings:
+    keep_operations_seconds: 172800
+    keep_in_chain_blocks: 10
+    gas_stats_lifetime: 3600
+    expired_after_blocks: 120
+  indexers:
+    ghostnet:
+      filters:
+        kinds:
+          - endorsement
+          - transaction
+          - activate_account
+          - ballot
+          - delegation
+          - double_baking_evidence
+          - double_endorsement_evidence
+          - origination
+          - proposals
+          - reveal
+          - seed_nonce_revelation
+          - register_global_constant
+          - set_deposits_limit
+          - preendorsement
+          - double_preendorsement_evidence
+          - tx_rollup_commit
+          - tx_rollup_dispatch_tickets
+          - tx_rollup_finalize_commitment
+          - tx_rollup_origination
+          - tx_rollup_rejection
+          - tx_rollup_remove_commitment
+          - tx_rollup_return_bond
+          - tx_rollup_submit_batch
+          - transfer_ticket
+          - vdf_revelation
+          - Increase_paid_storage
+          - drain_delegate
+          - update_consensus_key
+          - smart_rollup_add_messages
+          - smart_rollup_originate
+          - smart_rollup_execute_outbox_message
+          - smart_rollup_refute
+          - smart_rollup_publish
+          - smart_rollup_recover_bond
+          - smart_rollup_timeout
+          - smart_rollup_cement
+      datasources:
+          tzkt: ghostnet_tzkt
+          rpc:
+            - ghostnet_rpc
+
+database:
+  kind: postgres
+  host: ${POSTGRES_HOST:-db}
+  port: 5432
+  user: ${POSTGRES_USER:-dipdup}
+  password: ${POSTGRES_PASSWORD:-changeme}
+  database: ${POSTGRES_DB:-dipdup}
+
+hasura:
+  url: http://${HASURA_HOST:-hasura}:${HASURA_PORT:-8080}
+  admin_secret: ${ADMIN_SECRET:-changeme}
+  select_limit: 100
+  allow_aggregation: false
+  source:
+    name: default
+    database_host: ${HASURA_POSTGRES_HOST}
+    use_prepared_statements: true
+    isolation_level: read-committed
+  rest: true
+
+prometheus:
+  url: ${PROMETHEUS_BIND:-0.0.0.0:2112}
+
+datasources:
+  ghostnet_tzkt:
+    kind: tzkt
+    url: https://api.ghostnet.tzkt.io
+  ghostnet_rpc:
+    kind: tezos-node
+    url: https://rpc.tzkt.io/ghostnet

@@ -22,7 +22,7 @@ services:
       - db:/var/lib/postgres/data
     ports:
       - 127.0.0.1:5432:5432
-    environment: 
+    environment:
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
@@ -33,7 +33,7 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v2.23.0
+    image: hasura/graphql-engine:v2.27.0
     ports:
       - 127.0.0.1:${HASURA_PORT:-22000}:8080
     depends_on:
@@ -54,6 +54,6 @@ services:
       - 127.0.0.1:9090:9090
     volumes:
       - ./build/prometheus.yml:/etc/prometheus/prometheus.yml
-  
+
 volumes:
   db:
