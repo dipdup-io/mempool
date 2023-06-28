@@ -13,7 +13,7 @@ type SmartRollupExecute struct {
 	Source             string `json:"source,omitempty" index:"sr_execute_source_idx" comment:"Address of the account who has sent the operation."` // DISCUSS
 	Rollup             string `json:"rollup" index:"sr_execute_rollup_idx" comment:"Smart rollup to which the operation was sent."`
 	CementedCommitment string `json:"cemented_commitment" comment:"Executed commitment."`
-	OutputProof        string `json:"output_proof" comment:"Output proof."`
+	OutputProof        string `json:"output_proof" comment:"Output proof bytes (in base64)."`
 }
 
 // SetMempoolOperation -
