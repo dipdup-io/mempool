@@ -46,7 +46,7 @@ type MempoolOperation struct {
 	Signature       string  `json:"signature" comment:"Signature of the operation."`
 	Protocol        string  `json:"protocol" comment:"Hash of the protocol, in which the operation was included in mempool."`
 	Level           uint64  `json:"level" comment:"The height of the block from the genesis block, in which the operation was included."`
-	Errors          JSONB   `json:"errors,omitempty" pg:"type:jsonb" comment:"Errors with the operation processing if any."`
+	Errors          JSONB   `json:"errors,omitempty" pg:"type:jsonb" comment:"Errors with the operation processing if any."` // DISCUSS: List of errors provided by the node, injected the operation to the blockchain. null if there is no errors
 	ExpirationLevel *uint64 `json:"expiration_level" comment:"Datetime of block expiration in which the operation was included in seconds since UNIX epoch."`
 	Raw             JSONB   `json:"raw,omitempty" pg:"type:jsonb" comment:"Raw JSON object of the operation."`
 }
