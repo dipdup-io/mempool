@@ -18,3 +18,4 @@ type Reveal struct {
 //  comment:"A cap on the amount of gas a given operation can consume."`
 //  comment:"A cap on the amount of storage a given operation can consume."`
 //  comment:"Address of the account who has sent the operation."`           // DISCUSS
+//  comment:"Smart rollup to which the operation was sent."`
