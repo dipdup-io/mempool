@@ -12,10 +12,3 @@ type Reveal struct {
 	StorageLimit int64  `json:"storage_limit,string" comment:"A cap on the amount of storage a given operation can consume."`
 	PublicKey    string `json:"public_key" comment:"Public key of source address."` // DISCUSS
 }
-
-//  comment:"Fee to the baker, produced block, in which the operation was included (micro tez)."` // DISCUSS
-//  comment:"An account nonce which is used to prevent operation replay."`
-//  comment:"A cap on the amount of gas a given operation can consume."`
-//  comment:"A cap on the amount of storage a given operation can consume."`
-//  comment:"Address of the account who has sent the operation."`           // DISCUSS
-//  comment:"Address of the rollup to which the operation was sent."`
