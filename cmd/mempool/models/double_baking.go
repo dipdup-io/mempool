@@ -3,23 +3,23 @@ package models
 // DoubleBaking -
 type DoubleBaking struct {
 	//nolint
-	tableName struct{} `pg:"double_bakings"`
+	tableName struct{} `pg:"double_bakings" comment:"double_baking operation - is used by bakers to provide evidence of double baking (baking two different blocks at the same height) by a baker."`
 
 	MempoolOperation
 	Bh1 DoubleBakingInfo `json:"bh1" pg:"-"`
 	Bh2 DoubleBakingInfo `json:"bh2" pg:"-"`
 
-	Bh1Level            uint64 `json:"-" pg:"bh1_level"`
-	Bh1Proto            int64  `json:"-" pg:"bh1_proto"`
-	Bh1ValidationPass   int64  `json:"-" pg:"bh1_validation_pass"`
-	Bh1Priority         int64  `json:"-" pg:"bh1_priority"`
-	Bh1ProofOfWorkNonce string `json:"-" pg:"bh1_proof_of_work_nonce"`
+	Bh1Level            uint64 `json:"-" pg:"bh1_level" comment:"Height of the first block from the genesis."`
+	Bh1Proto            int64  `json:"-" pg:"bh1_proto" comment:"First block protocol code, representing a number of protocol changes since genesis (mod 256, but -1 for the genesis block)."`
+	Bh1ValidationPass   int64  `json:"-" pg:"bh1_validation_pass" comment:"First block number of endorsements (slots), included into the block."` // DISCUSS
+	Bh1Priority         int64  `json:"-" pg:"bh1_priority" comment:"First block priority [DEPRECATED]."`                                          // DISCUSS
+	Bh1ProofOfWorkNonce string `json:"-" pg:"bh1_proof_of_work_nonce" comment:"First block proof of work nonce."`                                 // DISCUSS
 
-	Bh2Level            uint64 `json:"-" pg:"bh2_level"`
-	Bh2Proto            int64  `json:"-" pg:"bh2_proto"`
-	Bh2ValidationPass   int64  `json:"-" pg:"bh2_validation_pass"`
-	Bh2Priority         int64  `json:"-" pg:"bh2_priority"`
-	Bh2ProofOfWorkNonce string `json:"-" pg:"bh2_proof_of_work_nonce"`
+	Bh2Level            uint64 `json:"-" pg:"bh2_level" comment:"Height of the second block from the genesis."`
+	Bh2Proto            int64  `json:"-" pg:"bh2_proto" comment:"Second block protocol code, representing a number of protocol changes since genesis (mod 256, but -1 for the genesis block)."`
+	Bh2ValidationPass   int64  `json:"-" pg:"bh2_validation_pass" comment:"Second block number of endorsements (slots), included into the block."` // DISCUSS
+	Bh2Priority         int64  `json:"-" pg:"bh2_priority" comment:"Second block priority [DEPRECATED]."`                                          // DISCUSS
+	Bh2ProofOfWorkNonce string `json:"-" pg:"bh2_proof_of_work_nonce" comment:"Second block proof of work nonce."`                                 // DISCUSS
 }
 
 // DoubleBakingInfo -

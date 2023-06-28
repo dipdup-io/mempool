@@ -3,7 +3,7 @@ package models
 // Delegation -
 type Delegation struct {
 	//nolint
-	tableName struct{} `pg:"delegations" comment:"Type of the operation, delegation - is used to delegate funds to a delegate (an implicit account registered as a baker)."`
+	tableName struct{} `pg:"delegations" comment:"delegation operation - is used to delegate funds to a delegate (an implicit account registered as a baker)."`
 	MempoolOperation
 	Fee          int64  `json:"fee,string" comment:"Fee to a baker, produced block, in which the operation was included."`
 	Counter      int64  `json:"counter,string" pg:",pk" comment:"An account nonce which is used to prevent operation replay."`
