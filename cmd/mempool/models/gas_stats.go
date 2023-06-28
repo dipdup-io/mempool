@@ -14,9 +14,9 @@ type GasStats struct {
 	//nolint
 	tableName      struct{} `pg:"gas_stats"`
 	Network        string   `pg:",pk" json:"network" comment:"Identifies belonging network."`
-	Hash           string   `pg:",pk" json:"hash" comment:"Hash of the operation."` // DISCUSS
-	TotalGasUsed   uint64   `pg:"total_gas_used" json:"total_gas_used" comment:"Total amount of used gas."`
-	TotalFee       uint64   `pg:"total_fee" json:"total_fee" comment:"Total amount of fee."`
+	Hash           string   `pg:",pk" json:"hash" comment:"Hash of the operation."`                             // DISCUSS
+	TotalGasUsed   uint64   `pg:"total_gas_used" json:"total_gas_used" comment:"Total amount of consumed gas."` // DISCUSS
+	TotalFee       uint64   `pg:"total_fee" json:"total_fee" comment:"Total amount of fee."`                    // DISCUSS
 	UpdatedAt      int64    `json:"updated_at" comment:"Date of last update in seconds since UNIX epoch."`
 	LevelInMempool uint64   `json:"level_in_mempool" comment:"Level of the block at which the statistics has been calculated in mempool."` // DISCUSS
 	LevelInChain   uint64   `json:"level_in_chain" comment:"Level of the block at which the statistics has been calculated in chain."`     // DISCUSS
