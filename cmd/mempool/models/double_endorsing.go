@@ -3,13 +3,13 @@ package models
 // DoubleEndorsing -
 type DoubleEndorsing struct {
 	//nolint
-	tableName struct{} `pg:"double_endorsings"`
+	tableName struct{} `pg:"double_endorsings" comment:"double_endorsing operation - is used by bakers to provide evidence of double endorsement (endorsing two different blocks at the same block height) by a baker."`
 
 	MempoolOperation
-	Op1Kind  string `json:"-" pg:"op1_kind"`
-	Op1Level uint64 `json:"-" pg:"op1_level"`
-	Op2Kind  string `json:"-" pg:"op2_kind"`
-	Op2Level uint64 `json:"-" pg:"op2_level"`
+	Op1Kind  string `json:"-" pg:"op1_kind" comment:"Kind of the first operation."` // DISCUSS
+	Op1Level uint64 `json:"-" pg:"op1_level" comment:"Height of the block from the genesis block, in which the first operation was included."`
+	Op2Kind  string `json:"-" pg:"op2_kind" comment:"Kind of the second operation."`
+	Op2Level uint64 `json:"-" pg:"op2_level" comment:"Height of the block from the genesis block, in which the second operation was included."`
 
 	Op1 struct {
 		Operations DoubleEndorsingOperations `json:"operations"`
