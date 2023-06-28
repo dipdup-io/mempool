@@ -7,20 +7,20 @@ import (
 // Origination -
 type Origination struct {
 	//nolint
-	tableName struct{} `pg:"originations"`
+	tableName struct{} `pg:"originations" comment:"origination - deployment / contract creation operation."`
 	MempoolOperation
-	Fee          int64  `json:"fee,string"`
-	Counter      int64  `json:"counter,string" pg:",pk" `
-	GasLimit     int64  `json:"gas_limit,string"`
-	StorageLimit int64  `json:"storage_limit,string"`
-	Balance      string `json:"balance"`
-	Delegate     string `json:",omitempty"`
-	Source       string `json:"source,omitempty" index:"origination_source_idx"`
+	Fee          int64  `json:"fee,string"` // DISCUSS: Which fee (bakerFee, storageFee, allocationFee)?
+	Counter      int64  `json:"counter,string" pg:",pk" comment:"An account nonce which is used to prevent operation replay."`
+	GasLimit     int64  `json:"gas_limit,string" comment:"A cap on the amount of gas a given operation can consume."`
+	StorageLimit int64  `json:"storage_limit,string" comment:"A cap on the amount of storage a given operation can consume."`
+	Balance      string `json:"balance" comment:"The contract origination balance (micro tez)."`
+	Delegate     string `json:",omitempty" comment:"Address of the baker (delegate), which was marked as a delegate in the operation."`               // DISCUSS
+	Source       string `json:"source,omitempty" index:"origination_source_idx" comment:"Address of the originated ( deployed / created ) contract."` // DISCUSS
 	Script       struct {
 		Storage json.RawMessage `json:"storage"`
 	} `json:"script" pg:"-"`
 
-	Storage JSONB `json:"-" pg:"type:jsonb"`
+	Storage JSONB `json:"-" pg:"type:jsonb" comment:"Initial contract storage value converted to human-readable JSON."`
 }
 
 // Fill -
