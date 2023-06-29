@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/dipdup-net/go-lib v0.2.33
+	github.com/dipdup-net/go-lib v0.2.37
 	github.com/go-pg/pg/v10 v10.10.6
 	github.com/json-iterator/go v1.1.12
 	github.com/karlseguin/ccache v2.0.3+incompatible

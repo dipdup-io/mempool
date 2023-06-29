@@ -34,6 +34,11 @@ func OpenDatabaseConnection(ctx context.Context, cfg config.Database, kinds ...s
 			return nil, err
 		}
 	}
+
+	if err := database.MakeComments(ctx, db, data...); err != nil {
+		return nil, err
+	}
+
 	db.DB().AddQueryHook(dbLogger{})
 
 	return db, nil
