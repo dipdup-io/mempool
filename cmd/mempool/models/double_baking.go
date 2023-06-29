@@ -11,15 +11,15 @@ type DoubleBaking struct {
 
 	Bh1Level            uint64 `json:"-" pg:"bh1_level" comment:"Height of the first block from the genesis."`
 	Bh1Proto            int64  `json:"-" pg:"bh1_proto" comment:"First block protocol code, representing a number of protocol changes since genesis (mod 256, but -1 for the genesis block)."`
-	Bh1ValidationPass   int64  `json:"-" pg:"bh1_validation_pass" comment:"First block number of endorsements (slots), included into the block."` // DISCUSS
-	Bh1Priority         int64  `json:"-" pg:"bh1_priority" comment:"First block priority [DEPRECATED]."`                                          // DISCUSS
-	Bh1ProofOfWorkNonce string `json:"-" pg:"bh1_proof_of_work_nonce" comment:"First block proof of work nonce."`                                 // DISCUSS
+	Bh1ValidationPass   int64  `json:"-" pg:"bh1_validation_pass" comment:"First block number of endorsements (slots), included into the block."`
+	Bh1Priority         int64  `json:"-" pg:"bh1_priority" comment:"First block priority [DEPRECATED]."`
+	Bh1ProofOfWorkNonce string `json:"-" pg:"bh1_proof_of_work_nonce" comment:"First block proof of work nonce."`
 
 	Bh2Level            uint64 `json:"-" pg:"bh2_level" comment:"Height of the second block from the genesis."`
 	Bh2Proto            int64  `json:"-" pg:"bh2_proto" comment:"Second block protocol code, representing a number of protocol changes since genesis (mod 256, but -1 for the genesis block)."`
-	Bh2ValidationPass   int64  `json:"-" pg:"bh2_validation_pass" comment:"Second block number of endorsements (slots), included into the block."` // DISCUSS
-	Bh2Priority         int64  `json:"-" pg:"bh2_priority" comment:"Second block priority [DEPRECATED]."`                                          // DISCUSS
-	Bh2ProofOfWorkNonce string `json:"-" pg:"bh2_proof_of_work_nonce" comment:"Second block proof of work nonce."`                                 // DISCUSS
+	Bh2ValidationPass   int64  `json:"-" pg:"bh2_validation_pass" comment:"Second block number of endorsements (slots), included into the block."`
+	Bh2Priority         int64  `json:"-" pg:"bh2_priority" comment:"Second block priority [DEPRECATED]."`
+	Bh2ProofOfWorkNonce string `json:"-" pg:"bh2_proof_of_work_nonce" comment:"Second block proof of work nonce."`
 }
 
 // DoubleBakingInfo -
