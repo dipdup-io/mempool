@@ -10,8 +10,9 @@ Selective Tezos mempool indexer based on DipDup framework.
 ## Configuration
 
 Fully compatible with DipDup YAML configuration file format.  
-Mempool indexer reuses `datasources`, `contracts`, `database`, `hasura`
-sections, and reads its own settings from `mempool` top-level section.  
+Mempool indexer reuses [`datasources`][datasources], [`contracts`][contracts],
+[`database`][database], [`hasura`][hasura] sections, and reads its own
+settings from `mempool` top-level section.  
 
 Mempool configuration has two sections: settings and indexers **(required)**.
 
@@ -110,23 +111,23 @@ The complete list of values allowed:
 
 #### accounts
 
-Array of [contract](../config/contracts.md) aliases used to filter operations by source or destination.  
+Array of [contract][contracts] aliases used to filter operations by source or destination.  
 **NOTE**: applied to manager operations only.
 
 ### Datasources
 
-Mempool plugin is tightly coupled with [TzKT](../config/datasources.md#tzkt) and [Tezos node](../config/datasources.md#tezos-node) providers.
+Mempool service is tightly coupled with [TzKT](https://docs.dipdup.io/config/datasources#tzkt)
+and [Tezos node](https://docs.dipdup.io/config/datasources#tezos-node) providers.
 
 #### tzkt
 
-An alias pointing to a [datasource](../config/datasources.md) of kind `tzkt` is expected.
+An alias pointing to a [datasource][datasources] of kind `tzkt` is expected.
 
 #### rpc
 
-An array of aliases pointing to [datasources](../config/datasources.md) of kind `tezos-node`  
+An array of aliases pointing to [datasources][datasources] of kind `tezos-node`  
 Polling multiple nodes allows to detect more refused operations and makes indexing more robust in general.
 
-Read more [in the docs](https://docs.dipdup.net/config-file-reference/plugins/mempool).
 
 ## GQL Client
 
@@ -135,3 +136,9 @@ npm i @dipdup/mempool
 ```
 
 Read [how to use](./build/client/README.md) the GraphQL client for the Mempool service.
+
+
+[datasources]: [https://docs.dipdup.io/config/datasources]
+[contracts]: [https://docs.dipdup.io/config/contracts]
+[database]: [https://docs.dipdup.io/config/database]
+[hasura]: [https://docs.dipdup.io/config/hasura]
