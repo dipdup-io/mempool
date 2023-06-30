@@ -25,6 +25,7 @@
         <node-interpreter value="project" />
         <envs />
       </option>
+      <option name="LaunchBrowser.Before.Run" url="http://127.0.0.1:22000/console" />
     </method>
   </configuration>
 </component>
