@@ -19,7 +19,12 @@
     <directory value="$PROJECT_DIR$/cmd/mempool" />
     <filePath value="$PROJECT_DIR$/cmd/mempool/main.go" />
     <method v="2">
-      <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_Compose up" />
+      <option name="NpmBeforeRunTask" enabled="true">
+        <package-json value="$PROJECT_DIR$/.run/package.json" />
+        <command value="start" />
+        <node-interpreter value="project" />
+        <envs />
+      </option>
     </method>
   </configuration>
 </component>
