@@ -24,3 +24,17 @@ create or replace view operation_groups as
         ) as foo
 	group by network, hash;
 
+comment on view operation_groups is 'Statistics per operations (transactions, delegations, originations, reveals) grouped by network and hash.';
+comment on column operation_groups.network is 'Network of the group.';
+comment on column operation_groups.hash is 'Hash of the operation group.';
+comment on column operation_groups.status is 'Status (max) of the operation group.';
+comment on column operation_groups.source is 'Source (max) of the operation group.';
+comment on column operation_groups.expiration_level is 'Expiration (max) level of the operation group.';
+comment on column operation_groups.level is 'Level (max) of the operation group.';
+comment on column operation_groups.branch is 'Branch (max) of the operation group.';
+comment on column operation_groups.fee is 'Sum of the fee of the operation group.';
+comment on column operation_groups.max_counter is 'Maximum counter of the operation group.';
+comment on column operation_groups.storage_limit is 'Sum of the storage limit of the operation group.';
+comment on column operation_groups.gas_limit is 'Sum of the gas limit of the operation group.';
+comment on column operation_groups.num_contents is 'Number of operations in group.';
+comment on column operation_groups.created_at is 'Date of fist operation creation in seconds since UNIX epoch.'
