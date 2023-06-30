@@ -16,3 +16,10 @@ create or replace view mutez_per_gas_unit as
         ) as gas
         group by gas.waiting_levels;
 
+comment on view mutez_per_gas_unit is 'Statistics for micro tez per gas unit.';
+comment on column mutez_per_gas_unit.waiting_levels is 'Difference between level in chain and level in mempool.';
+comment on column mutez_per_gas_unit.max is 'Maximum price for gas unit.';
+comment on column mutez_per_gas_unit.min is 'Minimum price for gas unit.';
+comment on column mutez_per_gas_unit.avg is 'Average price for gas unit.';
+comment on column mutez_per_gas_unit.count is 'Count of prices for gas unit.';
+comment on column mutez_per_gas_unit.median is 'Percentile (50%) of price for gas unit.';

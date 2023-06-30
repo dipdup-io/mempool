@@ -23,3 +23,4 @@ create or replace view operation_groups as
             select network, status, source, expiration_level, level, branch, hash, fee, counter, storage_limit, gas_limit, created_at from reveals
         ) as foo
 	group by network, hash;
+
