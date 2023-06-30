@@ -97,17 +97,42 @@ The complete list of values allowed:
 
 * `activate_account`
 * `ballot`
-* `delegation*`
+* `delegation`
 * `double_baking_evidence`
 * `double_endorsement_evidence`
 * `endorsement`
-* `origination*`
-* `proposal`
-* `reveal*`
+* `endorsement_with_slot`
+* `origination`
+* `proposals`
+* `reveal`
 * `seed_nonce_revelation`
-* `transaction*`
+* `transaction`
+* `register_global_constant`
+* `preendorsement`
+* `set_deposits_limit`
+* `double_preendorsement_evidence`
+* `tx_rollup_origination`
+* `tx_rollup_submit_batch`
+* `tx_rollup_commit`
+* `tx_rollup_return_bond`
+* `tx_rollup_finalize_commitment`
+* `tx_rollup_remove_commitment`
+* `tx_rollup_rejection`
+* `tx_rollup_dispatch_tickets`
+* `transfer_ticket`
+* `vdf_revelation`
+* `Increase_paid_storage`
+* `update_consensus_key`
+* `drain_delegate`
+* `smart_rollup_add_messages`
+* `smart_rollup_originate`
+* `smart_rollup_execute_outbox_message`
+* `smart_rollup_refute`
+* `smart_rollup_publish`
+* `smart_rollup_recover_bond`
+* `smart_rollup_timeout`
+* `smart_rollup_cement`
 
-`*`  — manager operations.
 
 #### accounts
 
