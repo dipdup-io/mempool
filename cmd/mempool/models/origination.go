@@ -20,7 +20,7 @@ type Origination struct {
 		Storage json.RawMessage `json:"storage"`
 	} `json:"script" pg:"-"`
 
-	Storage JSONB `json:"-" pg:"type:jsonb" comment:"Initial contract storage value converted to human-readable JSON."`
+	Storage JSONB `json:"-" pg:",type:jsonb" comment:"Initial contract storage value converted to human-readable JSON."`
 }
 
 // Fill -
