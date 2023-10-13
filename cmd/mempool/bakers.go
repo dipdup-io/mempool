@@ -26,10 +26,8 @@ func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case endorsement := <-indexer.endorsements:
-			if err := indexer.db.DB().RunInTransaction(ctx, func(tx *pg.Tx) error {
-				return indexer.findBaker(ctx, tx, endorsement)
-			}); err != nil {
-				log.Err(err).Msg("")
+			if err := indexer.findBaker(ctx, indexer.db.DB(), endorsement); err != nil {
+				log.Err(err).Msg("find baker")
 			}
 		}
 	}
@@ -76,7 +74,6 @@ func (indexer *Indexer) findBaker(ctx context.Context, tx pg.DBI, e *models.Endo
 	hash := endorsement.Hash(indexer.chainID, forged)
 	decodedSignature := endorsement.DecodeSignature(e.Signature)
 
-	query := tx.Model(e).WherePK()
 	for i := len(rights) - 1; i >= 0; i-- {
 		if rights[i].Slots == 0 {
 			break
@@ -96,7 +93,7 @@ func (indexer *Indexer) findBaker(ctx context.Context, tx pg.DBI, e *models.Endo
 		e.Baker = "unknown"
 	}
 
-	_, err = query.Update("baker", e.Baker)
+	_, err = tx.Model(e).WherePK().Update("baker", e.Baker)
 	return err
 }
 

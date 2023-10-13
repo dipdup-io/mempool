@@ -70,11 +70,13 @@ func ecdsaKeyWithCache(key []byte) (ecdsa.PublicKey, error) {
 		return ecdsa.PublicKey{}, err
 	}
 
-	return ecdsa.PublicKey{
+	pk := ecdsa.PublicKey{
 		Curve: elliptic.P256(),
 		X:     x,
 		Y:     y,
-	}, nil
+	}
+	ecdsaKeysCache[keyString] = pk
+	return pk, nil
 }
 
 // https://stackoverflow.com/a/46289709
