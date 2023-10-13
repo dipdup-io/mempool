@@ -81,3 +81,7 @@ datasources:
   ghostnet_rpc:
     kind: tezos-node
     url: https://rpc.tzkt.io/ghostnet
+
+profiler:
+  server: ${PROFILER_SERVER}
+  project: tezos-ghostnet-mempool

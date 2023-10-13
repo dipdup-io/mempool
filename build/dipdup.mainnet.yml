@@ -79,3 +79,7 @@ datasources:
   mainnet_rpc:
     kind: tezos-node
     url: https://rpc.tzkt.io/mainnet
+
+profiler:
+  server: ${PROFILER_SERVER}
+  project: tezos-mainnet-mempool
