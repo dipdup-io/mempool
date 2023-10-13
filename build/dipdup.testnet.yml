@@ -183,3 +183,7 @@ datasources:
   oxfordnet_rpc:
     kind: tezos-node
     url: https://rpc.tzkt.io/oxfordnet
+
+profiler:
+  server: ${PROFILER_SERVER}
+  project: tezos-testnet-mempool

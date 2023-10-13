@@ -2,12 +2,14 @@ package config
 
 import (
 	"github.com/dipdup-net/go-lib/config"
+	"github.com/dipdup-net/mempool/cmd/mempool/profiler"
 )
 
 // Config
 type Config struct {
 	config.Config `yaml:",inline"`
-	Mempool       Mempool `yaml:"mempool" validate:"required"`
+	Mempool       Mempool          `yaml:"mempool" validate:"required"`
+	Profiler      *profiler.Config `yaml:"profiler,omitempty"`
 }
 
 // Mempool -

@@ -32,6 +32,7 @@ type Indexer struct {
 	rights           *ccache.Cache
 	delegates        *CachedDelegates
 	state            *database.State
+	logger           zerolog.Logger
 	filters          config.Filters
 	endorsements     chan *models.Endorsement
 	network          string
@@ -103,6 +104,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		gasStatsLifetime: gasStatsLifetime,
 		endorsements:     make(chan *models.Endorsement, 1024*32),
 		rights:           ccache.New(ccache.Configure().MaxSize(60)),
+		logger:           log.Logger.With().Str("network", network).Logger(),
 	}
 	indexer.cache.Start(ctx)
 
@@ -134,7 +136,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 func (indexer *Indexer) Start(ctx context.Context) error {
 	indexer.info().Strs("kinds", indexer.filters.Kinds).Msg("starting...")
 
-	if err := indexer.initState(); err != nil {
+	if err := indexer.initState(ctx); err != nil {
 		return err
 	}
 
@@ -152,7 +154,7 @@ func (indexer *Indexer) Start(ctx context.Context) error {
 		for {
 			endorsements, err := models.EndorsementsWithoutBaker(indexer.db.DB(), indexer.network, 100, offset)
 			if err != nil {
-				log.Err(err).Msg("")
+				indexer.error(err).Msg("get endorsements without baker")
 				break
 			}
 			for i := range endorsements {
@@ -189,7 +191,7 @@ func (indexer *Indexer) sync(ctx context.Context) {
 
 }
 
-func (indexer *Indexer) initState() error {
+func (indexer *Indexer) initState(ctx context.Context) error {
 	current, err := indexer.db.State(indexer.indexName)
 	switch {
 	case err == nil:
@@ -242,12 +244,12 @@ func (indexer *Indexer) listen(ctx context.Context) {
 			return
 		case operations := <-indexer.tzkt.Operations():
 			if err := indexer.handleInChain(ctx, operations); err != nil {
-				indexer.error().Err(err).Msg("handleInChain")
+				indexer.error(err).Msg("handleInChain")
 				continue
 			}
 		case block := <-indexer.tzkt.Blocks():
 			if err := indexer.handleBlock(ctx, block); err != nil {
-				indexer.error().Err(err).Msg("handleBlock")
+				indexer.error(err).Msg("handleBlock")
 				continue
 			}
 		case msg := <-indexer.mempool.Operations():
@@ -255,7 +257,7 @@ func (indexer *Indexer) listen(ctx context.Context) {
 			case receiver.StatusApplied:
 				applied, ok := msg.Body.(node.Applied)
 				if !ok {
-					indexer.error().Msgf("invalid applied operation %v", applied)
+					indexer.error(nil).Msgf("invalid applied operation %v", applied)
 					continue
 				}
 				if !indexer.branches.Contains(applied.Branch) {
@@ -265,13 +267,13 @@ func (indexer *Indexer) listen(ctx context.Context) {
 					continue
 				}
 				if err := indexer.handleAppliedOperation(ctx, applied, msg.Protocol); err != nil {
-					log.Err(err).Msg("handleAppliedOperation")
+					indexer.error(err).Msg("handleAppliedOperation")
 					continue
 				}
 			case receiver.StatusBranchDelayed, receiver.StatusBranchRefused, receiver.StatusRefused, receiver.StatusUnprocessed, receiver.StatusOutdated:
 				failed, ok := msg.Body.(node.FailedMonitor)
 				if !ok {
-					indexer.error().Msgf("invalid %s operation %v", msg.Status, failed)
+					indexer.error(nil).Msgf("invalid %s operation %v", msg.Status, failed)
 					continue
 				}
 
@@ -282,11 +284,11 @@ func (indexer *Indexer) listen(ctx context.Context) {
 					continue
 				}
 				if err := indexer.handleFailedOperation(ctx, failed, string(msg.Status), msg.Protocol); err != nil {
-					indexer.error().Err(err).Msg("handleFailedOperation")
+					indexer.error(err).Msg("handleFailedOperation")
 					continue
 				}
 			default:
-				indexer.error().Msgf("invalid mempool operation status %s", msg.Status)
+				indexer.error(nil).Msgf("invalid mempool operation status %s", msg.Status)
 			}
 		}
 	}
@@ -307,7 +309,7 @@ func (indexer *Indexer) onPopBlockQueue(block Block) error {
 }
 
 func (indexer *Indexer) onRollbackBlockQueue(ctx context.Context, block Block) error {
-	log.Warn().Msgf("Rollback to %d level", block.Level)
+	indexer.warn().Msgf("Rollback to %d level", block.Level)
 	indexer.state.Level = block.Level
 	indexer.state.Timestamp = block.Timestamp
 
@@ -320,14 +322,14 @@ func (indexer *Indexer) onRollbackBlockQueue(ctx context.Context, block Block) e
 
 }
 
-func (indexer *Indexer) error() *zerolog.Event {
-	return log.Error().Uint64("state", indexer.state.Level).Str("name", indexer.indexName)
+func (indexer *Indexer) error(err error) *zerolog.Event {
+	return indexer.logger.Err(err).Uint64("state", indexer.state.Level)
 }
 
 func (indexer *Indexer) info() *zerolog.Event {
-	return log.Info().Uint64("state", indexer.state.Level).Str("name", indexer.indexName)
+	return indexer.logger.Info().Uint64("state", indexer.state.Level)
 }
 
 func (indexer *Indexer) warn() *zerolog.Event {
-	return log.Warn().Uint64("state", indexer.state.Level).Str("name", indexer.indexName)
+	return indexer.logger.Warn().Uint64("state", indexer.state.Level)
 }

@@ -88,7 +88,7 @@ func (indexer *Indexer) inChainOperationProcess(tx pg.DBI, operations tzkt.Opera
 			return false
 		}
 		if err := models.SetInChain(tx, indexer.network, apiOperation.Hash, apiOperation.Type, operations.Level); err != nil {
-			indexer.error().Err(err).Msg("models.SetInChain")
+			indexer.error(err).Msg("models.SetInChain")
 			return false
 		}
 
@@ -113,7 +113,7 @@ func (indexer *Indexer) inChainOperationProcess(tx pg.DBI, operations tzkt.Opera
 				gasStats.TotalFee = *apiOperation.BakerFee
 			}
 			if err := gasStats.Save(tx); err != nil {
-				indexer.error().Err(err).Msg("gasStats.Save")
+				indexer.error(err).Msg("gasStats.Save")
 				return false
 			}
 		}

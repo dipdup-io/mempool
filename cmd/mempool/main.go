@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/grafana/pyroscope-go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -20,6 +21,7 @@ import (
 	"github.com/dipdup-net/go-lib/prometheus"
 	"github.com/dipdup-net/mempool/cmd/mempool/config"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
+	"github.com/dipdup-net/mempool/cmd/mempool/profiler"
 )
 
 type startResult struct {
@@ -52,7 +54,7 @@ func main() {
 
 	var cfg config.Config
 	if err := libCfg.Parse(*configPath, &cfg); err != nil {
-		log.Err(err).Msg("")
+		log.Err(err).Msg("parse config")
 		return
 	}
 
@@ -60,6 +62,16 @@ func main() {
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
 	ctx, cancel := context.WithCancel(context.Background())
+
+	var prscp *pyroscope.Profiler
+	if cfg.Profiler != nil && cfg.Profiler.Server != "" {
+		p, err := profiler.New(cfg.Profiler, "indexer")
+		if err != nil {
+			log.Err(err).Msg("create profiler")
+			return
+		}
+		prscp = p
+	}
 
 	var prometheusService *prometheus.Service
 	if cfg.Prometheus != nil {
@@ -110,7 +122,7 @@ func main() {
 			if err == nil {
 				return
 			}
-			log.Err(err).Msg("")
+			log.Err(err).Msg("start indexer")
 
 			ticker := time.NewTicker(time.Minute)
 			defer ticker.Stop()
@@ -124,7 +136,7 @@ func main() {
 					if err == nil {
 						return
 					}
-					log.Err(err).Msg("")
+					log.Err(err).Msg("start indexer")
 				}
 			}
 		}(network, mempool)
@@ -134,7 +146,7 @@ func main() {
 
 	views, err := createViews(ctx, cfg.Database)
 	if err != nil {
-		log.Err(err).Msg("")
+		log.Err(err).Msg("creating views")
 		cancel()
 		return
 	}
@@ -171,7 +183,13 @@ func main() {
 
 	if prometheusService != nil {
 		if err := prometheusService.Close(); err != nil {
-			log.Err(err).Msg("")
+			log.Err(err).Msg("stopping prometheus")
+		}
+	}
+
+	if prscp != nil {
+		if err := prscp.Stop(); err != nil {
+			log.Panic().Err(err).Msg("stopping pyroscope")
 		}
 	}
 

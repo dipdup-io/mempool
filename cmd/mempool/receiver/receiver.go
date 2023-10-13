@@ -177,13 +177,13 @@ func (indexer *Receiver) updateState(ctx context.Context, url string) {
 	defer ticker.Stop()
 
 	// init
-	if err := indexer.setState(); err != nil {
-		log.Err(err).Msg("")
+	if err := indexer.setState(ctx); err != nil {
+		log.Err(err).Msg("set state")
 	}
 
 	rpc := node.NewMainRPC(url)
 	if err := indexer.checkHead(ctx, rpc); err != nil {
-		log.Err(err).Msg("")
+		log.Err(err).Msg("check head")
 	}
 
 	for {
@@ -192,22 +192,22 @@ func (indexer *Receiver) updateState(ctx context.Context, url string) {
 			return
 		case <-ticker.C:
 			if err := indexer.checkHead(ctx, rpc); err != nil {
-				log.Err(err).Msg("")
+				log.Err(err).Msg("check head")
 				continue
 			}
-			if err := indexer.setState(); err != nil {
-				log.Err(err).Msg("")
+			if err := indexer.setState(ctx); err != nil {
+				log.Err(err).Msg("set state")
 				continue
 			}
 		}
 	}
 }
 
-func (indexer *Receiver) setState() error {
+func (indexer *Receiver) setState(ctx context.Context) error {
 	state, err := indexer.db.State(indexer.indexName)
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRows) {
-			indexer.state = &database.State{}
+			indexer.state = new(database.State)
 			return nil
 		}
 		return err
