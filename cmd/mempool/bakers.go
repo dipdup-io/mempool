@@ -19,13 +19,16 @@ import (
 func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 	defer indexer.wg.Done()
 
-	log.Info().Str("network", indexer.network).Msg("Thread for finding endorsement baker started")
+	indexer.info().Msg("Thread for finding endorsement baker started")
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case endorsement := <-indexer.endorsements:
+			if len(endorsement.Errors) == 0 {
+				continue
+			}
 			if err := indexer.findBaker(ctx, indexer.db.DB(), endorsement); err != nil {
 				log.Err(err).Msg("find baker")
 			}

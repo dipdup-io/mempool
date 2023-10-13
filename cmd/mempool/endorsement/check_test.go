@@ -86,8 +86,8 @@ func TestCheckKey(t *testing.T) {
 }
 
 func BenchmarkCheckKey(b *testing.B) {
-	key := "edpkuEhzJqdFBCWMw6TU3deADRK2fq3GuwWFUphwyH7ero1Na4oGFP"
-	signature := "siggEYDRoz7tiECt2fc1M75ieJNeVAP6MGHLhpyPpPue8EU3QYjYSJLnDoDPgxkmrjr6R33qGrAxLASwkyQqa1r3tc5mGPwT"
+	key := DecodePublicKey("edpkuEhzJqdFBCWMw6TU3deADRK2fq3GuwWFUphwyH7ero1Na4oGFP")
+	signature := DecodeSignature("siggEYDRoz7tiECt2fc1M75ieJNeVAP6MGHLhpyPpPue8EU3QYjYSJLnDoDPgxkmrjr6R33qGrAxLASwkyQqa1r3tc5mGPwT")
 	chainID := "NetXdQprcVkpaWU"
 	endorsement := models.Endorsement{
 		Level: 751292,
@@ -100,7 +100,8 @@ func BenchmarkCheckKey(b *testing.B) {
 	if err != nil {
 		return
 	}
+	hash := Hash(chainID, data)
 	for i := 0; i < b.N; i++ {
-		CheckKey(key[:4], DecodePublicKey(key), DecodeSignature(signature), Hash(chainID, data))
+		CheckKey("edpk", key, signature, hash)
 	}
 }
