@@ -323,6 +323,9 @@ func (indexer *Indexer) onRollbackBlockQueue(ctx context.Context, block Block) e
 }
 
 func (indexer *Indexer) error(err error) *zerolog.Event {
+	if err == nil {
+		return indexer.logger.Error().Uint64("state", indexer.state.Level)
+	}
 	return indexer.logger.Err(err).Uint64("state", indexer.state.Level)
 }
 
