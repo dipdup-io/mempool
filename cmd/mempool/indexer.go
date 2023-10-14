@@ -322,7 +322,8 @@ func (indexer *Indexer) onRollbackBlockQueue(ctx context.Context, block Block) e
 		if err := models.Rollback(ctx, tx, indexer.network, block.Branch, block.Level, indexer.filters.Kinds...); err != nil {
 			return err
 		}
-		return indexer.db.UpdateState(ctx, indexer.state)
+		_, err := tx.NewUpdate().Model(indexer.state).WherePK().Exec(ctx)
+		return err
 	})
 
 }

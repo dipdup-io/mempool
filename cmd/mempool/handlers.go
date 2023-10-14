@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/dipdup-net/go-lib/node"
@@ -180,17 +179,13 @@ func (indexer *Indexer) appliedOperationProcess(ctx context.Context, tx bun.IDB,
 		}
 
 		if indexer.hasManager {
-			key := fmt.Sprintf("gas:%s", operation.Hash)
-			if !indexer.cache.Has(key) {
-				indexer.cache.Set(key)
-				gasStats := models.GasStats{
-					Network:        indexer.network,
-					Hash:           operation.Hash,
-					LevelInMempool: indexer.state.Level,
-				}
-				if err := gasStats.Save(ctx, tx); err != nil {
-					return err
-				}
+			gasStats := models.GasStats{
+				Network:        indexer.network,
+				Hash:           operation.Hash,
+				LevelInMempool: indexer.state.Level,
+			}
+			if err := gasStats.Save(ctx, tx); err != nil {
+				return err
 			}
 		}
 	}
