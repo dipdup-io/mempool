@@ -12,22 +12,31 @@ import (
 	"github.com/dipdup-net/go-lib/tzkt/data"
 	"github.com/dipdup-net/mempool/cmd/mempool/endorsement"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
-	pg "github.com/go-pg/pg/v10"
 	"github.com/rs/zerolog/log"
 )
+
+const unknownBaker = "unknown"
 
 func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 	defer indexer.wg.Done()
 
-	log.Info().Str("network", indexer.network).Msg("Thread for finding endorsement baker started")
+	indexer.info().Msg("Thread for finding endorsement baker started")
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case endorsement := <-indexer.endorsements:
-			if err := indexer.findBaker(ctx, indexer.db.DB(), endorsement); err != nil {
-				log.Err(err).Msg("find baker")
+			if len(endorsement.Errors) > 0 {
+				if err := indexer.findBaker(ctx, endorsement); err != nil {
+					log.Err(err).Msg("find baker")
+					continue
+				}
+			} else {
+				endorsement.Baker = unknownBaker
+			}
+			if _, err := indexer.db.DB().Model(endorsement).WherePK().Update("baker", endorsement.Baker); err != nil {
+				log.Err(err).Msg("set baker to endorsement")
 			}
 		}
 	}
@@ -53,7 +62,7 @@ func (indexer *Indexer) getEndorsingRights(ctx context.Context, level uint64) ([
 	}
 }
 
-func (indexer *Indexer) findBaker(ctx context.Context, tx pg.DBI, e *models.Endorsement) error {
+func (indexer *Indexer) findBaker(ctx context.Context, e *models.Endorsement) error {
 	if err := indexer.delegates.Update(ctx, e.Level); err != nil {
 		return err
 	}
@@ -93,8 +102,7 @@ func (indexer *Indexer) findBaker(ctx context.Context, tx pg.DBI, e *models.Endo
 		e.Baker = "unknown"
 	}
 
-	_, err = tx.Model(e).WherePK().Update("baker", e.Baker)
-	return err
+	return nil
 }
 
 // BySlots -
