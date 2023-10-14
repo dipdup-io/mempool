@@ -48,8 +48,7 @@ mempool:
           - smart_rollup_cement
       datasources:
           tzkt: ghostnet_tzkt
-          rpc: 
-            - ghostnet_rpc
+          rpc: ghostnet_rpc
 
     nairobinet:
       filters:
@@ -92,8 +91,7 @@ mempool:
           - smart_rollup_cement
       datasources:
         tzkt: nairobinet_tzkt
-        rpc:
-          - nairobinet_rpc
+        rpc: nairobinet_rpc
 
     # oxfordnet:
     #   filters:
@@ -136,8 +134,7 @@ mempool:
     #       - smart_rollup_cement
     #   datasources:
     #     tzkt: oxfordnet_tzkt
-    #     rpc:
-    #       - oxfordnet_rpc
+    #     rpc: oxfordnet_rpc
 
 database:
   kind: postgres

@@ -46,8 +46,7 @@ mempool:
           - smart_rollup_cement
       datasources:
           tzkt: mainnet_tzkt
-          rpc: 
-            - mainnet_rpc
+          rpc: mainnet_rpc
 
 database:
   kind: postgres

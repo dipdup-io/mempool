@@ -1,22 +1,23 @@
 package models
 
+import "github.com/uptrace/bun"
+
 // DoublePreendorsing -
 type DoublePreendorsing struct {
-	//nolint
-	tableName struct{} `pg:"double_preendorsings"`
+	bun.BaseModel `bun:"double_preendorsings"`
 
 	MempoolOperation
-	Op1Kind  string `json:"-" pg:"op1_kind" comment:"Kind of the first operation."`
-	Op1Level uint64 `json:"-" pg:"op1_level" comment:"Height of the block from the genesis block, in which the first operation was included."`
-	Op2Kind  string `json:"-" pg:"op2_kind" comment:"Kind of the second operation."`
-	Op2Level uint64 `json:"-" pg:"op2_level" comment:"Height of the block from the genesis block, in which the second operation was included."`
+	Op1Kind  string `bun:"op1_kind"  comment:"Kind of the first operation."                                                            json:"-"`
+	Op1Level uint64 `bun:"op1_level" comment:"Height of the block from the genesis block, in which the first operation was included."  json:"-"`
+	Op2Kind  string `bun:"op2_kind"  comment:"Kind of the second operation."                                                           json:"-"`
+	Op2Level uint64 `bun:"op2_level" comment:"Height of the block from the genesis block, in which the second operation was included." json:"-"`
 
 	Op1 struct {
 		Operations DoublePreendorsingOperations `json:"operations"`
-	} `json:"op1" pg:"-"`
+	} `json:"op1" bun:"-"`
 	Op2 struct {
 		Operations DoublePreendorsingOperations `json:"operations"`
-	} `json:"op2" pg:"-"`
+	} `json:"op2" bun:"-"`
 }
 
 // DoublePreendorsingOperations -

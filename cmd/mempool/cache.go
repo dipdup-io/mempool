@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/dipdup-io/workerpool"
 )
 
 // Cache -
@@ -13,7 +15,7 @@ type Cache struct {
 	ticker *time.Ticker
 	ttl    time.Duration
 
-	wg sync.WaitGroup
+	g workerpool.Group
 }
 
 // NewCache -
@@ -22,6 +24,7 @@ func NewCache(ttl time.Duration) *Cache {
 		lookup: make(map[string]int64),
 		ttl:    ttl,
 		ticker: time.NewTicker(time.Minute),
+		g:      workerpool.NewGroup(),
 	}
 }
 
@@ -43,31 +46,30 @@ func (c *Cache) Set(key string) {
 
 // Start -
 func (c *Cache) Start(ctx context.Context) {
-	c.wg.Add(1)
-	go c.checkExpiration(ctx)
+	c.g.GoCtx(ctx, c.checkExpiration)
+}
+
+func (c *Cache) Close() error {
+	c.g.Wait()
+	c.ticker.Stop()
+	return nil
 }
 
 func (c *Cache) checkExpiration(ctx context.Context) {
-	defer c.wg.Done()
-
 	for {
 		select {
 		case <-ctx.Done():
-			c.ticker.Stop()
 			return
+
 		case <-c.ticker.C:
-			c.mux.RLock()
+			c.mux.Lock()
 			for key, expiration := range c.lookup {
 				if time.Now().UnixNano() <= expiration {
 					continue
 				}
-				c.mux.RUnlock()
-				c.mux.Lock()
 				delete(c.lookup, key)
-				c.mux.Unlock()
-				c.mux.RLock()
 			}
-			c.mux.RUnlock()
+			c.mux.Unlock()
 		}
 	}
 }

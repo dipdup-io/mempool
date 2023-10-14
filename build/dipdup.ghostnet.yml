@@ -48,8 +48,7 @@ mempool:
           - smart_rollup_cement
       datasources:
           tzkt: ghostnet_tzkt
-          rpc:
-            - ghostnet_rpc
+          rpc: ghostnet_rpc
 
 database:
   kind: postgres

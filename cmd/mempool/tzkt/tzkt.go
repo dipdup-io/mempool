@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
+	"github.com/dipdup-io/workerpool"
 	"github.com/dipdup-net/go-lib/tzkt/api"
 	"github.com/dipdup-net/go-lib/tzkt/data"
 	"github.com/dipdup-net/go-lib/tzkt/events"
@@ -29,7 +29,7 @@ type TzKT struct {
 
 	operations chan OperationMessage
 	blocks     chan BlockMessage
-	wg         sync.WaitGroup
+	g          workerpool.Group
 }
 
 // NewTzKT - TzKT constructor
@@ -47,6 +47,7 @@ func NewTzKT(url string, accounts []string, kinds []string) *TzKT {
 		api:        api.New(url),
 		operations: make(chan OperationMessage, 1024),
 		blocks:     make(chan BlockMessage, 1024),
+		g:          workerpool.NewGroup(),
 	}
 }
 
@@ -56,17 +57,10 @@ func (tzkt *TzKT) Connect(ctx context.Context) error {
 		return err
 	}
 
-	tzkt.wg.Add(1)
-
-	go func() {
-		defer tzkt.wg.Done()
-
+	tzkt.g.GoCtx(ctx, func(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
-				if err := tzkt.close(); err != nil {
-					log.Err(err).Msg("tzkt.close")
-				}
 				return
 			case msg := <-tzkt.client.Listen():
 				switch msg.Channel {
@@ -81,18 +75,15 @@ func (tzkt *TzKT) Connect(ctx context.Context) error {
 				}
 			}
 		}
-	}()
+	})
 
 	return nil
 }
 
 // Close -
 func (tzkt *TzKT) Close() error {
-	tzkt.wg.Wait()
-	return nil
-}
+	tzkt.g.Wait()
 
-func (tzkt *TzKT) close() error {
 	if err := tzkt.client.Close(); err != nil {
 		return err
 	}
@@ -396,7 +387,7 @@ func (tzkt *TzKT) Sync(ctx context.Context, indexerLevel uint64) {
 
 	head, err := tzkt.api.GetHead(ctx)
 	if err != nil {
-		log.Err(err).Msg("")
+		log.Err(err).Msg("get tzkt head")
 		return
 	}
 
@@ -404,9 +395,6 @@ func (tzkt *TzKT) Sync(ctx context.Context, indexerLevel uint64) {
 	for {
 		select {
 		case <-ctx.Done():
-			if err := tzkt.close(); err != nil {
-				log.Err(err).Msg("")
-			}
 			return
 		default:
 			if head.Level <= tzkt.state || tzkt.state == 0 {
@@ -441,7 +429,7 @@ func (tzkt *TzKT) init(ctx context.Context, state syncState, indexerState, headL
 	for !state.finished() {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil
 		default:
 			for table := state.nextToRequest(); table != nil; table = state.nextToRequest() {
 				if err := tzkt.getTableData(ctx, table, indexerState, headLevel); err != nil {

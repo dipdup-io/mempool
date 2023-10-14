@@ -12,3 +12,5 @@ linters:
     - containedctx
     - tenv
     - musttag
+    - mirror
+    - tagalign

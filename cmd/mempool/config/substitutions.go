@@ -36,15 +36,14 @@ func substituteDataSources(c *Config, dataSource *MempoolDataSource) error {
 		dataSource.Tzkt.SetStruct(source)
 	}
 
-	for i, link := range dataSource.RPC {
-		source, ok := c.DataSources[link.Name()]
-		if !ok {
-			continue
-		}
-		if source.Kind != DataSourceKindNode {
-			return errors.Errorf("Invalid RPC data source kind. Expected `tezos-node`, got `%s`", source.Kind)
-		}
-		dataSource.RPC[i].SetStruct(source)
+	source, ok := c.DataSources[dataSource.RPC.Name()]
+	if !ok {
+		return errors.Errorf("invalid rpc datasource: %s", dataSource.RPC.Name())
 	}
+	if source.Kind != DataSourceKindNode {
+		return errors.Errorf("Invalid RPC data source kind. Expected `tezos-node`, got `%s`", source.Kind)
+	}
+	dataSource.RPC.SetStruct(source)
+
 	return nil
 }
