@@ -2,24 +2,22 @@ package models
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/uptrace/bun"
 )
 
 // GasStats -
 type GasStats struct {
-	//nolint
-	tableName      struct{} `pg:"gas_stats"`
-	Network        string   `pg:",pk" json:"network" comment:"Identifies belonging network."`
-	Hash           string   `pg:",pk" json:"hash" comment:"Hash of the operation."`
-	TotalGasUsed   uint64   `pg:"total_gas_used" json:"total_gas_used" comment:"Total amount of consumed gas."`
-	TotalFee       uint64   `pg:"total_fee" json:"total_fee" comment:"Total amount of fee."`
-	UpdatedAt      int64    `json:"updated_at" comment:"Date of last update in seconds since UNIX epoch."`
-	LevelInMempool uint64   `json:"level_in_mempool" comment:"Level of the block at which the statistics has been calculated in mempool."`
-	LevelInChain   uint64   `json:"level_in_chain" comment:"Level of the block at which the statistics has been calculated in chain."`
+	bun.BaseModel `bun:"gas_stats"`
+
+	Network        string `bun:",pk"                                                                            comment:"Identifies belonging network." json:"network"`
+	Hash           string `bun:",pk"                                                                            comment:"Hash of the operation."        json:"hash"`
+	TotalGasUsed   uint64 `bun:"total_gas_used"                                                                 comment:"Total amount of consumed gas." json:"total_gas_used"`
+	TotalFee       uint64 `bun:"total_fee"                                                                      comment:"Total amount of fee."          json:"total_fee"`
+	UpdatedAt      int64  `comment:"Date of last update in seconds since UNIX epoch."                           json:"updated_at"`
+	LevelInMempool uint64 `comment:"Level of the block at which the statistics has been calculated in mempool." json:"level_in_mempool"`
+	LevelInChain   uint64 `comment:"Level of the block at which the statistics has been calculated in chain."   json:"level_in_chain"`
 }
 
 // BeforeInsert -
@@ -35,61 +33,34 @@ func (s *GasStats) BeforeUpdate(ctx context.Context) (context.Context, error) {
 }
 
 // Append -
-func (s *GasStats) Save(db pg.DBI) error {
-	if s.TotalGasUsed == 0 && s.LevelInChain == 0 && s.LevelInMempool == 0 {
-		_, err := db.Model(s).Insert()
+func (s *GasStats) Save(ctx context.Context, db bun.IDB) error {
+	if s.TotalGasUsed+s.LevelInChain+s.LevelInMempool == 0 {
+		_, err := db.NewInsert().Model(s).Exec(ctx)
 		return err
 	}
 
-	query := db.Model(s).OnConflict("(network, hash) DO UPDATE")
+	query := db.NewInsert().Model(s).
+		On("CONFLICT (network, hash) DO UPDATE")
 
-	var set strings.Builder
 	if s.TotalGasUsed > 0 {
-		if _, err := set.WriteString(fmt.Sprintf("total_gas_used = gas_stats.total_gas_used + %d", s.TotalGasUsed)); err != nil {
-			return err
-		}
+		query.Set("total_gas_used = gas_stats.total_gas_used + excluded.total_gas_used")
 	}
 	if s.TotalFee > 0 {
-		if set.Len() > 0 {
-			if err := set.WriteByte(','); err != nil {
-				return err
-			}
-		}
-		if _, err := set.WriteString(fmt.Sprintf("total_fee = gas_stats.total_fee + %d", s.TotalFee)); err != nil {
-			return err
-		}
+		query.Set("total_fee = gas_stats.total_fee + excluded.total_fee")
 	}
 	if s.LevelInChain > 0 {
-		if set.Len() > 0 {
-			if err := set.WriteByte(','); err != nil {
-				return err
-			}
-		}
-		if _, err := set.WriteString(fmt.Sprintf("level_in_chain = %d", s.LevelInChain)); err != nil {
-			return err
-		}
+		query.Set("level_in_chain = excluded.level_in_chain")
 	}
 	if s.LevelInMempool > 0 {
-		if set.Len() > 0 {
-			if err := set.WriteByte(','); err != nil {
-				return err
-			}
-		}
-		if _, err := set.WriteString(fmt.Sprintf("level_in_mempool = case gas_stats.level_in_mempool when 0 then %d else gas_stats.level_in_mempool end", s.LevelInMempool)); err != nil {
-			return err
-		}
+		query.Set("level_in_mempool = case gas_stats.level_in_mempool when 0 then excluded.level_in_mempool else gas_stats.level_in_mempool end")
 	}
 
-	if set.Len() > 0 {
-		query.Set(set.String())
-	}
-
-	_, err := query.Insert()
+	_, err := query.Exec(ctx)
 	return err
 }
 
 // DeleteOldGasStats -
-func DeleteOldGasStats(db pg.DBI, timeout uint64) error {
-	_, err := db.Model((*GasStats)(nil)).Where("updated_at < ?", time.Now().Unix()-int64(timeout)).Delete()
+func DeleteOldGasStats(ctx context.Context, db bun.IDB, timeout uint64) error {
+	_, err := db.NewDelete().Model((*GasStats)(nil)).Where("updated_at < ?", time.Now().Unix()-int64(timeout)).Exec(ctx)
 	return err
 }

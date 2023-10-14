@@ -1,9 +1,10 @@
 package models
 
+import "github.com/uptrace/bun"
+
 // IncreasePaidStorage -
 type IncreasePaidStorage struct {
-	//nolint
-	tableName struct{} `pg:"increase_paid_storage"`
+	bun.BaseModel `bun:"increase_paid_storage"`
 
 	MempoolOperation
 }

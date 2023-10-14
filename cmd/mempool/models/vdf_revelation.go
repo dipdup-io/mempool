@@ -1,9 +1,10 @@
 package models
 
+import "github.com/uptrace/bun"
+
 // VdfRevelation -
 type VdfRevelation struct {
-	//nolint
-	tableName struct{} `pg:"vdf_revelation"`
+	bun.BaseModel `bun:"vdf_revelation"`
 
 	MempoolOperation
 }

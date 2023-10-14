@@ -29,12 +29,12 @@ func fromMessage(block tzkt.BlockMessage) Block {
 type BlockQueue struct {
 	queue      []Block
 	levels     map[string]uint64
-	onPop      func(block Block) error
+	onPop      func(ctx context.Context, block Block) error
 	onRollback func(ctx context.Context, block Block) error
 	capacity   uint64
 }
 
-func newBlockQueue(capacity uint64, onPop func(block Block) error, onRollback func(ctx context.Context, block Block) error) *BlockQueue {
+func newBlockQueue(capacity uint64, onPop func(ctx context.Context, block Block) error, onRollback func(ctx context.Context, block Block) error) *BlockQueue {
 	if capacity == 0 {
 		capacity = 60
 	}
@@ -66,7 +66,7 @@ func (bq *BlockQueue) Add(ctx context.Context, block tzkt.BlockMessage) error {
 			item := bq.queue[0]
 			bq.queue = bq.queue[1:]
 			if bq.onPop != nil {
-				if err := bq.onPop(item); err != nil {
+				if err := bq.onPop(ctx, item); err != nil {
 					return err
 				}
 			}

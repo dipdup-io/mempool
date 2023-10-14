@@ -6,10 +6,10 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
+	"github.com/dipdup-io/workerpool"
 	"github.com/grafana/pyroscope-go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -58,10 +58,9 @@ func main() {
 		return
 	}
 
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
 	ctx, cancel := context.WithCancel(context.Background())
+	notifyCtx, notifyCancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	defer notifyCancel()
 
 	var prscp *pyroscope.Profiler
 	if cfg.Profiler != nil && cfg.Profiler.Server != "" {
@@ -94,55 +93,58 @@ func main() {
 	db, err := models.OpenDatabaseConnection(ctx, cfg.Database, filters...)
 	if err != nil {
 		log.Err(err).Msg("open database connection")
+		return
 	}
 
-	var wg sync.WaitGroup
-	started := make(chan struct{}, len(cfg.Mempool.Indexers))
+	g := workerpool.NewGroup()
 	indexerCancels := make(map[string]context.CancelFunc)
 	indexers := make(map[string]*Indexer)
 
-	for network, mempool := range cfg.Mempool.Indexers {
-		startFunc := func(network string, mempool *config.Indexer) error {
-			result, err := startIndexer(ctx, network, cfg, mempool, db, prometheusService)
-			if err != nil {
-				return err
-			}
-
-			indexers[network] = result.indexer
-			indexerCancels[network] = result.cancel
-			started <- struct{}{}
-			return nil
+	startFunc := func(ctx context.Context, network string, mempool *config.Indexer) error {
+		result, err := startIndexer(ctx, network, cfg, mempool, db, prometheusService)
+		if err != nil {
+			return err
 		}
 
-		wg.Add(1)
-		go func(network string, mempool *config.Indexer) {
-			defer wg.Done()
-
-			err := startFunc(network, mempool)
-			if err == nil {
-				return
-			}
-			log.Err(err).Msg("start indexer")
-
-			ticker := time.NewTicker(time.Minute)
-			defer ticker.Stop()
-
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-ticker.C:
-					err := startFunc(network, mempool)
-					if err == nil {
-						return
-					}
-					log.Err(err).Msg("start indexer")
-				}
-			}
-		}(network, mempool)
+		indexers[network] = result.indexer
+		indexerCancels[network] = result.cancel
+		log.Info().Str("network", network).Msg("indexer started")
+		return nil
 	}
 
-	<-started
+	runFunc := func(ctx context.Context, network string, mempool *config.Indexer) {
+		err := startFunc(ctx, network, mempool)
+		if err == nil {
+			return
+		}
+		log.Err(err).Msg("start indexer")
+
+		ticker := time.NewTicker(time.Second * 10)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				err := startFunc(ctx, network, mempool)
+				if err == nil {
+					return
+				}
+				log.Err(err).Msg("start indexer")
+			}
+		}
+	}
+
+	for network, mempool := range cfg.Mempool.Indexers {
+		log.Info().Str("network", network).Msg("running indexer...")
+		g.GoCtx(ctx, func(ctx context.Context) {
+			runFunc(ctx, network, mempool)
+		})
+		time.Sleep(time.Millisecond * 100)
+	}
+
+	g.Wait()
 
 	views, err := createViews(ctx, cfg.Database)
 	if err != nil {
@@ -162,14 +164,14 @@ func main() {
 			Views:          views,
 			Models:         models.GetModelsBy(t...),
 		}); err != nil {
-			log.Err(err).Msg("")
+			log.Err(err).Msg("hasura.Create")
 			cancel()
 			return
 		}
 	}
 
-	<-signals
-	log.Warn().Msg("Trying carefully stopping....")
+	<-notifyCtx.Done()
+	log.Info().Msg("Trying carefully stopping....")
 
 	for _, indexerCancel := range indexerCancels {
 		indexerCancel()
@@ -192,11 +194,6 @@ func main() {
 			log.Panic().Err(err).Msg("stopping pyroscope")
 		}
 	}
-
-	wg.Wait()
-
-	close(signals)
-	close(started)
 }
 
 func createViews(ctx context.Context, database libCfg.Database) ([]string, error) {
@@ -232,7 +229,7 @@ func createViews(ctx context.Context, database libCfg.Database) ([]string, error
 	return views, nil
 }
 
-func startIndexer(ctx context.Context, network string, cfg config.Config, mempool *config.Indexer, db *database.PgGo, prometheusService *prometheus.Service) (startResult, error) {
+func startIndexer(ctx context.Context, network string, cfg config.Config, mempool *config.Indexer, db *database.Bun, prometheusService *prometheus.Service) (startResult, error) {
 	var result startResult
 
 	indexerCtx, cancel := context.WithCancel(ctx)

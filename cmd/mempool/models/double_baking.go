@@ -1,25 +1,26 @@
 package models
 
+import "github.com/uptrace/bun"
+
 // DoubleBaking -
 type DoubleBaking struct {
-	//nolint
-	tableName struct{} `pg:"double_bakings" comment:"double_baking operation - is used by bakers to provide evidence of double baking (baking two different blocks at the same height) by a baker."`
+	bun.BaseModel `bun:"double_bakings" comment:"double_baking operation - is used by bakers to provide evidence of double baking (baking two different blocks at the same height) by a baker."`
 
 	MempoolOperation
-	Bh1 DoubleBakingInfo `json:"bh1" pg:"-"`
-	Bh2 DoubleBakingInfo `json:"bh2" pg:"-"`
+	Bh1 DoubleBakingInfo `bun:"-" json:"bh1"`
+	Bh2 DoubleBakingInfo `bun:"-" json:"bh2"`
 
-	Bh1Level            uint64 `json:"-" pg:"bh1_level" comment:"Height of the first block from the genesis."`
-	Bh1Proto            int64  `json:"-" pg:"bh1_proto" comment:"First block protocol code, representing a number of protocol changes since genesis (mod 256, but -1 for the genesis block)."`
-	Bh1ValidationPass   int64  `json:"-" pg:"bh1_validation_pass" comment:"First block number of endorsements (slots), included into the block."`
-	Bh1Priority         int64  `json:"-" pg:"bh1_priority" comment:"First block priority [DEPRECATED]."`
-	Bh1ProofOfWorkNonce string `json:"-" pg:"bh1_proof_of_work_nonce" comment:"First block proof of work nonce."`
+	Bh1Level            uint64 `bun:"bh1_level"                            comment:"Height of the first block from the genesis."                                                                                 json:"-"`
+	Bh1Proto            int64  `bun:"bh1_proto"                            comment:"First block protocol code, representing a number of protocol changes since genesis (mod 256, but -1 for the genesis block)." json:"-"`
+	Bh1ValidationPass   int64  `bun:"bh1_validation_pass"                  comment:"First block number of endorsements (slots), included into the block."                                                        json:"-"`
+	Bh1Priority         int64  `bun:"bh1_priority"                         comment:"First block priority [DEPRECATED]."                                                                                          json:"-"`
+	Bh1ProofOfWorkNonce string `comment:"First block proof of work nonce." json:"-"                                                                                                                              pbung:"bh1_proof_of_work_nonce"`
 
-	Bh2Level            uint64 `json:"-" pg:"bh2_level" comment:"Height of the second block from the genesis."`
-	Bh2Proto            int64  `json:"-" pg:"bh2_proto" comment:"Second block protocol code, representing a number of protocol changes since genesis (mod 256, but -1 for the genesis block)."`
-	Bh2ValidationPass   int64  `json:"-" pg:"bh2_validation_pass" comment:"Second block number of endorsements (slots), included into the block."`
-	Bh2Priority         int64  `json:"-" pg:"bh2_priority" comment:"Second block priority [DEPRECATED]."`
-	Bh2ProofOfWorkNonce string `json:"-" pg:"bh2_proof_of_work_nonce" comment:"Second block proof of work nonce."`
+	Bh2Level            uint64 `bun:"bh2_level"               comment:"Height of the second block from the genesis."                                                                                 json:"-"`
+	Bh2Proto            int64  `bun:"bh2_proto"               comment:"Second block protocol code, representing a number of protocol changes since genesis (mod 256, but -1 for the genesis block)." json:"-"`
+	Bh2ValidationPass   int64  `bun:"bh2_validation_pass"     comment:"Second block number of endorsements (slots), included into the block."                                                        json:"-"`
+	Bh2Priority         int64  `bun:"bh2_priority"            comment:"Second block priority [DEPRECATED]."                                                                                          json:"-"`
+	Bh2ProofOfWorkNonce string `bun:"bh2_proof_of_work_nonce" comment:"Second block proof of work nonce."                                                                                            json:"-"`
 }
 
 // DoubleBakingInfo -

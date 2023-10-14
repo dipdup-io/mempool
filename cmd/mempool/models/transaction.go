@@ -1,17 +1,18 @@
 package models
 
+import "github.com/uptrace/bun"
+
 // Transaction -
 type Transaction struct {
-	//nolint
-	tableName struct{} `pg:"transactions"`
+	bun.BaseModel `bun:"transactions"`
 
 	MempoolOperation
-	Source       string `json:"source" index:"transaction_source_idx" comment:"Address of the account who has sent the operation."`
-	Fee          int64  `json:"fee,string" comment:"Fee to the baker, produced block, in which the operation was included (micro tez)."`
-	Counter      int64  `json:"counter,string" pg:",pk" comment:"An account nonce which is used to prevent operation replay."`
-	GasLimit     int64  `json:"gas_limit,string" comment:"A cap on the amount of gas a given operation can consume."`
-	StorageLimit int64  `json:"storage_limit,string" comment:"A cap on the amount of storage a given operation can consume."`
-	Amount       string `json:"amount" comment:"The transaction amount (mutez)."`
-	Destination  string `json:"destination" index:"transaction_destination_idx" comment:"Address of the target of the transaction."`
-	Parameters   JSONB  `json:"parameters,omitempty" pg:",type:jsonb" comment:"Transaction parameter, including called entrypoint and value passed to the entrypoint."`
+	Source       string `comment:"Address of the account who has sent the operation."                                 index:"transaction_source_idx"                                                                   json:"source"`
+	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`
+	Counter      int64  `bun:",pk"                                                                                    comment:"An account nonce which is used to prevent operation replay."                            json:"counter,string"`
+	GasLimit     int64  `comment:"A cap on the amount of gas a given operation can consume."                          json:"gas_limit,string"`
+	StorageLimit int64  `comment:"A cap on the amount of storage a given operation can consume."                      json:"storage_limit,string"`
+	Amount       string `comment:"The transaction amount (mutez)."                                                    json:"amount"`
+	Destination  string `comment:"Address of the target of the transaction."                                          index:"transaction_destination_idx"                                                              json:"destination"`
+	Parameters   JSONB  `bun:",type:jsonb"                                                                            comment:"Transaction parameter, including called entrypoint and value passed to the entrypoint." json:"parameters,omitempty"`
 }

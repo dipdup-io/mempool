@@ -2,11 +2,12 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/dipdup-net/go-lib/node"
-	pg "github.com/go-pg/pg/v10"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 )
 
 // Statuses
@@ -36,19 +37,19 @@ type ChangableMempoolOperation interface {
 
 // MempoolOperation -
 type MempoolOperation struct {
-	CreatedAt       int64   `json:"-" comment:"Date of creation in seconds since UNIX epoch."`
-	UpdatedAt       int64   `json:"-" comment:"Date of last update in seconds since UNIX epoch."`
-	Network         string  `json:"network" pg:",pk" comment:"Identifies belonging network."`
-	Hash            string  `json:"hash" pg:",pk" comment:"Hash of the operation."`
-	Branch          string  `json:"branch" comment:"Hash of the block, in which the operation was included."`
-	Status          string  `json:"status" comment:"Status of the operation."`
-	Kind            string  `json:"kind" comment:"Type of the operation."`
-	Signature       string  `json:"signature" comment:"Signature of the operation."`
-	Protocol        string  `json:"protocol" comment:"Hash of the protocol, in which the operation was included in mempool."`
-	Level           uint64  `json:"level" comment:"The height of the block from the genesis block, in which the operation was included."`
-	Errors          JSONB   `json:"errors,omitempty" pg:",type:jsonb" comment:"Errors with the operation processing if any."`
-	ExpirationLevel *uint64 `json:"expiration_level" comment:"Datetime of block expiration in which the operation was included in seconds since UNIX epoch."`
-	Raw             JSONB   `json:"raw,omitempty" pg:",type:jsonb" comment:"Raw JSON object of the operation."`
+	CreatedAt       int64   `comment:"Date of creation in seconds since UNIX epoch."                                                 json:"-"`
+	UpdatedAt       int64   `comment:"Date of last update in seconds since UNIX epoch."                                              json:"-"`
+	Network         string  `bun:",pk"                                                                                               comment:"Identifies belonging network."                json:"network"`
+	Hash            string  `bun:",pk"                                                                                               comment:"Hash of the operation."                       json:"hash"`
+	Branch          string  `comment:"Hash of the block, in which the operation was included."                                       json:"branch"`
+	Status          string  `comment:"Status of the operation."                                                                      json:"status"`
+	Kind            string  `comment:"Type of the operation."                                                                        json:"kind"`
+	Signature       string  `comment:"Signature of the operation."                                                                   json:"signature"`
+	Protocol        string  `comment:"Hash of the protocol, in which the operation was included in mempool."                         json:"protocol"`
+	Level           uint64  `comment:"The height of the block from the genesis block, in which the operation was included."          json:"level"`
+	Errors          JSONB   `bun:",type:jsonb"                                                                                       comment:"Errors with the operation processing if any." json:"errors,omitempty"`
+	ExpirationLevel *uint64 `comment:"Datetime of block expiration in which the operation was included in seconds since UNIX epoch." json:"expiration_level"`
+	Raw             JSONB   `bun:",type:jsonb"                                                                                       comment:"Raw JSON object of the operation."            json:"raw,omitempty"`
 }
 
 // BeforeInsert -
@@ -64,33 +65,19 @@ func (op *MempoolOperation) BeforeUpdate(ctx context.Context) (context.Context, 
 	return ctx, nil
 }
 
-func networkAndBranch(network, branch string) func(db *pg.Query) (*pg.Query, error) {
-	return func(db *pg.Query) (*pg.Query, error) {
-		return db.Where("network = ?", network).Where("branch = ?", branch), nil
-	}
-}
-
-func isApplied(db *pg.Query) (*pg.Query, error) {
-	return db.Where("status = ?", StatusApplied), nil
-}
-
-func isInChain(db *pg.Query) (*pg.Query, error) {
-	return db.Where("status = ?", StatusInChain), nil
-}
-
 // SetInChain -
-func SetInChain(db pg.DBI, network, hash, kind string, level uint64) error {
+func SetInChain(ctx context.Context, db bun.IDB, network, hash, kind string, level uint64) error {
 	model, err := getModelByKind(kind)
 	if err != nil {
 		return err
 	}
 
-	if _, err := db.Model(model).
+	if _, err := db.NewUpdate().Model(model).
 		Set("status = ?, level = ?, errors = NULL", StatusInChain, level).
 		Where("hash = ?", hash).
 		Where("network = ?", network).
-		Update(); err != nil {
-		if errors.Is(err, pg.ErrNoRows) {
+		Exec(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil
 		}
 		return err
@@ -99,7 +86,7 @@ func SetInChain(db pg.DBI, network, hash, kind string, level uint64) error {
 }
 
 // SetExpired -
-func SetExpired(db pg.DBI, network, branch string, kinds ...string) error {
+func SetExpired(ctx context.Context, db bun.IDB, network, branch string, kinds ...string) error {
 	if len(kinds) == 0 {
 		return nil
 	}
@@ -110,7 +97,13 @@ func SetExpired(db pg.DBI, network, branch string, kinds ...string) error {
 			return err
 		}
 
-		if _, err := db.Model(model).Set("status = ?", StatusExpired).Apply(networkAndBranch(network, branch)).Apply(isApplied).Update(); err != nil {
+		if _, err := db.NewUpdate().
+			Model(model).
+			Set("status = ?", StatusExpired).
+			Where("network = ?", network).
+			Where("branch = ?", branch).
+			Where("status = ?", StatusApplied).
+			Exec(ctx); err != nil {
 			return err
 		}
 	}
@@ -118,7 +111,7 @@ func SetExpired(db pg.DBI, network, branch string, kinds ...string) error {
 }
 
 // Rollback -
-func Rollback(db pg.DBI, network, branch string, level uint64, kinds ...string) error {
+func Rollback(ctx context.Context, db bun.IDB, network, branch string, level uint64, kinds ...string) error {
 	if len(kinds) == 0 {
 		return nil
 	}
@@ -129,24 +122,27 @@ func Rollback(db pg.DBI, network, branch string, level uint64, kinds ...string) 
 			return err
 		}
 
-		query := db.Model(model).Apply(networkAndBranch(network, branch))
+		query := db.NewUpdate().Model(model).
+			Where("network = ?", network).
+			Where("branch = ?", branch).
+			Set("status = ?", StatusBranchRefused).
+			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+				return q.Where("status = ?", StatusApplied).WhereGroup(" OR ", func(q1 *bun.UpdateQuery) *bun.UpdateQuery {
+					return q1.Where("status = ?", StatusInChain).Where("level = ?", level)
+				})
+			})
 
-		if _, err := query.Set("status = ?", StatusBranchRefused).
-			WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-				return q.Where("status = ?", StatusApplied).WhereOrGroup(func(q1 *pg.Query) (*pg.Query, error) {
-					return q1.Where("status = ?", StatusInChain).Where("level = ?", level), nil
-				}), nil
-			}).
-			Update(); err != nil {
+		if _, err := query.Exec(ctx); err != nil {
 			return err
 		}
 
-		if _, err := db.Model(model).
+		if _, err := db.NewUpdate().Model(model).
 			Set("status = ?", StatusApplied).
-			Apply(networkAndBranch(network, branch)).
-			Apply(isInChain).
+			Where("network = ?", network).
+			Where("branch = ?", branch).
+			Where("status = ?", StatusInChain).
 			Where("level < ?", level).
-			Update(); err != nil {
+			Exec(ctx); err != nil {
 			return err
 		}
 	}
@@ -155,7 +151,7 @@ func Rollback(db pg.DBI, network, branch string, level uint64, kinds ...string) 
 }
 
 // DeleteOldOperations -
-func DeleteOldOperations(db pg.DBI, timeout uint64, status string, kinds ...string) error {
+func DeleteOldOperations(ctx context.Context, db bun.IDB, timeout uint64, status string, kinds ...string) error {
 	if len(kinds) == 0 {
 		return nil
 	}
@@ -166,13 +162,13 @@ func DeleteOldOperations(db pg.DBI, timeout uint64, status string, kinds ...stri
 			return err
 		}
 		ts := time.Now().Unix() - int64(timeout)
-		query := db.Model(model).Where("updated_at < ?", ts)
+		query := db.NewDelete().Model(model).Where("updated_at < ?", ts)
 
 		if status != "" {
 			query.Where("status = ?", status)
 		}
 
-		if _, err := query.Delete(); err != nil {
+		if _, err := query.Exec(ctx); err != nil {
 			return err
 		}
 	}

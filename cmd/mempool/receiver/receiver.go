@@ -2,24 +2,24 @@ package receiver
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"sync"
 	"time"
 
+	"github.com/dipdup-io/workerpool"
 	"github.com/dipdup-net/go-lib/database"
 	"github.com/dipdup-net/go-lib/node"
 	"github.com/dipdup-net/go-lib/prometheus"
 	"github.com/dipdup-net/mempool/cmd/mempool/models"
-	pg "github.com/go-pg/pg/v10"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
 // Receiver -
 type Receiver struct {
-	urls      []string
-	monitors  []*node.Monitor
-	db        *database.PgGo
+	url       string
+	monitor   *node.Monitor
+	db        *database.Bun
 	prom      *prometheus.Service
 	state     *database.State
 	indexName string
@@ -28,27 +28,27 @@ type Receiver struct {
 
 	blockTime int64
 
-	wg         sync.WaitGroup
+	g          workerpool.Group
 	operations chan Message
 }
 
 // New -
-func New(urls []string, network string, opts ...ReceiverOption) (*Receiver, error) {
-	if len(urls) == 0 {
-		return nil, errors.Errorf("Empty url list: %s", network)
+func New(url string, network string, db *database.Bun, opts ...ReceiverOption) (*Receiver, error) {
+	if url == "" {
+		return nil, errors.Errorf("empty url: %s", network)
 	}
-
-	monitors := make([]*node.Monitor, len(urls))
-	for i := range urls {
-		monitors[i] = node.NewMonitor(urls[i])
+	if db == nil {
+		return nil, errors.Errorf("nil database connection: %s", network)
 	}
 
 	indexer := Receiver{
-		urls:       urls,
+		url:        url,
+		db:         db,
 		operations: make(chan Message, 1024),
 		indexName:  models.MempoolIndexName(network),
 		network:    network,
-		monitors:   monitors,
+		monitor:    node.NewMonitor(url),
+		g:          workerpool.NewGroup(),
 	}
 
 	for i := range opts {
@@ -56,7 +56,7 @@ func New(urls []string, network string, opts ...ReceiverOption) (*Receiver, erro
 	}
 
 	if indexer.blockTime == 0 {
-		indexer.blockTime = 30
+		indexer.blockTime = 15
 	}
 
 	return &indexer, nil
@@ -64,26 +64,30 @@ func New(urls []string, network string, opts ...ReceiverOption) (*Receiver, erro
 
 // Start -
 func (indexer *Receiver) Start(ctx context.Context) {
-	if indexer.db != nil && len(indexer.urls) > 0 {
-		indexer.wg.Add(1)
-		go indexer.updateState(ctx, indexer.urls[0])
-	}
+	indexer.g.GoCtx(ctx, func(ctx context.Context) {
+		indexer.updateState(ctx, indexer.url)
+	})
 
-	for i := range indexer.monitors {
-		indexer.wg.Add(1)
-		go indexer.run(ctx, indexer.monitors[i])
+	indexer.g.GoCtx(ctx, func(ctx context.Context) {
+		indexer.run(ctx, indexer.monitor)
+	})
 
-		indexer.monitors[i].SubscribeOnMempoolApplied(ctx)
-		indexer.monitors[i].SubscribeOnMempoolBranchDelayed(ctx)
-		indexer.monitors[i].SubscribeOnMempoolBranchRefused(ctx)
-		indexer.monitors[i].SubscribeOnMempoolRefused(ctx)
-		indexer.monitors[i].SubscribeOnMempoolOutdated(ctx)
-	}
+	indexer.monitor.SubscribeOnMempoolApplied(ctx)
+	indexer.monitor.SubscribeOnMempoolBranchDelayed(ctx)
+	indexer.monitor.SubscribeOnMempoolBranchRefused(ctx)
+	indexer.monitor.SubscribeOnMempoolRefused(ctx)
+	indexer.monitor.SubscribeOnMempoolOutdated(ctx)
 }
 
 // Close -
 func (indexer *Receiver) Close() error {
-	indexer.wg.Wait()
+	indexer.g.Wait()
+
+	if err := indexer.monitor.Close(); err != nil {
+		log.Err(err).Str("network", indexer.network).Msg("closing monitor")
+	}
+
+	close(indexer.operations)
 	return nil
 }
 
@@ -93,19 +97,11 @@ func (indexer *Receiver) Operations() <-chan Message {
 }
 
 func (indexer *Receiver) run(ctx context.Context, monitor *node.Monitor) {
-	defer indexer.wg.Done()
-
 	for {
 		select {
 		case <-ctx.Done():
-			for i := range indexer.monitors {
-				if err := indexer.monitors[i].Close(); err != nil {
-					log.Err(err).Msg("")
-				}
-			}
-
-			close(indexer.operations)
 			return
+
 		case applied := <-monitor.Applied():
 			for i := range applied {
 				indexer.operations <- Message{
@@ -151,10 +147,6 @@ func (indexer *Receiver) run(ctx context.Context, monitor *node.Monitor) {
 }
 
 func (indexer *Receiver) checkHead(ctx context.Context, rpc node.API) error {
-	if indexer.db == nil {
-		return nil
-	}
-
 	head, err := rpc.Header(ctx, "head")
 	if err != nil {
 		indexer.incrementMetric(rpc.URL(), indexer.network, err)
@@ -171,8 +163,6 @@ func (indexer *Receiver) checkHead(ctx context.Context, rpc node.API) error {
 }
 
 func (indexer *Receiver) updateState(ctx context.Context, url string) {
-	defer indexer.wg.Done()
-
 	ticker := time.NewTicker(time.Second * time.Duration(indexer.blockTime))
 	defer ticker.Stop()
 
@@ -204,9 +194,9 @@ func (indexer *Receiver) updateState(ctx context.Context, url string) {
 }
 
 func (indexer *Receiver) setState(ctx context.Context) error {
-	state, err := indexer.db.State(indexer.indexName)
+	state, err := indexer.db.State(ctx, indexer.indexName)
 	if err != nil {
-		if errors.Is(err, pg.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			indexer.state = new(database.State)
 			return nil
 		}

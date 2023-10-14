@@ -1,14 +1,15 @@
 package models
 
+import "github.com/uptrace/bun"
+
 // DelegateDrain -
 type DelegateDrain struct {
-	//nolint
-	tableName struct{} `pg:"drain_delegate"`
+	bun.BaseModel `bun:"drain_delegate"`
 
 	MempoolOperation
-	ConsensusKey int64  `json:"consensus_key" comment:"Consensus key that was used to sign Drain."`
-	Delegate     string `json:"delegate" comment:"Address of the drained delegate."`
-	Destination  string `json:"destination" comment:"Address of the recipient account."`
+	ConsensusKey int64  `comment:"Consensus key that was used to sign Drain." json:"consensus_key"`
+	Delegate     string `comment:"Address of the drained delegate."           json:"delegate"`
+	Destination  string `comment:"Address of the recipient account."          json:"destination"`
 }
 
 // SetMempoolOperation -

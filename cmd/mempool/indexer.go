@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"sync"
 	"time"
 
-	pg "github.com/go-pg/pg/v10"
+	"github.com/dipdup-io/workerpool"
 	"github.com/karlseguin/ccache"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/uptrace/bun"
 
 	"github.com/dipdup-net/go-lib/database"
 	"github.com/dipdup-net/go-lib/node"
@@ -23,7 +24,7 @@ import (
 
 // Indexer -
 type Indexer struct {
-	db               *database.PgGo
+	db               *database.Bun
 	tzkt             *tzkt.TzKT
 	mempool          *receiver.Receiver
 	prom             *prometheus.Service
@@ -43,12 +44,12 @@ type Indexer struct {
 	gasStatsLifetime uint64
 	hasManager       bool
 
-	wg sync.WaitGroup
+	g workerpool.Group
 }
 
 // NewIndexer -
-func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, db *database.PgGo, settings config.Settings, prom *prometheus.Service) (*Indexer, error) {
-	rpc := node.NewMainRPC(indexerCfg.DataSource.RPC[0].Struct().URL)
+func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, db *database.Bun, settings config.Settings, prom *prometheus.Service) (*Indexer, error) {
+	rpc := node.NewMainRPC(indexerCfg.DataSource.RPC.Struct().URL)
 	constants, err := rpc.Constants(ctx, "head")
 	if err != nil {
 		return nil, err
@@ -66,8 +67,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		return nil, err
 	}
 
-	memInd, err := receiver.New(indexerCfg.DataSource.URLs(), network,
-		receiver.WithStorage(db),
+	memInd, err := receiver.New(indexerCfg.DataSource.URL(), network, db,
 		receiver.WithPrometheus(prom),
 		receiver.WithBlockTime(delay),
 	)
@@ -105,6 +105,7 @@ func NewIndexer(ctx context.Context, network string, indexerCfg config.Indexer, 
 		endorsements:     make(chan *models.Endorsement, 1024*32),
 		rights:           ccache.New(ccache.Configure().MaxSize(60)),
 		logger:           log.Logger.With().Str("network", network).Logger(),
+		g:                workerpool.NewGroup(),
 	}
 	indexer.cache.Start(ctx)
 
@@ -140,19 +141,18 @@ func (indexer *Indexer) Start(ctx context.Context) error {
 		return err
 	}
 
-	indexer.wg.Add(1)
-	go indexer.listen(ctx)
+	indexer.g.GoCtx(ctx, indexer.listen)
 
 	if indexer.delegates != nil {
 		if err := indexer.delegates.Init(ctx); err != nil {
 			return err
 		}
-		indexer.wg.Add(1)
-		go indexer.setEndorsementBakers(ctx)
+
+		indexer.g.GoCtx(ctx, indexer.setEndorsementBakers)
 
 		var offset int
 		for {
-			endorsements, err := models.EndorsementsWithoutBaker(indexer.db.DB(), indexer.network, 100, offset)
+			endorsements, err := models.EndorsementsWithoutBaker(ctx, indexer.db.DB(), indexer.network, 100, offset)
 			if err != nil {
 				indexer.error(err).Msg("get endorsements without baker")
 				break
@@ -183,26 +183,23 @@ func (indexer *Indexer) Start(ctx context.Context) error {
 
 func (indexer *Indexer) sync(ctx context.Context) {
 	indexer.info().Msg("start syncing...")
-	indexer.wg.Add(1)
-	go func() {
-		defer indexer.wg.Done()
+	indexer.g.GoCtx(ctx, func(ctx context.Context) {
 		indexer.tzkt.Sync(ctx, indexer.state.Level)
-	}()
-
+	})
 }
 
 func (indexer *Indexer) initState(ctx context.Context) error {
-	current, err := indexer.db.State(indexer.indexName)
+	current, err := indexer.db.State(ctx, indexer.indexName)
 	switch {
 	case err == nil:
 		indexer.state = current
-	case errors.Is(err, pg.ErrNoRows):
+	case errors.Is(err, sql.ErrNoRows):
 		indexer.state = &database.State{
 			IndexType: models.IndexTypeMempool,
 			IndexName: indexer.indexName,
 		}
 
-		return indexer.db.CreateState(indexer.state)
+		return indexer.db.CreateState(ctx, indexer.state)
 	default:
 		return err
 	}
@@ -212,20 +209,30 @@ func (indexer *Indexer) initState(ctx context.Context) error {
 
 // Close -
 func (indexer *Indexer) Close() {
-	indexer.wg.Wait()
+	indexer.g.Wait()
 	indexer.info().Msg("indexer was stopped")
 }
 
 func (indexer *Indexer) close() error {
 	indexer.info().Msg("stopping...")
+
+	indexer.info().Msg("closing tzkt...")
 	if err := indexer.tzkt.Close(); err != nil {
 		return err
 	}
 
+	indexer.info().Msg("closing mempool...")
 	if err := indexer.mempool.Close(); err != nil {
 		return err
 	}
+
+	indexer.info().Msg("closing database...")
 	if err := indexer.db.Close(); err != nil {
+		return err
+	}
+
+	indexer.info().Msg("closing cache...")
+	if err := indexer.cache.Close(); err != nil {
 		return err
 	}
 
@@ -235,8 +242,6 @@ func (indexer *Indexer) close() error {
 }
 
 func (indexer *Indexer) listen(ctx context.Context) {
-	defer indexer.wg.Done()
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -303,9 +308,9 @@ func (indexer *Indexer) isHashProcessed(hash string) bool {
 	return true
 }
 
-func (indexer *Indexer) onPopBlockQueue(block Block) error {
+func (indexer *Indexer) onPopBlockQueue(ctx context.Context, block Block) error {
 	indexer.info().Uint64("block", block.Level).Msgf("operations with branch %s is expired", block.Branch)
-	return models.SetExpired(indexer.db.DB(), indexer.network, block.Branch, indexer.filters.Kinds...)
+	return models.SetExpired(ctx, indexer.db.DB(), indexer.network, block.Branch, indexer.filters.Kinds...)
 }
 
 func (indexer *Indexer) onRollbackBlockQueue(ctx context.Context, block Block) error {
@@ -313,11 +318,11 @@ func (indexer *Indexer) onRollbackBlockQueue(ctx context.Context, block Block) e
 	indexer.state.Level = block.Level
 	indexer.state.Timestamp = block.Timestamp
 
-	return indexer.db.DB().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		if err := models.Rollback(tx, indexer.network, block.Branch, block.Level, indexer.filters.Kinds...); err != nil {
+	return indexer.db.DB().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if err := models.Rollback(ctx, tx, indexer.network, block.Branch, block.Level, indexer.filters.Kinds...); err != nil {
 			return err
 		}
-		return indexer.db.UpdateState(indexer.state)
+		return indexer.db.UpdateState(ctx, indexer.state)
 	})
 
 }

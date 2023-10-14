@@ -1,9 +1,10 @@
 package models
 
+import "github.com/uptrace/bun"
+
 // Preendorsement -
 type Preendorsement struct {
-	//nolint
-	tableName struct{} `pg:"preendorsements"`
+	bun.BaseModel `bun:"preendorsements"`
 	MempoolOperation
 }
 

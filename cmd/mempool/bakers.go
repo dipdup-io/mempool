@@ -18,8 +18,6 @@ import (
 const unknownBaker = "unknown"
 
 func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
-	defer indexer.wg.Done()
-
 	indexer.info().Msg("Thread for finding endorsement baker started")
 
 	for {
@@ -35,7 +33,11 @@ func (indexer *Indexer) setEndorsementBakers(ctx context.Context) {
 			} else {
 				endorsement.Baker = unknownBaker
 			}
-			if _, err := indexer.db.DB().Model(endorsement).WherePK().Update("baker", endorsement.Baker); err != nil {
+			if _, err := indexer.db.DB().NewUpdate().
+				Model(endorsement).
+				WherePK().
+				Set("baker = ?", endorsement.Baker).
+				Exec(ctx); err != nil {
 				log.Err(err).Msg("set baker to endorsement")
 			}
 		}
