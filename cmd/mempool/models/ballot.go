@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // Ballot -
 type Ballot struct {
-	bun.BaseModel `bun:"ballots" comment:"ballot operation - is used to vote for a proposal in a given voting cycle."`
+	bun.BaseModel `bun:"table:ballots" comment:"ballot operation - is used to vote for a proposal in a given voting cycle."`
 	MempoolOperation
 	Period int64  `comment:"Voting period index, starting from zero, for which the ballot was submitted." json:"period"`
 	Ballot string `comment:"Vote, given in the ballot (yay, nay, or pass)."                               json:"ballot"`

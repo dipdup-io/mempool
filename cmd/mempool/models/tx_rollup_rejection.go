@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // TxRollupRejection -
 type TxRollupRejection struct {
-	bun.BaseModel `bun:"tx_rollup_rejection"`
+	bun.BaseModel `bun:"table:tx_rollup_rejection"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

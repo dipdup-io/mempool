@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // TxRollupReturnBond -
 type TxRollupReturnBond struct {
-	bun.BaseModel `bun:"tx_rollup_return_bond"`
+	bun.BaseModel `bun:"table:tx_rollup_return_bond"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

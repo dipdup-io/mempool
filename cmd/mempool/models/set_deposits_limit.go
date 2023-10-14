@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // SetDepositsLimit -
 type SetDepositsLimit struct {
-	bun.BaseModel `bun:"set_deposits_limit"`
+	bun.BaseModel `bun:"table:set_deposits_limit"`
 
 	MempoolOperation
 	Fee          int64   `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

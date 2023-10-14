@@ -9,7 +9,7 @@ import (
 
 // GasStats -
 type GasStats struct {
-	bun.BaseModel `bun:"gas_stats"`
+	bun.BaseModel `bun:"table:gas_stats"`
 
 	Network        string `bun:",pk"                                                                            comment:"Identifies belonging network." json:"network"`
 	Hash           string `bun:",pk"                                                                            comment:"Hash of the operation."        json:"hash"`

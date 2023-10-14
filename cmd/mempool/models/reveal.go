@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // Reveal -
 type Reveal struct {
-	bun.BaseModel `bun:"reveals" comment:"reveal operation - is used to reveal the public key associated with an account."`
+	bun.BaseModel `bun:"table:reveals" comment:"reveal operation - is used to reveal the public key associated with an account."`
 	MempoolOperation
 	Source       string `comment:"Address of the account who has sent the operation."                                 index:"reveal_source_idx"                                             json:"source"`
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

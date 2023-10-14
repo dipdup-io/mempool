@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // SmartRollupCement -
 type SmartRollupCement struct {
-	bun.BaseModel `bun:"sr_cement"`
+	bun.BaseModel `bun:"table:sr_cement"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // DoubleEndorsing -
 type DoubleEndorsing struct {
-	bun.BaseModel `bun:"double_endorsings" comment:"double_endorsing operation - is used by bakers to provide evidence of double endorsement (endorsing two different blocks at the same block height) by a baker."`
+	bun.BaseModel `bun:"table:double_endorsings" comment:"double_endorsing operation - is used by bakers to provide evidence of double endorsement (endorsing two different blocks at the same block height) by a baker."`
 
 	MempoolOperation
 	Op1Kind  string `bun:"op1_kind"  comment:"Kind of the first operation."                                                            json:"-"`

@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // UpdateConsensusKey -
 type UpdateConsensusKey struct {
-	bun.BaseModel `bun:"update_consensus_key"`
+	bun.BaseModel `bun:"table:update_consensus_key"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

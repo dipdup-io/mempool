@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // SetDepositsLimit -
 type SmartRollupAddMessage struct {
-	bun.BaseModel `bun:"sr_add_messages"`
+	bun.BaseModel `bun:"table:sr_add_messages"`
 
 	MempoolOperation
 	Fee          int64    `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

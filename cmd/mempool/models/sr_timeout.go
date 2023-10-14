@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // SmartRollupTimeout -
 type SmartRollupTimeout struct {
-	bun.BaseModel `bun:"sr_timeout"`
+	bun.BaseModel `bun:"table:sr_timeout"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

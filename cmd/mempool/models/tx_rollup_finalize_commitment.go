@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // TxRollupFinalizeCommitment -
 type TxRollupFinalizeCommitment struct {
-	bun.BaseModel `bun:"tx_rollup_finalize_commitment"`
+	bun.BaseModel `bun:"table:tx_rollup_finalize_commitment"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

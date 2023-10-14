@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/dipdup-io/workerpool v0.0.4
-	github.com/dipdup-net/go-lib v0.3.5
+	github.com/dipdup-net/go-lib v0.3.6
 	github.com/grafana/pyroscope-go v1.0.4
 	github.com/json-iterator/go v1.1.12
 	github.com/karlseguin/ccache v2.0.3+incompatible

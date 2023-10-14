@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // DoublePreendorsing -
 type DoublePreendorsing struct {
-	bun.BaseModel `bun:"double_preendorsings"`
+	bun.BaseModel `bun:"table:double_preendorsings"`
 
 	MempoolOperation
 	Op1Kind  string `bun:"op1_kind"  comment:"Kind of the first operation."                                                            json:"-"`

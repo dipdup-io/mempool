@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // DelegateDrain -
 type DelegateDrain struct {
-	bun.BaseModel `bun:"drain_delegate"`
+	bun.BaseModel `bun:"table:drain_delegate"`
 
 	MempoolOperation
 	ConsensusKey int64  `comment:"Consensus key that was used to sign Drain." json:"consensus_key"`

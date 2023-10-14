@@ -8,7 +8,7 @@ import (
 
 // Origination -
 type Origination struct {
-	bun.BaseModel `bun:"originations" comment:"origination - deployment / contract creation operation."`
+	bun.BaseModel `bun:"table:originations" comment:"origination - deployment / contract creation operation."`
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`
 	Counter      int64  `bun:",pk"                                                                                    comment:"An account nonce which is used to prevent operation replay." json:"counter,string"`

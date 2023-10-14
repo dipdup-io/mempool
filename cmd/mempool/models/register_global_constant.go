@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // RegisterGlobalConstant -
 type RegisterGlobalConstant struct {
-	bun.BaseModel `bun:"register_global_constant" comment:"register_constant operation - is used to register a global constant - Micheline expression that can be reused by multiple smart contracts."`
+	bun.BaseModel `bun:"table:register_global_constant" comment:"register_constant operation - is used to register a global constant - Micheline expression that can be reused by multiple smart contracts."`
 	MempoolOperation
 	Source       string `comment:"Address of the account who has sent the operation."                                 json:"source"`
 	Fee          string `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee"`

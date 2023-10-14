@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // TxRollupSubmitBatch -
 type TxRollupSubmitBatch struct {
-	bun.BaseModel `bun:"tx_rollup_submit_batch"`
+	bun.BaseModel `bun:"table:tx_rollup_submit_batch"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

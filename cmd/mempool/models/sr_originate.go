@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // SmartRollupOriginate -
 type SmartRollupOriginate struct {
-	bun.BaseModel `bun:"sr_originate"`
+	bun.BaseModel `bun:"table:sr_originate"`
 
 	MempoolOperation
 	Fee              int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

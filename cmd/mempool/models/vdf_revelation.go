@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // VdfRevelation -
 type VdfRevelation struct {
-	bun.BaseModel `bun:"vdf_revelation"`
+	bun.BaseModel `bun:"table:vdf_revelation"`
 
 	MempoolOperation
 }

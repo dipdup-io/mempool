@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // Preendorsement -
 type Preendorsement struct {
-	bun.BaseModel `bun:"preendorsements"`
+	bun.BaseModel `bun:"table:preendorsements"`
 	MempoolOperation
 }
 

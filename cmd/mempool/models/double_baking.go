@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // DoubleBaking -
 type DoubleBaking struct {
-	bun.BaseModel `bun:"double_bakings" comment:"double_baking operation - is used by bakers to provide evidence of double baking (baking two different blocks at the same height) by a baker."`
+	bun.BaseModel `bun:"table:double_bakings" comment:"double_baking operation - is used by bakers to provide evidence of double baking (baking two different blocks at the same height) by a baker."`
 
 	MempoolOperation
 	Bh1 DoubleBakingInfo `bun:"-" json:"bh1"`

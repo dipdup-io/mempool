@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // SmartRollupRecoverBond -
 type SmartRollupRecoverBond struct {
-	bun.BaseModel `bun:"sr_recover_bond"`
+	bun.BaseModel `bun:"table:sr_recover_bond"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

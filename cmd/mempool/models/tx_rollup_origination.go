@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // TxRollupOrigination -
 type TxRollupOrigination struct {
-	bun.BaseModel `bun:"tx_rollup_origination"`
+	bun.BaseModel `bun:"table:tx_rollup_origination"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

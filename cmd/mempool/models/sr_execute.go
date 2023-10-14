@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // SmartRollupExecute -
 type SmartRollupExecute struct {
-	bun.BaseModel `bun:"sr_execute"`
+	bun.BaseModel `bun:"table:sr_execute"`
 
 	MempoolOperation
 	Fee                int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

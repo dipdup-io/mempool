@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // TxRollupDispatchTickets -
 type TxRollupDispatchTickets struct {
-	bun.BaseModel `bun:"tx_rollup_dispatch_tickets"`
+	bun.BaseModel `bun:"table:tx_rollup_dispatch_tickets"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`

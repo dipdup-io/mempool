@@ -73,9 +73,11 @@ func SetInChain(ctx context.Context, db bun.IDB, network, hash, kind string, lev
 	}
 
 	if _, err := db.NewUpdate().Model(model).
-		Set("status = ?, level = ?, errors = NULL", StatusInChain, level).
 		Where("hash = ?", hash).
 		Where("network = ?", network).
+		Set("status = ?", StatusInChain).
+		Set("level = ?", level).
+		Set("errors = NULL").
 		Exec(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil

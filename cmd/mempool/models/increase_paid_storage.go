@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // IncreasePaidStorage -
 type IncreasePaidStorage struct {
-	bun.BaseModel `bun:"increase_paid_storage"`
+	bun.BaseModel `bun:"table:increase_paid_storage"`
 
 	MempoolOperation
 }

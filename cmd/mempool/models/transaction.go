@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // Transaction -
 type Transaction struct {
-	bun.BaseModel `bun:"transactions"`
+	bun.BaseModel `bun:"table:transactions"`
 
 	MempoolOperation
 	Source       string `comment:"Address of the account who has sent the operation."                                 index:"transaction_source_idx"                                                                   json:"source"`

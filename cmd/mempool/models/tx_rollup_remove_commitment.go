@@ -4,7 +4,7 @@ import "github.com/uptrace/bun"
 
 // TxRollupRemoveCommitment -
 type TxRollupRemoveCommitment struct {
-	bun.BaseModel `bun:"tx_rollup_remove_commitment"`
+	bun.BaseModel `bun:"table:tx_rollup_remove_commitment"`
 
 	MempoolOperation
 	Fee          int64  `comment:"Fee to the baker, produced block, in which the operation was included (micro tez)." json:"fee,string"`
