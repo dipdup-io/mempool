@@ -41,7 +41,7 @@ func NewTzKT(url string, accounts []string, kinds []string) *TzKT {
 		}
 	}
 	return &TzKT{
-		client:     events.NewTzKT(fmt.Sprintf("%s/%s", strings.TrimSuffix(url, "/"), "v1/events")),
+		client:     events.NewTzKT(fmt.Sprintf("%s/%s", strings.TrimSuffix(url, "/"), "v1/ws")),
 		kinds:      tzktKinds,
 		accounts:   accounts,
 		api:        api.New(url),
