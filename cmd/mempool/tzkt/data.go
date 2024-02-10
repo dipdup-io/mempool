@@ -9,42 +9,6 @@ import (
 	"github.com/dipdup-net/go-lib/tzkt/events"
 )
 
-var toNodeKinds = map[string]string{
-	data.KindActivation:               node.KindActivation,
-	data.KindBallot:                   node.KindBallot,
-	data.KindDelegation:               node.KindDelegation,
-	data.KindDoubleBaking:             node.KindDoubleBaking,
-	data.KindDoubleEndorsing:          node.KindDoubleEndorsing,
-	data.KindEndorsement:              node.KindEndorsement,
-	data.KindNonceRevelation:          node.KindNonceRevelation,
-	data.KindOrigination:              node.KindOrigination,
-	data.KindProposal:                 node.KindProposal,
-	data.KindReveal:                   node.KindReveal,
-	data.KindTransaction:              node.KindTransaction,
-	data.KindRegisterGlobalConstant:   node.KindRegisterGlobalConstant,
-	data.KindRollupDispatchTickets:    node.KindTxRollupDispatchTickets,
-	data.KindRollupFinalizeCommitment: node.KindTxRollupFinalizeCommitment,
-	data.KindRollupReturnBond:         node.KindTxRollupReturnBond,
-	data.KindRollupSubmitBatch:        node.KindTxRollupSubmitBatch,
-	data.KindTransferTicket:           node.KindTransferTicket,
-	data.KindTxRollupCommit:           node.KindTxRollupCommit,
-	data.KindTxRollupOrigination:      node.KindTxRollupOrigination,
-	data.KindTxRollupRejection:        node.KindTxRollupRejection,
-	data.KindTxRollupRemoveCommitment: node.KindTxRollupRemoveCommitment,
-	data.KindSetDepositsLimit:         node.KindSetDepositsLimit,
-	data.KindIncreasePaidStorage:      node.KindIncreasePaidStorage,
-	data.KindVdfRevelation:            node.KindVdfRevelation,
-	data.KindUpdateConsensusKey:       node.KindUpdateConsensusKey,
-	data.KindDrainDelegate:            node.KindDrainDelegate,
-	data.KindSrAddMessages:            node.KindSrAddMessages,
-	data.KindSrCement:                 node.KindSrCement,
-	data.KindSrExecute:                node.KindSrExecute,
-	data.KindSrOriginate:              node.KindSrOriginate,
-	data.KindSrPublish:                node.KindSrPublish,
-	data.KindSrRecoverBond:            node.KindSrRecoverBond,
-	data.KindSrRefute:                 node.KindSrRefute,
-}
-
 var toTzKTKinds = map[string]string{
 	node.KindActivation:                 data.KindActivation,
 	node.KindBallot:                     data.KindBallot,
