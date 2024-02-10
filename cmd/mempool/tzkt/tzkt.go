@@ -278,7 +278,6 @@ func (tzkt *TzKT) processOperation(model interface{}, message *OperationMessage)
 	if err != nil {
 		return err
 	}
-	operation.Type = toNodeKinds[operation.Type]
 	if value, ok := message.Hash.LoadOrStore(operation.Hash, operation); ok {
 		if stored, ok := value.(data.Operation); ok {
 			if operation.BakerFee != nil {
