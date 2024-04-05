@@ -52,17 +52,16 @@ type MempoolOperation struct {
 	Raw             JSONB   `bun:",type:jsonb"                                                                                       comment:"Raw JSON object of the operation."            json:"raw,omitempty"`
 }
 
-// BeforeInsert -
-func (op *MempoolOperation) BeforeInsert(ctx context.Context) (context.Context, error) {
-	op.CreatedAt = time.Now().Unix()
-	op.UpdatedAt = op.CreatedAt
-	return ctx, nil
-}
+var _ bun.BeforeAppendModelHook = (*MempoolOperation)(nil)
 
-// BeforeUpdate -
-func (op *MempoolOperation) BeforeUpdate(ctx context.Context) (context.Context, error) {
-	op.UpdatedAt = time.Now().Unix()
-	return ctx, nil
+func (mo *MempoolOperation) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	switch query.(type) {
+	case *bun.InsertQuery:
+		mo.CreatedAt = time.Now().Unix()
+	case *bun.UpdateQuery:
+		mo.UpdatedAt = time.Now().Unix()
+	}
+	return nil
 }
 
 // SetInChain -
