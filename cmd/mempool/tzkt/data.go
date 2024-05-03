@@ -16,6 +16,7 @@ var toTzKTKinds = map[string]string{
 	node.KindDoubleBaking:               data.KindDoubleBaking,
 	node.KindDoubleEndorsing:            data.KindDoubleEndorsing,
 	node.KindEndorsement:                data.KindEndorsement,
+	node.KindEndorsementWithDal:         data.KindEndorsement,
 	node.KindNonceRevelation:            data.KindNonceRevelation,
 	node.KindOrigination:                data.KindOrigination,
 	node.KindProposal:                   data.KindProposal,
@@ -44,6 +45,7 @@ var toTzKTKinds = map[string]string{
 	node.KindSrRecoverBond:              data.KindSrRecoverBond,
 	node.KindSrRefute:                   data.KindSrRefute,
 	node.KindSrTimeout:                  data.KindSrRefute,
+	node.KindDalPublishCommitment:       data.KindDalPublishCommitment,
 }
 
 // OperationMessage -

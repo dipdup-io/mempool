@@ -268,6 +268,9 @@ func (tzkt *TzKT) getAPIOperation(model interface{}) (data.Operation, error) {
 	case *data.SmartRollupRefute:
 		return operationFromSrRefute(*operation), nil
 
+	case *data.DalPublishCommitment:
+		return operationFromDalPublishCommitment(*operation), nil
+
 	default:
 		return data.Operation{}, errors.Wrapf(ErrInvalidOperationType, "%T", model)
 	}
@@ -591,6 +594,8 @@ func (tzkt *TzKT) getTableData(ctx context.Context, table *tableState, indexerSt
 		return getOperations(ctx, table, filters, tzkt.api.GetSmartRollupRecoverBond, operationFromSrRecoverBond)
 	case data.KindSrRefute:
 		return getOperations(ctx, table, filters, tzkt.api.GetSmartRollupRefute, operationFromSrRefute)
+	case data.KindDalPublishCommitment:
+		return getOperations(ctx, table, filters, tzkt.api.GetDalPublishCommitment, operationFromDalPublishCommitment)
 	default:
 		return errors.Wrap(ErrUnknownOperationKind, table.Table)
 	}

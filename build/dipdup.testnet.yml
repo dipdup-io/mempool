@@ -97,6 +97,7 @@ mempool:
       filters:
         kinds:
           - endorsement
+          - endorsement_with_dal
           - transaction
           - activate_account
           - ballot
@@ -132,6 +133,7 @@ mempool:
           - smart_rollup_recover_bond
           - smart_rollup_timeout
           - smart_rollup_cement
+          - dal_publish_commitment
       datasources:
         tzkt: parisnet_tzkt
         rpc: parisnet_rpc

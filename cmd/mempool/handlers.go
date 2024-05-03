@@ -221,6 +221,8 @@ func (indexer *Indexer) handleContent(ctx context.Context, tx bun.IDB, content n
 		return indexer.handleEndorsement(ctx, tx, content, operation)
 	case node.KindEndorsementWithSlot:
 		return indexer.handleEndorsementWithSlot(ctx, tx, content, operation)
+	case node.KindEndorsementWithDal:
+		return indexer.handleEndorsement(ctx, tx, content, operation)
 	case node.KindNonceRevelation:
 		var model models.NonceRevelation
 		return defaultHandler(ctx, tx, content, operation, &model)
@@ -306,6 +308,9 @@ func (indexer *Indexer) handleContent(ctx context.Context, tx bun.IDB, content n
 	case node.KindSrTimeout:
 		var model models.SmartRollupTimeout
 		return defaultHandler(ctx, tx, content, operation, &model)
+	case node.KindDalPublishCommitment:
+		var model models.DalPublishCommitment
+		return defaultHandler(ctx, tx, content, operation, &model)
 	case node.KindEvent:
 	default:
 		indexer.warn().Str("kind", content.Kind).Msg("unknown operation kind")
@@ -319,6 +324,20 @@ func createModel(ctx context.Context, tx bun.IDB, model any) error {
 }
 
 func (indexer *Indexer) handleEndorsement(ctx context.Context, tx bun.IDB, content node.Content, operation models.MempoolOperation) error {
+	var endorsement models.Endorsement
+	if err := json.Unmarshal(content.Body, &endorsement); err != nil {
+		return err
+	}
+	endorsement.MempoolOperation = operation
+
+	if err := createModel(ctx, tx, &endorsement); err != nil {
+		return err
+	}
+	indexer.endorsements <- &endorsement
+	return nil
+}
+
+func (indexer *Indexer) handleEndorsementWithDal(ctx context.Context, tx bun.IDB, content node.Content, operation models.MempoolOperation) error {
 	var endorsement models.Endorsement
 	if err := json.Unmarshal(content.Body, &endorsement); err != nil {
 		return err
