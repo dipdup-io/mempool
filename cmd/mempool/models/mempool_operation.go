@@ -22,7 +22,7 @@ const (
 
 // DefaultConstraint -
 type DefaultConstraint interface {
-	Ballot | ActivateAccount | Delegation | DoubleBaking | DoubleEndorsing | DoublePreendorsing | Endorsement | 
+	Ballot | ActivateAccount | Delegation | DoubleBaking | DoubleEndorsing | DoublePreendorsing | Endorsement |
 		NonceRevelation | Origination | Preendorsement | Proposal | RegisterGlobalConstant | Reveal | SetDepositsLimit |
 		Transaction | TransferTicket | TxRollupCommit | TxRollupDispatchTickets | TxRollupFinalizeCommitment | TxRollupOrigination |
 		TxRollupRejection | TxRollupRemoveCommitment | TxRollupReturnBond | TxRollupSubmitBatch | VdfRevelation | IncreasePaidStorage |
@@ -208,6 +208,8 @@ func getModelByKind(kind string) (interface{}, error) {
 		return &DoubleEndorsing{}, nil
 	case node.KindEndorsement:
 		return &Endorsement{}, nil
+	case node.KindEndorsementWithDal:
+		return &Endorsement{}, nil
 	case node.KindNonceRevelation:
 		return &NonceRevelation{}, nil
 	case node.KindOrigination:
@@ -270,7 +272,6 @@ func getModelByKind(kind string) (interface{}, error) {
 		return &SmartRollupTimeout{}, nil
 	case node.KindDalPublishCommitment:
 		return &DalPublishCommitment{}, nil
-
 
 	default:
 		return nil, errors.Wrap(node.ErrUnknownKind, kind)

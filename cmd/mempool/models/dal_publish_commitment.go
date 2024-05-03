@@ -15,12 +15,12 @@ type DalPublishCommitment struct {
 	SlotHeader   SlotHeader `comment:"Published slot header"                                                              json:"slot_header"`
 }
 
-
 type SlotHeader struct {
 	SlotIndex       int    `json:"slot_index"`
 	Commitment      string `json:"commitment"`
 	CommitmentProof string `json:"commitment_proof"`
 }
+
 // SetMempoolOperation -
 func (i *DalPublishCommitment) SetMempoolOperation(operaiton MempoolOperation) {
 	i.MempoolOperation = operaiton

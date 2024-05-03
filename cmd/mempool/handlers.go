@@ -337,20 +337,6 @@ func (indexer *Indexer) handleEndorsement(ctx context.Context, tx bun.IDB, conte
 	return nil
 }
 
-func (indexer *Indexer) handleEndorsementWithDal(ctx context.Context, tx bun.IDB, content node.Content, operation models.MempoolOperation) error {
-	var endorsement models.Endorsement
-	if err := json.Unmarshal(content.Body, &endorsement); err != nil {
-		return err
-	}
-	endorsement.MempoolOperation = operation
-
-	if err := createModel(ctx, tx, &endorsement); err != nil {
-		return err
-	}
-	indexer.endorsements <- &endorsement
-	return nil
-}
-
 func (indexer *Indexer) handleEndorsementWithSlot(ctx context.Context, tx bun.IDB, content node.Content, operation models.MempoolOperation) error {
 	var endorsementWithSlot node.EndorsementWithSlot
 	if err := json.Unmarshal(content.Body, &endorsementWithSlot); err != nil {

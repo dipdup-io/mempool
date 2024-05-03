@@ -27,7 +27,7 @@ type Indexer struct {
 // Filters -
 type Filters struct {
 	Accounts []*config.Alias[config.Contract] `validate:"max=50"                                                                                                                                                                                                                                    yaml:"accounts"`
-	Kinds    []string                         `validate:"required,min=1,dive,oneof=activate_account ballot delegation double_baking_evidence double_endorsement_evidence endorsement endorsement_with_slot origination proposals reveal seed_nonce_revelation transaction register_global_constant" yaml:"kinds"`
+	Kinds    []string                         `validate:"required,min=1,dive,oneof=activate_account ballot delegation double_baking_evidence double_endorsement_evidence endorsement endorsement_with_dal endorsement_with_slot origination proposals reveal seed_nonce_revelation transaction register_global_constant" yaml:"kinds"`
 }
 
 // Addresses -
