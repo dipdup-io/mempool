@@ -27,7 +27,7 @@ type DefaultConstraint interface {
 		Transaction | TransferTicket | TxRollupCommit | TxRollupDispatchTickets | TxRollupFinalizeCommitment | TxRollupOrigination |
 		TxRollupRejection | TxRollupRemoveCommitment | TxRollupReturnBond | TxRollupSubmitBatch | VdfRevelation | IncreasePaidStorage |
 		UpdateConsensusKey | DelegateDrain | SmartRollupAddMessage | SmartRollupCement | SmartRollupExecute |
-		SmartRollupOriginate | SmartRollupPublish | SmartRollupRecoverBond | SmartRollupRefute | SmartRollupTimeout
+		SmartRollupOriginate | SmartRollupPublish | SmartRollupRecoverBond | SmartRollupRefute | SmartRollupTimeout | DalPublishCommitment
 }
 
 // ChangableMempoolOperation -
@@ -208,6 +208,8 @@ func getModelByKind(kind string) (interface{}, error) {
 		return &DoubleEndorsing{}, nil
 	case node.KindEndorsement:
 		return &Endorsement{}, nil
+	case node.KindEndorsementWithDal:
+		return &Endorsement{}, nil
 	case node.KindNonceRevelation:
 		return &NonceRevelation{}, nil
 	case node.KindOrigination:
@@ -268,6 +270,8 @@ func getModelByKind(kind string) (interface{}, error) {
 		return &SmartRollupRefute{}, nil
 	case node.KindSrTimeout:
 		return &SmartRollupTimeout{}, nil
+	case node.KindDalPublishCommitment:
+		return &DalPublishCommitment{}, nil
 
 	default:
 		return nil, errors.Wrap(node.ErrUnknownKind, kind)

@@ -221,6 +221,8 @@ func (indexer *Indexer) handleContent(ctx context.Context, tx bun.IDB, content n
 		return indexer.handleEndorsement(ctx, tx, content, operation)
 	case node.KindEndorsementWithSlot:
 		return indexer.handleEndorsementWithSlot(ctx, tx, content, operation)
+	case node.KindEndorsementWithDal:
+		return indexer.handleEndorsement(ctx, tx, content, operation)
 	case node.KindNonceRevelation:
 		var model models.NonceRevelation
 		return defaultHandler(ctx, tx, content, operation, &model)
@@ -305,6 +307,9 @@ func (indexer *Indexer) handleContent(ctx context.Context, tx bun.IDB, content n
 		return defaultHandler(ctx, tx, content, operation, &model)
 	case node.KindSrTimeout:
 		var model models.SmartRollupTimeout
+		return defaultHandler(ctx, tx, content, operation, &model)
+	case node.KindDalPublishCommitment:
+		var model models.DalPublishCommitment
 		return defaultHandler(ctx, tx, content, operation, &model)
 	case node.KindEvent:
 	default:

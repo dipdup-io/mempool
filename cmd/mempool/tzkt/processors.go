@@ -341,3 +341,12 @@ func operationFromSrRefute(model data.SmartRollupRefute) data.Operation {
 		Hash:  model.Hash,
 	}
 }
+
+func operationFromDalPublishCommitment(model data.DalPublishCommitment) data.Operation {
+	return data.Operation{
+		Type:  node.KindDalPublishCommitment,
+		Level: model.Level,
+		ID:    model.ID,
+		Hash:  model.Hash,
+	}
+}
