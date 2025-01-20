@@ -11,6 +11,7 @@ mempool:
       filters:
         kinds:
           - endorsement
+          - endorsement_with_dal
           - transaction
           - activate_account
           - ballot
@@ -36,6 +37,8 @@ mempool:
           - transfer_ticket
           - vdf_revelation
           - Increase_paid_storage
+          - drain_delegate
+          - update_consensus_key
           - smart_rollup_add_messages
           - smart_rollup_originate
           - smart_rollup_execute_outbox_message
@@ -44,6 +47,7 @@ mempool:
           - smart_rollup_recover_bond
           - smart_rollup_timeout
           - smart_rollup_cement
+          - dal_publish_commitment
       datasources:
           tzkt: mainnet_tzkt
           rpc: mainnet_rpc
