@@ -49,97 +49,6 @@ mempool:
       datasources:
         tzkt: ghostnet_tzkt
         rpc: ghostnet_rpc
-
-    rionet:
-      filters:
-        kinds:
-          - endorsement
-          - endorsement_with_dal
-          - transaction
-          - activate_account
-          - ballot
-          - delegation
-          - double_baking_evidence
-          - double_endorsement_evidence
-          - origination
-          - proposals
-          - reveal
-          - seed_nonce_revelation
-          - register_global_constant
-          - set_deposits_limit
-          - preendorsement
-          - double_preendorsement_evidence
-          - tx_rollup_commit
-          - tx_rollup_dispatch_tickets
-          - tx_rollup_finalize_commitment
-          - tx_rollup_origination
-          - tx_rollup_rejection
-          - tx_rollup_remove_commitment
-          - tx_rollup_return_bond
-          - tx_rollup_submit_batch
-          - transfer_ticket
-          - vdf_revelation
-          - Increase_paid_storage
-          - drain_delegate
-          - update_consensus_key
-          - smart_rollup_add_messages
-          - smart_rollup_originate
-          - smart_rollup_execute_outbox_message
-          - smart_rollup_refute
-          - smart_rollup_publish
-          - smart_rollup_recover_bond
-          - smart_rollup_timeout
-          - smart_rollup_cement
-          - dal_publish_commitment
-      datasources:
-        tzkt: rionet_tzkt
-        rpc: rionet_rpc
-
-    seoulnet:
-      filters:
-        kinds:
-          - endorsement
-          - endorsement_with_dal
-          - transaction
-          - activate_account
-          - ballot
-          - delegation
-          - double_baking_evidence
-          - double_endorsement_evidence
-          - origination
-          - proposals
-          - reveal
-          - seed_nonce_revelation
-          - register_global_constant
-          - set_deposits_limit
-          - preendorsement
-          - double_preendorsement_evidence
-          - tx_rollup_commit
-          - tx_rollup_dispatch_tickets
-          - tx_rollup_finalize_commitment
-          - tx_rollup_origination
-          - tx_rollup_rejection
-          - tx_rollup_remove_commitment
-          - tx_rollup_return_bond
-          - tx_rollup_submit_batch
-          - transfer_ticket
-          - vdf_revelation
-          - Increase_paid_storage
-          - drain_delegate
-          - update_consensus_key
-          - smart_rollup_add_messages
-          - smart_rollup_originate
-          - smart_rollup_execute_outbox_message
-          - smart_rollup_refute
-          - smart_rollup_publish
-          - smart_rollup_recover_bond
-          - smart_rollup_timeout
-          - smart_rollup_cement
-          - dal_publish_commitment
-      datasources:
-        tzkt: seoulnet_tzkt
-        rpc: seoulnet_rpc
-        
     shadownet:
       filters:
         kinds:
@@ -216,20 +125,6 @@ datasources:
     kind: tezos-node
     url: https://rpc.tzkt.io/ghostnet
 
-  rionet_tzkt:
-    kind: tzkt
-    url: https://api.rionet.tzkt.io
-  rionet_rpc:
-    kind: tezos-node
-    url: https://rpc.tzkt.io/rionet
-
-  seoulnet_tzkt:
-    kind: tzkt
-    url: https://api.seoulnet.tzkt.io
-  seoulnet_rpc:
-    kind: tezos-node
-    url: https://rpc.tzkt.io/seoulnet
-    
   shadownet_tzkt:
     kind: tzkt
     url: https://api.shadownet.tzkt.io
